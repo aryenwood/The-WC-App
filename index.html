@@ -5671,11 +5671,12 @@
       border-top: 1px solid var(--g-border);
       z-index: 351;
       display: flex; flex-direction: column;
-      transform: translateY(100%);
+      transform: translateY(calc(100% + var(--nav-h) + 20px));
+      pointer-events: none;
       transition: transform 0.38s cubic-bezier(0.32,0.72,0,1);
       overflow: hidden;
     }
-    #cal-day-sheet.cal-day-sheet--open { transform: translateY(0); }
+    #cal-day-sheet.cal-day-sheet--open { transform: translateY(0); pointer-events: auto; }
     #cal-day-sheet-handle {
       width: 36px; height: 4px; border-radius: 2px;
       background: var(--g-border); margin: 10px auto 0;
