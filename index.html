@@ -571,6 +571,11 @@
         radial-gradient(ellipse 60% 50% at 75% 92%, rgba(20,143,152,0.10)  0%, transparent 60%),
         radial-gradient(ellipse 80% 60% at 42% 55%, rgba(255,255,255,0.60) 0%, transparent 70%);
     }
+    /* Explicit dark body background — bulletproof override */
+    html.dark-mode body {
+      background: #040b0f;
+      color: #f0f8ff;
+    }
     html.dark-mode body::before {
       /* Tesla HUD — tight precision beams, not soft clouds */
       background:
