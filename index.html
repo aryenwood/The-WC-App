@@ -2974,8 +2974,10 @@
       display: flex; gap: 8px; overflow-x: auto;
       padding-bottom: 2px; margin-bottom: 14px;
       scrollbar-width: none; -webkit-overflow-scrolling: touch;
+      touch-action: pan-x; overscroll-behavior-x: contain;
     }
     .log-filters::-webkit-scrollbar { display: none; }
+    .log-filters--appts { justify-content: safe center; padding-left: 16px; padding-right: 16px; }
 
     .filter-pill {
       flex-shrink: 0; padding: 7px 16px; border-radius: 50px;
@@ -3190,6 +3192,7 @@
       margin-bottom: 0;
       overflow-x: auto; -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
+      touch-action: pan-x; overscroll-behavior-x: contain;
     }
     .crm-subtab-nav::-webkit-scrollbar { display: none; }
     .crm-subtab {
@@ -3478,25 +3481,39 @@
       display: inline-flex; align-items: center; gap: 3px;
     }
 
-    /* Action buttons — HubSpot icon strip */
+    /* Action buttons — colored icon strip */
     .cust-d-actions {
-      display: flex; gap: 6px;
-      padding: 0 18px 16px;
+      display: flex; gap: 8px;
+      padding: 12px 18px 16px;
       border-bottom: 1px solid var(--g-border);
     }
     .cust-d-action-btn {
-      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
-      padding: 10px 4px; border-radius: 12px;
-      border: 1.5px solid var(--g-border); background: var(--g1);
-      cursor: pointer; font-size: 10px; font-weight: 700;
-      color: var(--text-3); font-family: var(--font-ui);
-      transition: all 0.15s;
-      text-decoration: none;
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 12px 4px 10px; border-radius: 14px;
+      border: none; background: var(--g2);
+      cursor: pointer; font-size: 11px; font-weight: 700;
+      color: var(--text-2); font-family: var(--font-ui);
+      transition: all 0.15s; text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
     }
-    .cust-d-action-btn:active { transform: scale(0.93); background: var(--g2); border-color: var(--primary); }
-    .cust-d-action-btn:hover { border-color: rgba(20,143,152,0.4); color: var(--primary); }
-    .cust-d-action-btn svg { width: 18px; height: 18px; stroke: var(--primary); stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-    .cust-d-action-btn span { color: inherit; font-size: 10px; font-weight: 600; }
+    .cust-d-action-btn:active { transform: scale(0.91); opacity: 0.8; }
+    /* Icon circle */
+    .cust-d-action-btn .act-icon {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .cust-d-action-btn svg { width: 18px; height: 18px; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .cust-d-action-btn span { color: var(--text-2); font-size: 10px; font-weight: 600; letter-spacing: 0.01em; }
+    /* Per-action colors */
+    .cust-d-action-btn--call .act-icon { background: rgba(34,197,94,0.15); }
+    .cust-d-action-btn--call svg { stroke: #22c55e; }
+    .cust-d-action-btn--text .act-icon { background: rgba(59,130,246,0.15); }
+    .cust-d-action-btn--text svg { stroke: #3b82f6; }
+    .cust-d-action-btn--email .act-icon { background: rgba(245,158,11,0.15); }
+    .cust-d-action-btn--email svg { stroke: #f59e0b; }
+    .cust-d-action-btn--book .act-icon { background: rgba(20,143,152,0.15); }
+    .cust-d-action-btn--book svg { stroke: var(--primary); }
 
     /* Sub-tabs — HubSpot underline tabs */
     .cust-d-tabs {
@@ -3504,6 +3521,7 @@
       background: var(--bg); position: sticky; top: 57px; z-index: 1;
       padding: 0 4px; gap: 0;
       overflow-x: auto; -webkit-overflow-scrolling: touch;
+      touch-action: pan-x; overscroll-behavior-x: contain;
     }
     .cust-d-tab {
       flex: 0 0 auto; padding: 12px 14px;
@@ -6214,78 +6232,97 @@
   .coaching-btn { background:none; border:1px dashed var(--g-border); border-radius:8px; font-size:12px; color:var(--text-2); padding:4px 10px; cursor:pointer; margin-left:6px; }
   .coaching-btn:hover { border-color:var(--amber); color:var(--amber); }
 
-  /* ===== v74 On The Doors Mode — Gamified Redesign ===== */
+  /* ===== On The Doors Mode — v85 Redesign ===== */
 
   /* ── Overlay shell ── */
   #otd-overlay {
     position: fixed; inset: 0; z-index: 9200;
     display: none; flex-direction: column;
-    background: #06101a;  /* always deep-dark regardless of theme */
+    background: #070f1a;
     overflow: hidden;
   }
   #otd-overlay.otd-open { display: flex; }
 
-  /* ── Hero header ── */
+  /* ── Header bar ── */
   .otd-hero {
     flex-shrink: 0;
-    background: linear-gradient(160deg, #0d2033 0%, #091622 100%);
-    border-bottom: 1px solid rgba(0,200,215,0.15);
-    padding: 0 18px 16px;
+    background: #070f1a;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    padding: 0 16px 12px;
     padding-top: calc(env(safe-area-inset-top, 14px) + 10px);
   }
   .otd-hero-row1 {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
+  }
+  /* Live badge + title left side */
+  .otd-hero-left { display: flex; align-items: center; gap: 10px; }
+  .otd-live-badge {
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3);
+    border-radius: 20px; padding: 4px 10px;
   }
   .otd-hero-title {
-    display: flex; align-items: center; gap: 10px;
-    font-family: var(--font-display); font-size: 20px; font-weight: 900;
+    font-family: var(--font-display); font-size: 18px; font-weight: 900;
     color: #fff; letter-spacing: -0.02em;
   }
   .otd-hero-title .otd-pulse {
-    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
     background: #22c55e;
     animation: otd-live-pulse 1.8s ease infinite;
   }
+  .otd-live-label { font-size: 11px; font-weight: 700; color: #4ade80; letter-spacing: 0.04em; }
   @keyframes otd-live-pulse {
     0%  { box-shadow: 0 0 0 0 rgba(34,197,94,0.7); }
-    70% { box-shadow: 0 0 0 9px rgba(34,197,94,0); }
+    70% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
     100%{ box-shadow: 0 0 0 0 rgba(34,197,94,0); }
   }
+  /* Stats right side — compact inline numbers */
+  .otd-stats-inline {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .otd-stat-item { text-align: center; }
+  .otd-stat-num {
+    font-size: 18px; font-weight: 900; color: #fff;
+    font-family: var(--font-display); letter-spacing: -0.02em; line-height: 1;
+  }
+  .otd-stat-lbl { font-size: 9px; color: rgba(255,255,255,0.38); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
+  .otd-stat-div { width: 1px; height: 28px; background: rgba(255,255,255,0.1); }
+  .otd-conv-val { font-size: 13px; font-weight: 800; color: #22d3ee; }
   .otd-exit-btn {
-    display: flex; align-items: center; gap: 5px;
-    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.14);
-    border-radius: 20px; padding: 7px 14px;
-    font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.7);
+    display: flex; align-items: center; gap: 4px;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px; padding: 7px 13px;
+    font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.65);
     cursor: pointer; -webkit-tap-highlight-color: transparent;
     transition: background .15s;
   }
-  .otd-exit-btn:active { background: rgba(255,255,255,0.14); }
+  .otd-exit-btn:active { background: rgba(255,255,255,0.13); }
 
-  /* ── GPS / Address bar inside hero ── */
+  /* ── GPS / Address bar ── */
   .otd-addr-row {
     display: flex; align-items: center; gap: 8px;
-    background: rgba(255,255,255,0.06); border: 1px solid rgba(0,200,215,0.18);
-    border-radius: 14px; padding: 10px 14px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(0,200,215,0.16);
+    border-radius: 12px; padding: 8px 12px;
   }
-  .otd-addr-icon { font-size: 15px; flex-shrink: 0; }
+  .otd-addr-icon { font-size: 14px; flex-shrink: 0; }
   .otd-addr-text {
-    flex: 1; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.8);
+    flex: 1; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.75);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    cursor: pointer; /* tappable for manual edit */
+    cursor: pointer;
   }
   .otd-addr-text.otd-addr-scanning { color: #22d3ee; animation: otd-blink .9s ease infinite alternate; }
   @keyframes otd-blink { from{opacity:.5} to{opacity:1} }
-  .otd-addr-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .otd-addr-actions { display: flex; gap: 5px; flex-shrink: 0; }
   .otd-addr-icon-btn {
-    width: 32px; height: 32px; border-radius: 10px; border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; font-size: 15px;
-    background: rgba(255,255,255,0.08); -webkit-tap-highlight-color: transparent;
+    width: 28px; height: 28px; border-radius: 8px; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 13px;
+    background: rgba(255,255,255,0.07); -webkit-tap-highlight-color: transparent;
     transition: background .14s;
   }
-  .otd-addr-icon-btn:active { background: rgba(255,255,255,0.18); }
+  .otd-addr-icon-btn:active { background: rgba(255,255,255,0.16); }
 
-  /* Manual address edit input (shown when tapping address) */
+  /* Manual address edit input */
   .otd-addr-edit {
     display: none; width: 100%; padding: 9px 12px; border-radius: 10px;
     border: 1.5px solid rgba(0,200,215,0.4); background: rgba(0,0,0,0.3);
@@ -6296,132 +6333,115 @@
 
   /* ── Scrollable body ── */
   .otd-body {
-    flex: 1; overflow-y: auto; padding: 18px 14px;
-    display: flex; flex-direction: column; gap: 18px;
-    -webkit-overflow-scrolling: touch;
+    flex: 1; overflow-y: auto; padding: 16px 14px 100px;
+    display: flex; flex-direction: column; gap: 10px;
+    -webkit-overflow-scrolling: touch; touch-action: pan-y;
   }
 
   /* ── Section labels ── */
   .otd-section-label {
     font-size: 10px; font-weight: 800; letter-spacing: .12em;
-    text-transform: uppercase; color: rgba(0,200,215,0.7); margin-bottom: 8px;
+    text-transform: uppercase; color: rgba(0,200,215,0.6); margin-bottom: 6px;
   }
 
-  /* ── Dispo grid — 5 big tap cards ── */
+  /* ── Dispo grid — redesigned large cards ── */
   .otd-dispo-grid {
     display: grid; grid-template-columns: 1fr 1fr;
-    gap: 9px;
+    gap: 8px;
   }
   .otd-dispo-btn {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 8px; padding: 18px 8px;
-    border-radius: 18px; border: 1.5px solid transparent;
-    font-size: 12px; font-weight: 800; cursor: pointer; line-height: 1.2;
-    font-family: var(--font-body); letter-spacing: .01em;
-    transition: transform .13s var(--spring), filter .13s, border-color .13s;
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 14px;
+    border-radius: 16px; border: 1.5px solid transparent;
+    font-size: 14px; font-weight: 800; cursor: pointer; line-height: 1.2;
+    font-family: var(--font-body); letter-spacing: .01em; text-align: left;
+    transition: transform .13s var(--spring), filter .13s;
     -webkit-tap-highlight-color: transparent;
     position: relative; overflow: hidden;
   }
-  /* shimmer on tap */
   .otd-dispo-btn::after {
     content: ''; position: absolute; inset: 0;
-    background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.08) 50%, transparent 70%);
+    background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.07) 50%, transparent 70%);
     transform: translateX(-100%); transition: transform .4s;
   }
-  .otd-dispo-btn:active { transform: scale(0.91); }
+  .otd-dispo-btn:active { transform: scale(0.93); }
   .otd-dispo-btn:active::after { transform: translateX(100%); }
-  .otd-dispo-emoji { font-size: 28px; line-height: 1; }
+  .otd-dispo-emoji {
+    font-size: 24px; line-height: 1; flex-shrink: 0;
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.07);
+  }
+  .otd-dispo-label { flex: 1; }
   /* Status colors */
   .otd-dispo-btn--not-home {
-    background: linear-gradient(145deg, rgba(71,85,105,0.5) 0%, rgba(51,65,85,0.3) 100%);
-    border-color: rgba(148,163,184,0.3); color: #94a3b8;
+    background: rgba(71,85,105,0.22);
+    border-color: rgba(148,163,184,0.2); color: #94a3b8;
   }
+  .otd-dispo-btn--not-home .otd-dispo-emoji { background: rgba(148,163,184,0.12); }
   .otd-dispo-btn--dq {
-    background: linear-gradient(145deg, rgba(124,45,18,0.45) 0%, rgba(92,30,10,0.3) 100%);
-    border-color: rgba(251,146,60,0.35); color: #fb923c;
+    background: rgba(124,45,18,0.25);
+    border-color: rgba(251,146,60,0.25); color: #fb923c;
   }
+  .otd-dispo-btn--dq .otd-dispo-emoji { background: rgba(251,146,60,0.12); }
   .otd-dispo-btn--not-int {
-    background: linear-gradient(145deg, rgba(136,19,55,0.45) 0%, rgba(100,10,40,0.3) 100%);
-    border-color: rgba(244,63,94,0.35); color: #fb7185;
+    background: rgba(136,19,55,0.25);
+    border-color: rgba(244,63,94,0.25); color: #fb7185;
   }
+  .otd-dispo-btn--not-int .otd-dispo-emoji { background: rgba(244,63,94,0.12); }
   .otd-dispo-btn--go-back {
-    background: linear-gradient(145deg, rgba(67,56,202,0.45) 0%, rgba(49,46,129,0.3) 100%);
-    border-color: rgba(129,140,248,0.35); color: #a5b4fc;
+    background: rgba(67,56,202,0.25);
+    border-color: rgba(129,140,248,0.25); color: #a5b4fc;
   }
+  .otd-dispo-btn--go-back .otd-dispo-emoji { background: rgba(129,140,248,0.12); }
   .otd-dispo-btn--contact {
     grid-column: 1 / -1;
-    background: linear-gradient(135deg, rgba(6,148,162,0.55) 0%, rgba(8,110,125,0.4) 100%);
-    border-color: rgba(34,211,238,0.45); color: #67e8f9;
-    padding: 22px 10px;
+    background: linear-gradient(135deg, rgba(6,148,162,0.35) 0%, rgba(8,110,125,0.25) 100%);
+    border-color: rgba(34,211,238,0.35); color: #67e8f9;
+    padding: 18px 16px;
+  }
+  .otd-dispo-btn--contact .otd-dispo-emoji {
+    font-size: 28px; width: 52px; height: 52px; border-radius: 14px;
+    background: rgba(34,211,238,0.12);
   }
   /* selected state */
   .otd-dispo-btn--selected {
-    filter: brightness(1.18);
-    box-shadow: 0 0 0 2px currentColor, 0 0 18px rgba(0,0,0,0.3);
+    filter: brightness(1.2);
+    box-shadow: 0 0 0 2px currentColor;
   }
 
-  /* ── Save & next door button ── */
-  #otd-quick-save-btn {
-    width: 100%; padding: 18px; border-radius: 18px; border: none;
-    background: linear-gradient(135deg, #148f98 0%, #0d7882 100%);
-    color: #fff; font-size: 16px; font-weight: 900; cursor: pointer;
-    font-family: var(--font-display); letter-spacing: -.01em;
-    box-shadow: 0 6px 24px rgba(20,143,152,0.45);
-    transition: transform .13s var(--spring), box-shadow .13s;
-    -webkit-tap-highlight-color: transparent; display: none;
-  }
-  #otd-quick-save-btn:active { transform: scale(0.94); box-shadow: 0 2px 10px rgba(20,143,152,0.3); }
-
-  /* ── HO info card (Made Contact) ── */
-  .otd-info-card {
-    background: rgba(255,255,255,0.04); border: 1px solid rgba(0,200,215,0.14);
-    border-radius: 20px; padding: 16px; display: none; flex-direction: column; gap: 10px;
-  }
-  .otd-info-card.otd-visible { display: flex; }
-  .otd-info-input {
-    width: 100%; padding: 12px 14px; border-radius: 12px;
-    border: 1.5px solid rgba(255,255,255,0.09); background: rgba(255,255,255,0.06);
-    font-size: 14px; color: #fff; font-family: var(--font-body);
-    box-sizing: border-box; outline: none; transition: border-color .18s;
-  }
-  .otd-info-input:focus { border-color: rgba(0,200,215,0.55); }
-  .otd-info-input::placeholder { color: rgba(255,255,255,0.28); }
-  textarea.otd-info-input { resize: none; }
-
-  /* ── Camera + action row ── */
-  .otd-cam-row {
-    display: flex; gap: 9px;
+  /* ── Floating capture bar (fixed bottom) ── */
+  .otd-capture-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 12px 14px calc(env(safe-area-inset-bottom, 0px) + 14px);
+    background: linear-gradient(to top, #070f1a 60%, rgba(7,15,26,0));
+    display: flex; gap: 8px;
   }
   .otd-cam-btn {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 7px; padding: 16px 10px; border-radius: 16px; border: none; cursor: pointer;
-    font-family: var(--font-body); font-size: 12px; font-weight: 800;
+    gap: 5px; padding: 12px 8px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1);
+    cursor: pointer; font-family: var(--font-body); font-size: 11px; font-weight: 700;
     transition: transform .13s var(--spring); -webkit-tap-highlight-color: transparent;
-    flex: 1;
+    flex: 1; background: rgba(255,255,255,0.06);
   }
   .otd-cam-btn:active { transform: scale(0.91); }
-  .otd-cam-emoji { font-size: 28px; line-height: 1; }
-  .otd-cam-btn--bill {
-    background: linear-gradient(145deg, #1e3a5f 0%, #0e2444 100%);
-    color: #7dd3fc; border: 1.5px solid rgba(125,211,252,0.25);
-    box-shadow: 0 4px 16px rgba(14,36,68,0.5);
-  }
+  .otd-cam-emoji { font-size: 22px; line-height: 1; }
+  .otd-cam-btn--bill { color: #7dd3fc; border-color: rgba(125,211,252,0.2); }
   .otd-cam-btn--form {
     background: linear-gradient(145deg, #148f98 0%, #0d7882 100%);
-    color: #fff; border: 1.5px solid rgba(20,143,152,0.4);
-    box-shadow: 0 4px 16px rgba(20,143,152,0.35);
+    color: #fff; border-color: rgba(20,143,152,0.4);
+    box-shadow: 0 4px 16px rgba(20,143,152,0.3);
   }
-  .otd-cam-btn--voice {
-    background: linear-gradient(145deg, #3b0a0a 0%, #250606 100%);
-    color: #fca5a5; border: 1.5px solid rgba(252,165,165,0.25);
-    box-shadow: 0 4px 16px rgba(59,10,10,0.5);
-    min-width: 72px; flex: 0 0 auto;
+  .otd-cam-btn--voice { color: #fca5a5; border-color: rgba(252,165,165,0.2); flex: 0 0 auto; min-width: 70px; }
+  .otd-cam-btn--dropcall { color: #7dd3fc; border-color: rgba(125,211,252,0.2); flex: 0 0 auto; min-width: 70px; }
+  .otd-cam-btn--voice.otd-voice-btn--rec {
+    background: linear-gradient(145deg, #b91c1c 0%, #991b1b 100%);
+    color: #fff; border-color: #ef4444;
+    animation: otd-rec-pulse 1s ease infinite;
   }
-  .otd-cam-btn--dropcall {
-    background: linear-gradient(145deg, #0a2e3b 0%, #061825 100%);
-    color: #7dd3fc; border: 1.5px solid rgba(125,211,252,0.25);
-    box-shadow: 0 4px 16px rgba(10,46,59,0.5);
-    min-width: 72px; flex: 0 0 auto;
+  @keyframes otd-rec-pulse {
+    0%,100%{ box-shadow: 0 0 0 0 rgba(185,28,28,.5); }
+    50%    { box-shadow: 0 0 0 10px rgba(185,28,28,0); }
   }
   .otd-dropcall-item {
     display: flex; align-items: center; gap: 12px;
@@ -6434,41 +6454,48 @@
   .otd-dropcall-item:active { background: var(--g3); }
   .otd-dropcall-label { font-size: 14px; font-weight: 600; flex: 1; }
   .otd-dropcall-number { font-size: 12px; color: var(--text-3); }
-  .otd-cam-btn--voice.otd-voice-btn--rec {
-    background: linear-gradient(145deg, #b91c1c 0%, #991b1b 100%);
-    color: #fff; border-color: #ef4444;
-    animation: otd-rec-pulse 1s ease infinite;
-  }
-  @keyframes otd-rec-pulse {
-    0%,100%{ box-shadow: 0 0 0 0 rgba(185,28,28,.5); }
-    50%    { box-shadow: 0 0 0 10px rgba(185,28,28,0); }
-  }
 
-  /* Standalone camera button (always visible, before contact selection) */
-  .otd-cam-row--always { display: flex; }
+  /* ── Save & next door button (inline with dispo, shown when status selected) ── */
+  #otd-quick-save-btn {
+    width: 100%; padding: 16px; border-radius: 16px; border: none;
+    background: linear-gradient(135deg, #148f98 0%, #0d7882 100%);
+    color: #fff; font-size: 16px; font-weight: 900; cursor: pointer;
+    font-family: var(--font-display); letter-spacing: -.01em;
+    box-shadow: 0 6px 24px rgba(20,143,152,0.45);
+    transition: transform .13s var(--spring), box-shadow .13s;
+    -webkit-tap-highlight-color: transparent; display: none;
+  }
+  #otd-quick-save-btn:active { transform: scale(0.94); box-shadow: 0 2px 10px rgba(20,143,152,0.3); }
+
+  /* ── HO info card (Made Contact) ── */
+  .otd-info-card {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(0,200,215,0.14);
+    border-radius: 18px; padding: 14px; display: none; flex-direction: column; gap: 9px;
+  }
+  .otd-info-card.otd-visible { display: flex; }
+  .otd-info-input {
+    width: 100%; padding: 12px 14px; border-radius: 11px;
+    border: 1.5px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.05);
+    font-size: 14px; color: #fff; font-family: var(--font-body);
+    box-sizing: border-box; outline: none; transition: border-color .18s;
+  }
+  .otd-info-input:focus { border-color: rgba(0,200,215,0.55); }
+  .otd-info-input::placeholder { color: rgba(255,255,255,0.25); }
+  textarea.otd-info-input { resize: none; }
 
   /* ── Saved banner ── */
   .otd-saved-banner {
     display: none; align-items: center; justify-content: center; gap: 10px;
-    padding: 16px; border-radius: 16px;
-    background: linear-gradient(135deg, rgba(21,128,61,0.35) 0%, rgba(15,100,45,0.2) 100%);
-    border: 1px solid rgba(34,197,94,0.35);
-    font-size: 15px; font-weight: 800; color: #4ade80; text-align: center;
+    padding: 14px; border-radius: 14px;
+    background: linear-gradient(135deg, rgba(21,128,61,0.3) 0%, rgba(15,100,45,0.18) 100%);
+    border: 1px solid rgba(34,197,94,0.3);
+    font-size: 14px; font-weight: 800; color: #4ade80; text-align: center;
   }
   .otd-saved-banner.otd-visible { display: flex; }
 
-  /* ── Door counter chip (gamification) ── */
-  .otd-counter-row {
-    display: flex; align-items: center; justify-content: space-between;
-    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 14px; padding: 10px 16px;
-  }
-  .otd-counter-label { font-size: 12px; color: rgba(255,255,255,0.4); font-weight: 600; }
-  .otd-counter-val {
-    font-size: 22px; font-weight: 900; color: #fff;
-    font-family: var(--font-display); letter-spacing: -0.03em;
-  }
-  .otd-counter-stat { font-size: 11px; color: rgba(0,200,215,0.8); font-weight: 700; }
+  /* ── Door counter (now inline in header) ── */
+  .otd-counter-row { display: none; } /* hidden — counters moved to header */
+  .otd-counter-label, .otd-counter-val, .otd-counter-stat { display: none; }
 
   /* ── Dashboard OTD toggle card (replaces FAB) ── */
   .otd-toggle-card {
@@ -7266,7 +7293,7 @@
         </div>
 
         <!-- Appointment filter pills -->
-        <div class="log-filters" role="group" aria-label="Filter appointments" style="justify-content:center">
+        <div class="log-filters log-filters--appts" role="group" aria-label="Filter appointments">
           <button class="filter-pill active" data-appt-filter="all">All</button>
           <button class="filter-pill" data-appt-filter="upcoming">Upcoming</button>
           <button class="filter-pill" data-appt-filter="past">Past</button>
@@ -9392,14 +9419,37 @@
 <!-- ── On The Doors Mode overlay ─────────────────────────────────────── -->
 <div id="otd-overlay" role="dialog" aria-modal="true" aria-label="On The Doors Mode">
 
-  <!-- Hero header -->
+  <!-- Header bar -->
   <div class="otd-hero">
     <div class="otd-hero-row1">
-      <div class="otd-hero-title">
-        <div class="otd-pulse"></div>
-        On The Doors
+      <!-- Left: live badge + title -->
+      <div class="otd-hero-left">
+        <div class="otd-live-badge">
+          <div class="otd-pulse"></div>
+          <span class="otd-live-label">LIVE</span>
+        </div>
+        <div class="otd-hero-title">On The Doors</div>
       </div>
-      <button class="otd-exit-btn" onclick="otdRequestClose()">✕ Exit</button>
+      <!-- Right: stats + exit -->
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="otd-stats-inline">
+          <div class="otd-stat-item">
+            <div class="otd-stat-num" id="otd-door-count">0</div>
+            <div class="otd-stat-lbl">Doors</div>
+          </div>
+          <div class="otd-stat-div"></div>
+          <div class="otd-stat-item">
+            <div class="otd-stat-num" id="otd-contact-count">0</div>
+            <div class="otd-stat-lbl">Contacts</div>
+          </div>
+          <div class="otd-stat-div"></div>
+          <div class="otd-stat-item">
+            <div class="otd-conv-val" id="otd-conv-rate">—</div>
+            <div class="otd-stat-lbl">Conv</div>
+          </div>
+        </div>
+        <button class="otd-exit-btn" onclick="otdRequestClose()">✕ Exit</button>
+      </div>
     </div>
 
     <!-- GPS / Address row -->
@@ -9421,20 +9471,11 @@
   <!-- Scrollable body -->
   <div class="otd-body">
 
-    <!-- Door counter / gamification strip -->
-    <div class="otd-counter-row">
-      <div>
-        <div class="otd-counter-label">Doors Today</div>
-        <div class="otd-counter-val" id="otd-door-count">0</div>
-      </div>
-      <div style="text-align:center">
-        <div class="otd-counter-label">Contacts</div>
-        <div class="otd-counter-val" id="otd-contact-count">0</div>
-      </div>
-      <div style="text-align:right">
-        <div class="otd-counter-label">Conv. Rate</div>
-        <div class="otd-counter-stat" id="otd-conv-rate">—</div>
-      </div>
+    <!-- Hidden counter row (data IDs kept for JS compat; display moved to header) -->
+    <div class="otd-counter-row" style="display:none">
+      <div><div class="otd-counter-label">Doors Today</div><div class="otd-counter-val" id="otd-door-count-old">0</div></div>
+      <div><div class="otd-counter-label">Contacts</div><div class="otd-counter-val" id="otd-contact-count-old">0</div></div>
+      <div><div class="otd-counter-label">Conv. Rate</div><div class="otd-counter-stat" id="otd-conv-rate-old">—</div></div>
     </div>
 
     <!-- Saved banner -->
@@ -9444,51 +9485,29 @@
 
     <!-- Quick Dispo -->
     <div>
-      <div class="otd-section-label">Quick Dispo</div>
+      <div class="otd-section-label">What happened at this door?</div>
       <div class="otd-dispo-grid">
         <button class="otd-dispo-btn otd-dispo-btn--not-home" data-status="not-home" onclick="otdSelectStatus(this)">
-          <span class="otd-dispo-emoji">🚪</span>Not Home
+          <span class="otd-dispo-emoji">🚪</span>
+          <span class="otd-dispo-label">Not Home</span>
         </button>
         <button class="otd-dispo-btn otd-dispo-btn--dq" data-status="dq" onclick="otdSelectStatus(this)">
-          <span class="otd-dispo-emoji">🚫</span>DQ
+          <span class="otd-dispo-emoji">🚫</span>
+          <span class="otd-dispo-label">DQ</span>
         </button>
         <button class="otd-dispo-btn otd-dispo-btn--not-int" data-status="not-interested" onclick="otdSelectStatus(this)">
-          <span class="otd-dispo-emoji">👋</span>Not Interested
+          <span class="otd-dispo-emoji">👋</span>
+          <span class="otd-dispo-label">Not Interested</span>
         </button>
         <button class="otd-dispo-btn otd-dispo-btn--go-back" data-status="go-back" onclick="otdSelectStatus(this)">
-          <span class="otd-dispo-emoji">📅</span>Go Back
+          <span class="otd-dispo-emoji">📅</span>
+          <span class="otd-dispo-label">Go Back</span>
         </button>
         <button class="otd-dispo-btn otd-dispo-btn--contact" data-status="made-contact" onclick="otdSelectStatus(this)">
-          <span class="otd-dispo-emoji">🤝</span>Made Contact — Collect Info
+          <span class="otd-dispo-emoji">🤝</span>
+          <span class="otd-dispo-label">Made Contact<br><span style="font-size:11px;font-weight:600;opacity:0.7">Collect homeowner info</span></span>
         </button>
       </div>
-    </div>
-
-    <!-- Capture row — always visible -->
-    <div>
-      <div class="otd-section-label">Capture</div>
-      <div class="otd-cam-row">
-        <button class="otd-cam-btn otd-cam-btn--bill" onclick="otdSnapBill()">
-          <span class="otd-cam-emoji">📷</span>
-          Snap Bill
-        </button>
-        <button class="otd-cam-btn otd-cam-btn--voice" id="otd-voice-btn" onclick="otdToggleVoice()">
-          <span class="otd-cam-emoji" id="otd-voice-emoji">🎙️</span>
-          <span id="otd-voice-label">Memo</span>
-        </button>
-        <button class="otd-cam-btn otd-cam-btn--dropcall" id="otd-drop-call-btn" onclick="otdOpenDropCall()" style="display:none">
-          <span class="otd-cam-emoji">📞</span>
-          Drop Call
-        </button>
-      </div>
-    </div>
-
-    <!-- Drop Call sheet (slides up inside OTD) -->
-    <div id="otd-dropcall-sheet" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9050;background:var(--g1);border-radius:20px 20px 0 0;padding:16px;box-shadow:0 -8px 32px rgba(0,0,0,0.5)">
-      <div style="width:36px;height:4px;background:var(--g-border);border-radius:2px;margin:0 auto 14px"></div>
-      <div style="font-size:14px;font-weight:700;margin-bottom:12px;text-align:center">📞 Drop Call</div>
-      <div id="otd-dropcall-list" style="display:flex;flex-direction:column;gap:8px"></div>
-      <button onclick="otdCloseDropCall()" style="margin-top:14px;width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid var(--g-border);border-radius:12px;color:var(--text-2);font-size:14px;font-weight:600;cursor:pointer">Cancel</button>
     </div>
 
     <!-- HO Info card (shown when Made Contact) -->
@@ -9501,7 +9520,7 @@
       <textarea id="otd-ho-notes" class="otd-info-input" rows="2" placeholder="Notes…"></textarea>
       <!-- Full form action (Made Contact only) -->
       <div id="otd-action-row" style="display:none">
-        <button class="otd-cam-btn otd-cam-btn--form" onclick="otdFillForm()" style="width:100%;margin-top:4px">
+        <button class="otd-cam-btn otd-cam-btn--form" onclick="otdFillForm()" style="width:100%;margin-top:4px;flex-direction:row;gap:8px;padding:14px 16px">
           <span class="otd-cam-emoji">✏️</span>
           Save &amp; Open Full Form
         </button>
@@ -9514,6 +9533,31 @@
     </button>
 
   </div><!-- /otd-body -->
+
+  <!-- Floating capture bar -->
+  <div class="otd-capture-bar">
+    <button class="otd-cam-btn otd-cam-btn--bill" onclick="otdSnapBill()">
+      <span class="otd-cam-emoji">📷</span>
+      Snap Bill
+    </button>
+    <button class="otd-cam-btn otd-cam-btn--voice" id="otd-voice-btn" onclick="otdToggleVoice()">
+      <span class="otd-cam-emoji" id="otd-voice-emoji">🎙️</span>
+      <span id="otd-voice-label">Memo</span>
+    </button>
+    <button class="otd-cam-btn otd-cam-btn--dropcall" id="otd-drop-call-btn" onclick="otdOpenDropCall()" style="display:none">
+      <span class="otd-cam-emoji">📞</span>
+      Drop Call
+    </button>
+  </div>
+
+  <!-- Drop Call sheet (slides up inside OTD) -->
+  <div id="otd-dropcall-sheet" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9050;background:#0d1f30;border-radius:20px 20px 0 0;padding:16px;box-shadow:0 -8px 32px rgba(0,0,0,0.6)">
+    <div style="width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 14px"></div>
+    <div style="font-size:14px;font-weight:700;margin-bottom:12px;text-align:center;color:#fff">📞 Drop Call</div>
+    <div id="otd-dropcall-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    <button onclick="otdCloseDropCall()" style="margin-top:14px;width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:rgba(255,255,255,0.6);font-size:14px;font-weight:600;cursor:pointer">Cancel</button>
+  </div>
+
 </div><!-- /#otd-overlay -->
 
 <!-- OTD confirm sheet + overlay -->
@@ -10001,7 +10045,16 @@ function activateTab(tabId) {
 }
 
 navItems.forEach(btn => {
-  btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    // If already on dashboard, scroll to top instead of re-activating
+    if (tab === 'dashboard' && btn.classList.contains('active')) {
+      const panel = document.getElementById('panel-dashboard');
+      if (panel) panel.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    activateTab(tab);
+  });
 });
 
 
@@ -12753,20 +12806,20 @@ function _buildCustDetailHTML({ c, initials, hasSigned, latestResult, latestColo
 
       <!-- Quick action buttons -->
       <div class="cust-d-actions">
-        ${c.phone ? `<a class="cust-d-action-btn" href="tel:${escHtml(c.phone)}">
-          <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.44 2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.78a16 16 0 0 0 6.29 6.29l1.58-1.58a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        ${c.phone ? `<a class="cust-d-action-btn cust-d-action-btn--call" href="tel:${escHtml(c.phone)}">
+          <div class="act-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.44 2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.78a16 16 0 0 0 6.29 6.29l1.58-1.58a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
           <span>Call</span>
         </a>` : ''}
-        ${c.phone ? `<a class="cust-d-action-btn" href="sms:${escHtml(c.phone)}">
-          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        ${c.phone ? `<a class="cust-d-action-btn cust-d-action-btn--text" href="sms:${escHtml(c.phone)}">
+          <div class="act-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
           <span>Text</span>
         </a>` : ''}
-        ${c.email ? `<a class="cust-d-action-btn" href="mailto:${escHtml(c.email)}">
-          <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        ${c.email ? `<a class="cust-d-action-btn cust-d-action-btn--email" href="mailto:${escHtml(c.email)}">
+          <div class="act-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
           <span>Email</span>
         </a>` : ''}
-        <button class="cust-d-action-btn" id="cust-d-book-btn">
-          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <button class="cust-d-action-btn cust-d-action-btn--book" id="cust-d-book-btn">
+          <div class="act-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
           <span>Book</span>
         </button>
       </div>
@@ -14469,8 +14522,8 @@ function openMasterAdmin() {
   const aboutEl = document.getElementById('ma-about-text');
   if (aboutEl) {
     aboutEl.textContent =
-      `App version:   capital-energy-v84\n` +
-      `SW cache:      capital-energy-v84\n` +
+      `App version:   capital-energy-v85\n` +
+      `SW cache:      capital-energy-v85\n` +
       `Build date:    ${new Date().toLocaleDateString()}\n` +
       `User role:     master_admin\n` +
       `localStorage:  ${Object.keys(localStorage).filter(k => k.startsWith('ce_')).length} keys`;
@@ -17746,12 +17799,15 @@ function openDispoSheet() {
   const _ds = document.getElementById('dispo-appt-sheet');
   const _di = _ds.querySelector('div');
   _ds.style.pointerEvents = 'auto';
+  /* Use two rAFs so browser has time to paint before triggering transition */
   requestAnimationFrame(function() {
-    _ds.style.background = 'rgba(0,0,0,0.6)';
-    _ds.style.opacity = '1';
-    if (_di) _di.style.transform = 'translateY(0)';
+    requestAnimationFrame(function() {
+      _ds.style.background = 'rgba(0,0,0,0.65)';
+      _ds.style.opacity = '1';
+      if (_di) _di.style.transform = 'translateY(0)';
+    });
   });
-  document.body.style.overflow = 'hidden';
+  /* Do NOT toggle body overflow — it causes white flash repaint on iOS */
 }
 
 function closeDIspoSheet() {
@@ -17761,7 +17817,6 @@ function closeDIspoSheet() {
   _ds.style.opacity = '0';
   _ds.style.pointerEvents = 'none';
   if (_di) _di.style.transform = 'translateY(30px)';
-  document.body.style.overflow = '';
 }
 
 document.getElementById('dispo-appt-btn').addEventListener('click', openDispoSheet);
