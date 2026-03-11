@@ -2942,7 +2942,7 @@
     /* ── Log tab ─────────────────────────────────────────────────────────── */
     .log-header {
       display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 20px; gap: 12px;
+      margin-bottom: 14px; gap: 12px;
     }
 
     .log-title { font-size: 24px; font-weight: 700; letter-spacing: -0.03em; }
@@ -2967,7 +2967,7 @@
     /* Filter bar */
     .log-filters {
       display: flex; gap: 8px; overflow-x: auto;
-      padding-bottom: 2px; margin-bottom: 20px;
+      padding-bottom: 2px; margin-bottom: 14px;
       scrollbar-width: none;
     }
     .log-filters::-webkit-scrollbar { display: none; }
@@ -2988,7 +2988,7 @@
     }
 
     /* Entry list */
-    #log-list { display: flex; flex-direction: column; gap: 10px; }
+    #log-list { display: flex; flex-direction: column; gap: 8px; }
 
     .log-empty {
       background: var(--g1);
@@ -5535,13 +5535,10 @@
       color: #fff !important;
       border-color: transparent !important;
     }
-    /* Per-status active colours */
-    .cal-filter-active[data-cal-filter="all"]        { background: var(--amber); }
-    .cal-filter-active[data-cal-filter="Pending"]    { background: #64748b; }
-    .cal-filter-active[data-cal-filter="Confirmed"]  { background: #3b82f6; }
-    .cal-filter-active[data-cal-filter="Signed"]     { background: #22c55e; }
-    .cal-filter-active[data-cal-filter="No Show"]    { background: #ef4444; }
-    .cal-filter-active[data-cal-filter="Reschedule"] { background: #a855f7; }
+    /* Per-type active colours */
+    .cal-filter-active[data-cal-filter="all"]      { background: var(--amber); }
+    .cal-filter-active[data-cal-filter="appts"]    { background: #3b82f6; }
+    .cal-filter-active[data-cal-filter="gobacks"]  { background: #8b5cf6; }
 
     /* DOW header */
     #cal-dow-headers {
@@ -5954,14 +5951,17 @@
      v71 NEW FEATURE STYLES
      ═══════════════════════════════════════════════════════════════════════ */
 
-  /* F5: Sync queue badge */
+  /* F5: Sync queue badge — tappable to dismiss */
   #sync-queue-badge {
     display: none; align-items: center;
     font-size: 10px; font-weight: 700;
     color: #fff; background: #f59e0b;
     padding: 2px 8px; border-radius: 50px;
     white-space: nowrap; margin: 0 6px; flex-shrink: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
   }
+  #sync-queue-badge:active { opacity: 0.75; }
 
   /* F10: Impersonation banner */
   #impersonate-banner {
@@ -6785,11 +6785,10 @@
 
       <div id="header-titles">
         <img id="header-brand-img" src="logo.png" alt="Capital Energy" />
-        <div id="sync-queue-badge" title="Changes pending cloud sync"></div>
       </div>
 
-      <!-- v71: Sync queue badge -->
-      <div id="sync-queue-badge" title="Changes pending cloud sync"></div>
+      <!-- v77: Sync queue badge — tap to dismiss (local-only app, no backend) -->
+      <div id="sync-queue-badge" title="All changes are stored locally — tap to dismiss" onclick="DataStore.drainSyncQueue();showToast('✅ Sync cleared')"></div>
 
       <div id="header-actions">
         <button id="dark-mode-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
@@ -7361,13 +7360,13 @@
       <div class="res-subtab-nav">
         <button class="res-subtab res-subtab--active" data-pane="adders">Adders</button>
         <button class="res-subtab" data-pane="books">Books</button>
+        <button class="res-subtab" data-pane="utility">⚡ Utility</button>
         <button class="res-subtab" data-pane="videos">Videos</button>
         <button class="res-subtab" data-pane="training">Training</button>
         <button class="res-subtab" data-pane="gosolo">GoSolo</button>
         <button class="res-subtab" data-pane="palmetto">Palmetto</button>
         <button class="res-subtab" data-pane="checklist">Checklist</button>
         <button class="res-subtab" data-pane="docs">Docs</button>
-        <button class="res-subtab" data-pane="utility">⚡ Utility</button>
       </div>
 
       <!-- ══ BOOKS pane ══════════════════════════════════════════════════════ -->
@@ -8568,13 +8567,10 @@
       </div>
 
       <!-- Filter bar -->
-      <div id="cal-filter-bar" role="group" aria-label="Filter appointments by status">
+      <div id="cal-filter-bar" role="group" aria-label="Filter calendar events by type">
         <button class="cal-filter-pill cal-filter-active" data-cal-filter="all">All</button>
-        <button class="cal-filter-pill" data-cal-filter="Pending">Pending</button>
-        <button class="cal-filter-pill" data-cal-filter="Confirmed">Confirmed</button>
-        <button class="cal-filter-pill" data-cal-filter="Signed">Signed</button>
-        <button class="cal-filter-pill" data-cal-filter="No Show">No Show</button>
-        <button class="cal-filter-pill" data-cal-filter="Reschedule">Reschedule</button>
+        <button class="cal-filter-pill" data-cal-filter="appts">📅 Appts</button>
+        <button class="cal-filter-pill" data-cal-filter="gobacks">🔄 Go-Backs</button>
       </div>
 
       <div id="cal-dow-headers">
@@ -8670,7 +8666,7 @@
           <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
         </svg>
       </div>
-      <span class="nav-label">Utility</span>
+      <span class="nav-label">Resources</span>
     </button>
 
     <!-- Spacer reserves center space for the absolutely-positioned home button -->
@@ -10084,6 +10080,9 @@ function getDashRangeFilter(range) {
 }
 
 function renderDashboard() {
+  // v77: always re-apply role UI on every render (handles impersonation switches cleanly)
+  applyRoleUI();
+
   let entries = [];
   try { entries = JSON.parse(localStorage.getItem('ce_log_entries') || '[]'); } catch(_) {}
 
@@ -10257,7 +10256,10 @@ function renderDashUpcoming() {
   const visible = appts.slice(0, 5);
 
   if (!visible.length) {
-    list.innerHTML = `<div style="color:var(--text-3);font-size:13px;padding:10px 0">No upcoming appointments.</div>`;
+    const emptyMsg = role === 'closer'
+      ? `<div style="color:var(--text-3);font-size:13px;padding:10px 0;line-height:1.5">No upcoming appointments.<br><span style="font-size:12px;opacity:0.7">Your canvassers will book appointments for you — they'll appear here.</span></div>`
+      : `<div style="color:var(--text-3);font-size:13px;padding:10px 0">No upcoming appointments.</div>`;
+    list.innerHTML = emptyMsg;
     return;
   }
 
@@ -10270,7 +10272,11 @@ function renderDashUpcoming() {
     const result = a.result || 'Pending';
     const color  = APPT_RESULT_COLORS[result] || '#64748b';
     const dateStr = dt.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
-    const meta   = [dateStr, a.closer ? `Closer: ${a.closer}` : '', a.street || ''].filter(Boolean).join(' · ');
+    // v77: Closers see setter name; managers see closer name
+    const roleMeta = role === 'closer'
+      ? (a.repName ? `Set by ${a.repName}` : '')
+      : (a.closer  ? `Closer: ${a.closer}` : '');
+    const meta = [dateStr, roleMeta, a.street || ''].filter(Boolean).join(' · ');
     const calDs  = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
 
     return `<div class="dash-upcoming-card" data-cal-date="${calDs}" role="button">
@@ -11838,6 +11844,35 @@ logForm.addEventListener('submit', e => {
   }
 
   saveEntries(entries);
+
+  // v77: auto-save dictated/typed notes as a text note file in the customer record
+  const savedEntry = editingId ? entries.find(x => x.id === editingId) : entries[0];
+  if (savedEntry && savedEntry.notes) {
+    try {
+      const normPhone = p => (p || '').replace(/\D/g, '').slice(-10);
+      const normAddr  = a => (a || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
+      const custKey   = normPhone(savedEntry.phone) || normAddr(savedEntry.address) || ('log-' + savedEntry.id);
+      const dateLabel = new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' });
+      const fileName  = `Note – ${dateLabel}.txt`;
+      const noteText  = `[Door knock note – ${dateLabel}]\nStatus: ${savedEntry.status || 'not-home'}\n\n${savedEntry.notes}`;
+      const dataUrl   = 'data:text/plain;charset=utf-8,' + encodeURIComponent(noteText);
+      const custFiles = (() => { try { return JSON.parse(localStorage.getItem(`ce_cust_files_${custKey}`) || '[]'); } catch(_) { return []; } })();
+      custFiles.unshift({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+        name: fileName,
+        type: 'text/plain',
+        ext:  'txt',
+        size: noteText.length,
+        uploadedBy: localStorage.getItem('ce_user_name') || 'Rep',
+        uploadedAt: Date.now(),
+        dataUrl,
+      });
+      // Keep last 20 note files per customer
+      const trimmed = custFiles.slice(0, 20);
+      localStorage.setItem(`ce_cust_files_${custKey}`, JSON.stringify(trimmed));
+    } catch(_) {}
+  }
+
   closeSheet();
   renderLogList();
   updateLogBadge();
@@ -12282,6 +12317,21 @@ function renderCustomerList() {
 
   // Store current list for tap handler
   window._custListCache = customers;
+}
+
+// v77: navigate from map pin to customer record in CRM
+function openCustomerByApptId(apptId) {
+  // Switch to CRM tab → Customers pane, then find and open the customer
+  activateTab('log');
+  setTimeout(() => {
+    switchCrmPane('customers');
+    setTimeout(() => {
+      // renderCustomerList sets window._custListCache
+      const customers = window._custListCache || [];
+      const idx = customers.findIndex(c => c.appointments.some(a => a.id === apptId));
+      if (idx >= 0) openCustomerDetail(idx);
+    }, 120);
+  }, 200);
 }
 
 let _custDetailTab = 'activity'; // active sub-tab: 'overview' | 'activity' | 'photos'
@@ -13437,7 +13487,7 @@ requestNotifPermission();
 let calYear  = new Date().getFullYear();
 let calMonth = new Date().getMonth();
 let calSelectedDate = null; // 'YYYY-MM-DD' string
-let calFilter = 'all';      // active status filter: 'all' | 'Pending' | 'Confirmed' | 'Signed' | 'No Show' | 'Reschedule'
+let calFilter = 'all';      // active type filter: 'all' | 'appts' | 'gobacks'
 
 function calDateStr(y, m, d) {
   return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -13461,10 +13511,9 @@ function loadCalAppointments() {
     );
   }
 
-  // Apply status filter
-  if (calFilter && calFilter !== 'all') {
-    filtered = filtered.filter(a => (a.result || 'Pending') === calFilter);
-  }
+  // Apply type filter — 'appts' shows only appointments, 'gobacks' shows none (handled in renderCalendar)
+  // 'gobacks' filter suppresses appointments; 'appts' shows appointments only (no go-backs in renderCalendar)
+  if (calFilter === 'gobacks') return []; // no appts shown when filtering go-backs only
   return filtered;
 }
 
@@ -13485,14 +13534,17 @@ function renderCalendar() {
   apptsByDate.forEach(arr => arr.sort((a, b) => new Date(a.datetime) - new Date(b.datetime)));
 
   // Also add go-backs from log entries (those with status 'go-back' and a goBackDate)
-  const allEntries = (() => { try { return JSON.parse(localStorage.getItem('ce_log_entries') || '[]'); } catch(_) { return []; } })();
-  allEntries.forEach(e => {
-    if ((e.status || '').toLowerCase() !== 'go-back') return;
-    if (!e.goBackDate) return;
-    const ds = e.goBackDate;
-    if (!apptsByDate.has(ds)) apptsByDate.set(ds, []);
-    apptsByDate.get(ds).push({ _type: 'goback', _name: e.name || e.address || 'Go-Back', _time: e.goBackTime || '', id: e.id });
-  });
+  // Skip if filtering to appts only
+  if (calFilter !== 'appts') {
+    const allEntries = (() => { try { return JSON.parse(localStorage.getItem('ce_log_entries') || '[]'); } catch(_) { return []; } })();
+    allEntries.forEach(e => {
+      if ((e.status || '').toLowerCase() !== 'go-back') return;
+      if (!e.goBackDate) return;
+      const ds = e.goBackDate;
+      if (!apptsByDate.has(ds)) apptsByDate.set(ds, []);
+      apptsByDate.get(ds).push({ _type: 'goback', _name: e.name || e.address || 'Go-Back', _time: e.goBackTime || '', id: e.id });
+    });
+  }
 
   const today    = new Date();
   const todayStr = calDateStr(today.getFullYear(), today.getMonth(), today.getDate());
@@ -13819,13 +13871,47 @@ function migrateDataV1() {
 }
 
 // ── Apply role-based UI — show/hide elements based on role ─────────────────
+// v77: expanded to fully filter dashboard, CRM, leaderboard per role
 function applyRoleUI() {
-  const role = getActiveRole();
+  const role      = getActiveRole();
   const isManager = role === 'manager' || role === 'master_admin';
+  const isCloser  = role === 'closer';
+  const isCanv    = role === 'canvasser';
 
-  // Show/hide Reports tile
-  const reportsBtn = document.getElementById('reports-btn');
+  // ── Dashboard quick-link tiles ──
+  const reportsBtn  = document.getElementById('reports-btn');
+  const dispoBtn    = document.getElementById('dispo-appt-btn');
   if (reportsBtn) reportsBtn.style.display = isManager ? '' : 'none';
+  // Dispo appt: closers + managers only (canvassers don't close deals)
+  if (dispoBtn)   dispoBtn.style.display   = isCanv ? 'none' : '';
+
+  // ── Show Rate stat card: closer + manager only ──
+  const srCard = document.getElementById('stat-card-show-rate');
+  if (srCard) srCard.style.display = (isCloser || isManager) ? '' : 'none';
+
+  // ── CRM Follow-Up tab: hide for managers (they see all reps, not personal queue) — keep for canvassers + closers ──
+  const fqTab = document.getElementById('crm-tab-followup');
+  if (fqTab) fqTab.style.display = isManager ? 'none' : '';
+
+  // ── Leaderboard show-rate panel: closer + manager only ──
+  const srPanel = document.getElementById('lb-show-rate-panel');
+  if (srPanel) srPanel.style.display = (isCloser || isManager) ? '' : 'none';
+
+  // ── Wall of Wins input (manual post): closer + manager can post; canvasser read-only ──
+  const wowInput = document.getElementById('dash-wow-input');
+  if (wowInput) wowInput.style.display = (isCloser || isManager) ? '' : 'none';
+
+  // ── Canvasser-specific: hide appointments CRM sub-tab (they don't run appts) ──
+  const apptTab = document.getElementById('crm-tab-appointments');
+  if (apptTab) apptTab.style.display = isCanv ? 'none' : '';
+
+  // ── Hub badge: personalize per role ──
+  const hubBadge = document.getElementById('dash-hub-badge');
+  if (hubBadge) {
+    if (isManager)      hubBadge.textContent = '📊 Manager Hub';
+    else if (isCloser)  hubBadge.textContent = '🤝 Closer Hub';
+    else                hubBadge.textContent = '🚪 Solar Sales Hub';
+  }
 }
 
 // ── First-Run Modal ─────────────────────────────────────────────────────────
@@ -14094,8 +14180,8 @@ function openMasterAdmin() {
   const aboutEl = document.getElementById('ma-about-text');
   if (aboutEl) {
     aboutEl.textContent =
-      `App version:   capital-energy-v76\n` +
-      `SW cache:      capital-energy-v76\n` +
+      `App version:   capital-energy-v77\n` +
+      `SW cache:      capital-energy-v77\n` +
       `Build date:    ${new Date().toLocaleDateString()}\n` +
       `User role:     master_admin\n` +
       `localStorage:  ${Object.keys(localStorage).filter(k => k.startsWith('ce_')).length} keys`;
@@ -15718,22 +15804,7 @@ document.getElementById('admin-ql-save-btn')?.addEventListener('click', () => {
   _applyQuickLinkConfig();
 })();
 
-// ── Seed test data for demo/testing ───────────────────────────────────────
-(function seedTestData() {
-  // Only seed if no team exists yet
-  const existing = JSON.parse(localStorage.getItem('ce_team') || '[]');
-  if (existing.length > 0) return;
-  const testTeam = [
-    { name: 'Sarah Kim', role: 'closer' },
-    { name: 'Bob Johnson', role: 'closer' },
-    { name: 'Mike Torres', role: 'closer' },
-    { name: 'Alex Rivera', role: 'canvasser' },
-    { name: 'Sam Torres', role: 'canvasser' },
-    { name: 'Chris Wu', role: 'canvasser' },
-    { name: 'Jordan Lee', role: 'canvasser' },
-  ];
-  try { localStorage.setItem('ce_team', JSON.stringify(testTeam)); } catch(_) {}
-})();
+// ── v77: Seed test data REMOVED — was auto-populating fake reps on every fresh install ──
 
 document.getElementById('admin-save-btn').addEventListener('click', saveAdminSettings);
 
@@ -15868,6 +15939,18 @@ function openBcard() {
 
   // Draw QR
   _drawQR(document.getElementById('bcard-qr-canvas'), _bcardBuildVCard(d), 160);
+
+  // v77: auto-enter edit mode if card is essentially blank (first-time setup nudge)
+  const isBlank = !d.phone && !d.email && !d.tagline;
+  if (isBlank) {
+    document.getElementById('bcard-card').classList.add('edit-mode');
+    document.getElementById('bcard-edit-label').textContent = 'Done';
+    setTimeout(() => {
+      const nameEl = document.getElementById('bcard-edit-name');
+      if (nameEl) nameEl.focus();
+      showToast('✏️ Fill out your card — tap Done when finished!');
+    }, 350);
+  }
 
   document.getElementById('bcard-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -16478,7 +16561,10 @@ function renderMapPins() {
           <span style="display:inline-block;padding:2px 9px;border-radius:50px;background:${color};color:#fff;font-size:11px;font-weight:700;margin-bottom:6px">${escHtml(result)}</span>
           ${a.street ? `<div style="color:#555">${escHtml(a.street)}, ${escHtml(a.city||'')}</div>` : ''}
           ${a.datetime ? `<div style="color:#888;font-size:11px;margin-top:4px">${new Date(a.datetime).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div>` : ''}
-          <button onclick="openResultSheet('${a.id}')" style="margin-top:8px;padding:5px 12px;background:var(--amber);color:#fff;border:none;border-radius:50px;font-size:12px;font-weight:600;cursor:pointer">Update Result</button>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+            <button onclick="openResultSheet('${a.id}')" style="padding:5px 12px;background:var(--amber);color:#fff;border:none;border-radius:50px;font-size:12px;font-weight:600;cursor:pointer">Update Result</button>
+            <button onclick="openCustomerByApptId('${a.id}')" style="padding:5px 12px;background:rgba(255,255,255,0.12);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:50px;font-size:12px;font-weight:600;cursor:pointer">View Record</button>
+          </div>
         </div>`);
       mapMarkers.push(m);
     });
