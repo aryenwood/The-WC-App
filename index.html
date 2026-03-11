@@ -694,8 +694,8 @@
          Use dvh with -webkit-fill-available fallback for older Safari. */
       height: -webkit-fill-available;
       height: 100dvh;
-      /* Disable double-tap zoom globally — keeps taps instant,
-         single-finger scroll and pinch-zoom still work normally */
+      /* Lock pull-to-refresh and all overscroll bounce at root */
+      overscroll-behavior: none;
       touch-action: manipulation;
     }
     body {
@@ -2405,6 +2405,7 @@
       flex-wrap: nowrap;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
+      touch-action: pan-x; overscroll-behavior-x: contain;
       scrollbar-width: none; /* Firefox */
       margin-bottom: 18px;
       /* Bleed to panel edges so pills aren't clipped */
@@ -6356,9 +6357,10 @@
 
   /* ── Scrollable body ── */
   .otd-body {
-    flex: 1; overflow-y: auto; padding: 16px 14px 100px;
+    flex: 1; overflow-y: auto; padding: 16px 14px 160px;
     display: flex; flex-direction: column; gap: 10px;
-    -webkit-overflow-scrolling: touch; touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y pan-x; overscroll-behavior: contain;
   }
 
   /* ── Section labels ── */
@@ -6462,6 +6464,12 @@
     background: linear-gradient(145deg, #148f98 0%, #0d7882 100%);
     color: #fff; border-color: rgba(20,143,152,0.4);
     box-shadow: 0 4px 16px rgba(20,143,152,0.3);
+    padding: 14px 16px;
+  }
+  .otd-cam-btn--book {
+    background: linear-gradient(145deg, rgba(245,158,11,0.3) 0%, rgba(180,110,0,0.2) 100%);
+    color: #fbbf24; border-color: rgba(251,191,36,0.35);
+    box-shadow: 0 4px 16px rgba(245,158,11,0.2);
     padding: 14px 16px;
   }
 
@@ -9613,12 +9621,18 @@
       <input id="otd-ho-email" class="otd-info-input" type="email" placeholder="Email (optional)" autocomplete="off">
       <input id="otd-ho-bill"  class="otd-info-input" type="text"  placeholder="Avg monthly bill" autocomplete="off">
       <textarea id="otd-ho-notes" class="otd-info-input" rows="2" placeholder="Notes…"></textarea>
-      <!-- Full form action (Made Contact only) -->
+      <!-- Full form + Book Appt actions (Made Contact only) -->
       <div id="otd-action-row" style="display:none">
-        <button class="otd-cam-btn otd-cam-btn--form" onclick="otdFillForm()" style="width:100%;margin-top:4px;flex-direction:row;gap:8px;padding:14px 16px">
-          <span class="otd-cam-emoji">✏️</span>
-          Save &amp; Open Full Form
-        </button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+          <button class="otd-cam-btn otd-cam-btn--form" onclick="otdFillForm()" style="flex-direction:row;gap:8px;padding:14px 12px">
+            <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <span style="font-size:12px;font-weight:800">Full Form</span>
+          </button>
+          <button class="otd-cam-btn otd-cam-btn--book" onclick="otdBookAppt()" style="flex-direction:row;gap:8px;padding:14px 12px">
+            <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#fbbf24;fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span style="font-size:12px;font-weight:800">Book Appt</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -13604,6 +13618,282 @@ function updateLogBadge() {
 }
 updateLogBadge();
 
+// ══════════════════════════════════════════════════════════════════════════
+// Address Autocomplete + Verification (Nominatim + offline cache)
+// ══════════════════════════════════════════════════════════════════════════
+;(function() {
+
+  var ADDR_CACHE_KEY = 'ce_addr_cache';
+  var ADDR_CACHE_MAX = 200;  // max cached suggestions
+  var _addrDebounce  = {};
+
+  function _loadCache() {
+    try { return JSON.parse(localStorage.getItem(ADDR_CACHE_KEY) || '[]'); }
+    catch(_) { return []; }
+  }
+  function _saveCache(arr) {
+    try { localStorage.setItem(ADDR_CACHE_KEY, JSON.stringify(arr.slice(0, ADDR_CACHE_MAX))); }
+    catch(_) {}
+  }
+
+  /* Query Nominatim — returns array of {display, lat, lon, road, city, state, postcode} */
+  function _queryNominatim(q, cb) {
+    var url = 'https://nominatim.openstreetmap.org/search?q=' +
+              encodeURIComponent(q) +
+              '&format=jsonv2&addressdetails=1&limit=5&countrycodes=us';
+    fetch(url, { headers: { 'Accept-Language': 'en' } })
+      .then(function(r) { return r.json(); })
+      .then(function(results) {
+        var mapped = (results || []).map(function(r) {
+          var a = r.address || {};
+          var street = [a.house_number, a.road].filter(Boolean).join(' ');
+          var city   = a.city || a.town || a.village || a.suburb || '';
+          var state  = a.state || '';
+          var zip    = a.postcode || '';
+          return {
+            display: r.display_name,
+            short: [street, city, state].filter(Boolean).join(', '),
+            lat: parseFloat(r.lat), lon: parseFloat(r.lon),
+            road: a.road || '', houseNum: a.house_number || '',
+            city: city, state: state, postcode: zip
+          };
+        });
+        // Merge into cache (dedupe by display)
+        var cache = _loadCache();
+        mapped.forEach(function(m) {
+          if (!cache.find(function(c){ return c.display === m.display; })) cache.unshift(m);
+        });
+        _saveCache(cache);
+        cb(mapped);
+      })
+      .catch(function() { cb([]); });
+  }
+
+  /* Search offline cache */
+  function _searchCache(q) {
+    var lower = q.toLowerCase();
+    return _loadCache().filter(function(c) {
+      return c.short.toLowerCase().includes(lower) || c.display.toLowerCase().includes(lower);
+    }).slice(0, 5);
+  }
+
+  /* Build dropdown UI */
+  function _buildDropdown(input, results, onSelect) {
+    // Remove any existing dropdown
+    var existing = input.parentNode.querySelector('.addr-autocomplete-list');
+    if (existing) existing.remove();
+    if (!results.length) return;
+
+    var list = document.createElement('div');
+    list.className = 'addr-autocomplete-list';
+    list.style.cssText = [
+      'position:absolute','left:0','right:0','top:100%','z-index:99999',
+      'background:#0d1e2e','border:1.5px solid rgba(0,200,215,0.35)',
+      'border-radius:14px','overflow:hidden','box-shadow:0 8px 32px rgba(0,0,0,0.5)',
+      'margin-top:4px'
+    ].join(';');
+
+    results.forEach(function(r) {
+      var item = document.createElement('button');
+      item.type = 'button';
+      item.style.cssText = [
+        'display:flex','align-items:flex-start','gap:10px','width:100%','padding:11px 14px',
+        'background:none','border:none','border-bottom:1px solid rgba(255,255,255,0.06)',
+        'cursor:pointer','text-align:left','-webkit-tap-highlight-color:transparent'
+      ].join(';');
+      item.innerHTML = [
+        '<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:rgba(0,200,215,0.7);fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0;margin-top:2px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+        '<div>',
+          '<div style="font-size:13px;font-weight:700;color:#fff;line-height:1.3">' + _escHtmlAddr(r.short || r.display) + '</div>',
+          '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;line-height:1.3">' + _escHtmlAddr(r.city && r.state ? r.city + ', ' + r.state + (r.postcode ? ' ' + r.postcode : '') : '') + '</div>',
+        '</div>'
+      ].join('');
+      item.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        onSelect(r);
+        list.remove();
+      });
+      list.appendChild(item);
+    });
+
+    // Ensure parent is positioned
+    var par = input.parentNode;
+    if (getComputedStyle(par).position === 'static') par.style.position = 'relative';
+    par.appendChild(list);
+
+    // Close on outside click
+    setTimeout(function() {
+      document.addEventListener('click', function handler() {
+        list.remove();
+        document.removeEventListener('click', handler);
+      }, { once: true });
+    }, 50);
+  }
+
+  function _escHtmlAddr(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* Mark input as verified */
+  function _markVerified(input, verified) {
+    input.dataset.addrVerified = verified ? '1' : '0';
+    var badge = input.parentNode.querySelector('.addr-verify-badge');
+    if (verified) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'addr-verify-badge';
+        badge.style.cssText = 'position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:#4ade80;pointer-events:none;display:flex;align-items:center;gap:4px';
+        badge.innerHTML = '<svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:#4ade80;fill:none;stroke-width:2.5;stroke-linecap:round"><polyline points="20 6 9 17 4 12"/></svg> Verified';
+        var par = input.parentNode;
+        if (getComputedStyle(par).position === 'static') par.style.position = 'relative';
+        par.appendChild(badge);
+      }
+    } else {
+      if (badge) badge.remove();
+    }
+  }
+
+  /* Attach autocomplete to an input.
+     options.onSelect(result) — called when a suggestion is picked
+     options.fields — object mapping { city, state, zip, street } → element IDs to auto-fill */
+  window.attachAddrAutocomplete = function(input, options) {
+    if (!input || input._addrAutoAttached) return;
+    input._addrAutoAttached = true;
+    options = options || {};
+
+    input.setAttribute('autocomplete', 'off');
+
+    input.addEventListener('input', function() {
+      var q = input.value.trim();
+      _markVerified(input, false);
+      var key = input.id || Math.random();
+      clearTimeout(_addrDebounce[key]);
+      if (q.length < 4) {
+        // Remove dropdown on short input
+        var ex = input.parentNode.querySelector('.addr-autocomplete-list');
+        if (ex) ex.remove();
+        return;
+      }
+      _addrDebounce[key] = setTimeout(function() {
+        // First show cached results instantly
+        var cached = _searchCache(q);
+        if (cached.length) _buildDropdown(input, cached, function(r) { _applyResult(input, r, options); });
+        // Then fetch live (if online)
+        if (navigator.onLine) {
+          _queryNominatim(q, function(live) {
+            if (live.length) _buildDropdown(input, live, function(r) { _applyResult(input, r, options); });
+          });
+        }
+      }, 350);
+    });
+
+    input.addEventListener('blur', function() {
+      // Small delay so click on dropdown item fires first
+      setTimeout(function() {
+        var ex = input.parentNode.querySelector('.addr-autocomplete-list');
+        if (ex) ex.remove();
+      }, 200);
+    });
+  };
+
+  function _applyResult(input, r, options) {
+    // Fill the input with the short address
+    input.value = r.road ? [r.houseNum, r.road].filter(Boolean).join(' ') : r.short;
+    _markVerified(input, true);
+    // Fill sibling fields if configured
+    if (options.fields) {
+      var fill = function(id, val) {
+        var el = document.getElementById(id);
+        if (!el || !val) return;
+        if (el.tagName === 'SELECT') {
+          // Match option by text (full state name) or value
+          for (var i = 0; i < el.options.length; i++) {
+            if (el.options[i].value.toLowerCase() === val.toLowerCase() ||
+                el.options[i].text.toLowerCase()  === val.toLowerCase()) {
+              el.selectedIndex = i; break;
+            }
+          }
+        } else {
+          el.value = val;
+        }
+      };
+      if (options.fields.city)  fill(options.fields.city,  r.city);
+      if (options.fields.state) fill(options.fields.state, r.state);
+      if (options.fields.zip)   fill(options.fields.zip,   r.postcode);
+    }
+    if (options.onSelect) options.onSelect(r);
+    // Trigger change event
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  /* Auto-attach to all known address fields on DOM ready */
+  function _attachAll() {
+    // Booking form street
+    var bStreet = document.getElementById('b-street');
+    if (bStreet) attachAddrAutocomplete(bStreet, { fields: { city: 'b-city', state: 'b-state', zip: 'b-zip' } });
+
+    // OTD manual addr edit
+    var otdEdit = document.getElementById('otd-addr-edit');
+    if (otdEdit) attachAddrAutocomplete(otdEdit, {
+      onSelect: function(r) {
+        _otdAddr = r.short;
+        var lbl = document.getElementById('otd-addr-label');
+        if (lbl) lbl.textContent = 'Verified Address';
+        var dot = document.getElementById('otd-gps-dot');
+        if (dot) { dot.classList.add('otd-addr-gps-dot--fixed'); }
+        // Also update the display text row
+        var txt = document.getElementById('otd-addr-text');
+        if (txt) { txt.textContent = r.short; txt.className = 'otd-addr-text'; txt.style.display = ''; }
+        // Close the edit field
+        otdEdit.classList.remove('otd-edit-open');
+      }
+    });
+
+    // Quick Log address field
+    var qlAddr = document.getElementById('ql-addr-input');
+    if (qlAddr) attachAddrAutocomplete(qlAddr);
+
+    // Activity log full form address (if it exists)
+    var fmAddr = document.getElementById('f-address');
+    if (fmAddr) attachAddrAutocomplete(fmAddr);
+  }
+
+  // Run after DOM is fully parsed
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _attachAll);
+  } else {
+    setTimeout(_attachAll, 500); // slight delay to ensure all elements exist
+  }
+
+})();
+
+// ── PWA: Block pull-to-refresh / overscroll on iOS Chrome ────────────────
+// `overscroll-behavior:none` on html/body handles most browsers.
+// This JS fallback catches iOS Safari's rubber-band when at scroll top.
+;(function() {
+  var _touchStartY = 0;
+  document.addEventListener('touchstart', function(e) {
+    _touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchmove', function(e) {
+    var y = e.touches[0].clientY;
+    // If pulling down from top AND no scrollable parent is already scrolled down — prevent
+    if (y > _touchStartY) {
+      var el = e.target;
+      while (el && el !== document.body) {
+        var style = getComputedStyle(el);
+        var overflow = style.overflowY;
+        if ((overflow === 'auto' || overflow === 'scroll') && el.scrollTop > 0) return; // let it scroll
+        el = el.parentNode;
+      }
+      // Nothing was scrolled down — we're at the top; block the pull
+      if (document.documentElement.scrollTop === 0 && document.body.scrollTop === 0) {
+        e.preventDefault();
+      }
+    }
+  }, { passive: false });
+})();
+
 // ── PWA: Service Worker registration + immediate update takeover ─────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -13626,10 +13916,14 @@ if ('serviceWorker' in navigator) {
         });
       });
 
-      // When the SW takes over, reload the page to get fresh content
+      // When the SW takes over, reload ONLY if there was already a controller
+      // (i.e. this is an UPDATE, not the very first install).
+      // On first install navigator.serviceWorker.controller is null before the
+      // event fires, so we skip the reload to prevent a double splash-screen.
+      const hadController = !!navigator.serviceWorker.controller;
       let refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!refreshing) { refreshing = true; window.location.reload(); }
+        if (hadController && !refreshing) { refreshing = true; window.location.reload(); }
       });
     }).catch(err => {
       console.warn('SW registration failed:', err);
@@ -14656,8 +14950,8 @@ function openMasterAdmin() {
   const aboutEl = document.getElementById('ma-about-text');
   if (aboutEl) {
     aboutEl.textContent =
-      `App version:   capital-energy-v86\n` +
-      `SW cache:      capital-energy-v86\n` +
+      `App version:   capital-energy-v87\n` +
+      `SW cache:      capital-energy-v87\n` +
       `Build date:    ${new Date().toLocaleDateString()}\n` +
       `User role:     master_admin\n` +
       `localStorage:  ${Object.keys(localStorage).filter(k => k.startsWith('ce_')).length} keys`;
@@ -18451,6 +18745,44 @@ function _otdSaveEntry(entry) {
   var badge = document.getElementById('log-badge');
   if (badge) badge.textContent = entries.length;
   setTimeout(function() { _resetOTDUI(); }, 1100);
+}
+
+/* ─── Book Appointment from OTD ─── */
+function otdBookAppt() {
+  if (!_otdStatus) _otdStatus = 'made-contact';
+  // Save the HO entry first
+  var entry = _otdBuildEntry();
+  var entries = DataStore.loadEntries();
+  entries.unshift(entry); DataStore.saveEntries(entries);
+  _otdSessionDoors++; if (entry.status === 'made-contact') _otdSessionContact++;
+  // Pre-fill booking form with collected HO info
+  var name  = (document.getElementById('otd-ho-name')  || {}).value || '';
+  var phone = (document.getElementById('otd-ho-phone') || {}).value || '';
+  var email = (document.getElementById('otd-ho-email') || {}).value || '';
+  var parts = name.trim().split(/\s+/);
+  var firstName = parts[0] || '';
+  var lastName  = parts.slice(1).join(' ') || '';
+  // Parse phone: strip non-digits, split into area + number
+  var phoneDigits = phone.replace(/\D/g,'');
+  var areaCode = phoneDigits.length >= 10 ? phoneDigits.slice(-10,-7) : '';
+  var lineNum  = phoneDigits.length >= 7  ? phoneDigits.slice(-7) : phoneDigits;
+  var lineFormatted = lineNum.length === 7 ? lineNum.slice(0,3) + '-' + lineNum.slice(3) : lineNum;
+  // Populate booking form
+  var setVal = function(id, val) { var el = document.getElementById(id); if (el && val) el.value = val; };
+  setVal('b-first', firstName);
+  setVal('b-last',  lastName);
+  setVal('b-email', email);
+  setVal('b-area',  areaCode);
+  setVal('b-phone', lineFormatted);
+  // Pre-fill address from GPS / current address
+  if (_otdAddr) {
+    var addrParts = _otdAddr.split(',').map(function(s){ return s.trim(); });
+    setVal('b-street', addrParts[0] || _otdAddr);
+    if (addrParts[1]) setVal('b-city', addrParts[1]);
+  }
+  // Close OTD, open booking sheet
+  closeOTD();
+  setTimeout(function() { openBookingSheet(); }, 300);
 }
 
 /* ─── Quick save (non-contact statuses) ─── */
