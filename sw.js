@@ -1,4 +1,4 @@
-const CACHE_NAME = 'capital-energy-v79';
+const CACHE_NAME = 'capital-energy-v80';
 
 // ── Complete app shell — everything needed to run 100% offline ──────────────
 const STATIC_ASSETS = [
@@ -193,6 +193,11 @@ self.addEventListener('fetch', event => {
       }).catch(() => caches.match('./index.html'));
     })
   );
+});
+
+// ── Skip-waiting: let new SW take over immediately on deploy ──────────────
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 // ── v71: Message-based notification relay ─────────────────────────────────

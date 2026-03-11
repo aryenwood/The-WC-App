@@ -13252,10 +13252,34 @@ function updateLogBadge() {
 }
 updateLogBadge();
 
-// ── PWA: Service Worker registration ─────────────────────────────────────
+// ── PWA: Service Worker registration + immediate update takeover ─────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(err => {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      // Force-check for a new SW on every load
+      reg.update();
+
+      // When a new SW is waiting, tell it to skip waiting and take over now
+      function applyUpdate(r) {
+        if (r.waiting) {
+          r.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+      }
+      applyUpdate(reg);
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed') applyUpdate(reg);
+        });
+      });
+
+      // When the SW takes over, reload the page to get fresh content
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) { refreshing = true; window.location.reload(); }
+      });
+    }).catch(err => {
       console.warn('SW registration failed:', err);
     });
   });
@@ -14269,8 +14293,8 @@ function openMasterAdmin() {
   const aboutEl = document.getElementById('ma-about-text');
   if (aboutEl) {
     aboutEl.textContent =
-      `App version:   capital-energy-v79\n` +
-      `SW cache:      capital-energy-v79\n` +
+      `App version:   capital-energy-v80\n` +
+      `SW cache:      capital-energy-v80\n` +
       `Build date:    ${new Date().toLocaleDateString()}\n` +
       `User role:     master_admin\n` +
       `localStorage:  ${Object.keys(localStorage).filter(k => k.startsWith('ce_')).length} keys`;
