@@ -8606,6 +8606,20 @@
         <div id="admin-bg-reminder-status" style="font-size:12px;color:var(--text-3);margin-top:6px"></div>
       </div>
 
+      <!-- Drop Call Numbers — Manager & Master Admin only -->
+      <div class="admin-section" id="admin-drop-call-section">
+        <div class="admin-section-title">📞 Drop Call Numbers</div>
+        <p style="font-size:12px;color:var(--text-3);margin:0 0 10px;line-height:1.5">Configure the numbers shown when reps tap "Drop Call" in OTD mode.</p>
+        <div class="admin-field">
+          <label class="admin-label" for="admin-drop-call-numbers">Numbers (one per line)</label>
+          <textarea class="admin-input" id="admin-drop-call-numbers" rows="5"
+            placeholder="Office: +16025550100&#10;Leads: +16025550101&#10;Manager: +16025550102"
+            style="font-family:monospace;font-size:12px;resize:vertical"></textarea>
+          <div style="font-size:11px;color:var(--text-3);margin-top:5px">Format: <code>Label: +1XXXXXXXXXX</code></div>
+        </div>
+        <button class="admin-save-btn" id="admin-save-drop-call-btn" style="margin-top:4px">💾 Save Drop Call Numbers</button>
+      </div>
+
       <!-- Save -->
       <div class="admin-save-wrap">
         <button class="admin-save-btn" id="admin-save-btn">Save &amp; Close</button>
@@ -8953,21 +8967,6 @@
     </div>
 
     <!-- Developer Quick Links -->
-    <!-- Drop Call Numbers (OTD Mode) -->
-    <div class="ma-section">
-      <div class="ma-section-title">📞 Drop Call Numbers</div>
-      <div class="ma-field">
-        <label class="ma-label">NUMBERS (one per line — label: number)</label>
-        <textarea class="ma-input" id="ma-drop-call-numbers" rows="5"
-          placeholder="Office: +16025550100&#10;Leads: +16025550101&#10;Manager: +16025550102"
-          style="font-family:monospace;font-size:12px;resize:vertical"></textarea>
-      </div>
-      <div class="ma-field">
-        <div style="font-size:11px;color:var(--text-3);margin-bottom:8px">Format: <code>Label: +1XXXXXXXXXX</code> — shows as a list in OTD mode's Drop Call button.</div>
-        <button class="ma-btn" id="ma-save-drop-call-btn">💾 Save Drop Call Numbers</button>
-      </div>
-    </div>
-
     <div class="ma-section">
       <div class="ma-section-title">🔗 Developer Quick Links</div>
       <div class="ma-field">
@@ -14358,10 +14357,6 @@ function openMasterAdmin() {
   if (maGoSolo)     maGoSolo.value     = s.gosoloUrl || 'https://phx.gosolo.io/';
   if (maGrid)       maGrid.value       = s.gridUrl   || 'https://procfu.com/widgets/mcapp/qWhbwtv797R7';
 
-  // Drop call numbers
-  const maDropCall = document.getElementById('ma-drop-call-numbers');
-  if (maDropCall) maDropCall.value = localStorage.getItem('ce_drop_call_numbers') || '';
-
   // Storage info
   refreshStorageInfo();
 
@@ -14369,8 +14364,8 @@ function openMasterAdmin() {
   const aboutEl = document.getElementById('ma-about-text');
   if (aboutEl) {
     aboutEl.textContent =
-      `App version:   capital-energy-v82\n` +
-      `SW cache:      capital-energy-v82\n` +
+      `App version:   capital-energy-v83\n` +
+      `SW cache:      capital-energy-v83\n` +
       `Build date:    ${new Date().toLocaleDateString()}\n` +
       `User role:     master_admin\n` +
       `localStorage:  ${Object.keys(localStorage).filter(k => k.startsWith('ce_')).length} keys`;
@@ -14512,14 +14507,13 @@ document.getElementById('ma-save-links-btn').addEventListener('click', () => {
   setTimeout(() => { btn.textContent = '💾 Save Quick Links'; }, 1500);
 });
 
-// ── Drop Call: save from master admin ──────────────────────────────────────
-document.getElementById('ma-save-drop-call-btn').addEventListener('click', () => {
-  const raw = (document.getElementById('ma-drop-call-numbers').value || '').trim();
+// ── Drop Call: save from manager Admin Settings ─────────────────────────────
+document.getElementById('admin-save-drop-call-btn')?.addEventListener('click', () => {
+  const raw = (document.getElementById('admin-drop-call-numbers')?.value || '').trim();
   localStorage.setItem('ce_drop_call_numbers', raw);
   _otdSyncDropCallBtn();
-  const btn = document.getElementById('ma-save-drop-call-btn');
-  btn.textContent = '✓ Saved!';
-  setTimeout(() => { btn.textContent = '💾 Save Drop Call Numbers'; }, 1500);
+  const btn = document.getElementById('admin-save-drop-call-btn');
+  if (btn) { btn.textContent = '✓ Saved!'; setTimeout(() => { btn.textContent = '💾 Save Drop Call Numbers'; }, 1500); }
 });
 
 // Populate textarea when master admin opens
@@ -16032,18 +16026,33 @@ document.getElementById('admin-ql-save-btn')?.addEventListener('click', () => {
   showToast('Quick links saved!');
 });
 
-// Hook into admin panel open to populate quick links editor
+// Hook into admin panel open to populate quick links editor + drop call numbers
 (function() {
   const adminPanel = document.getElementById('panel-admin');
   if (adminPanel) {
     new MutationObserver(() => {
       if (adminPanel.classList.contains('active')) {
         renderAdminQuickLinks();
+        // Populate drop call numbers textarea
+        const dcTextarea = document.getElementById('admin-drop-call-numbers');
+        if (dcTextarea) dcTextarea.value = localStorage.getItem('ce_drop_call_numbers') || '';
+        // Show drop call section only for manager / master_admin
+        const dcSection = document.getElementById('admin-drop-call-section');
+        if (dcSection) {
+          const r = localStorage.getItem('ce_user_role') || 'canvasser';
+          dcSection.style.display = (r === 'manager' || r === 'master_admin') ? '' : 'none';
+        }
       }
     }).observe(adminPanel, { attributes: true, attributeFilter: ['class'] });
   }
   // Apply on load
   _applyQuickLinkConfig();
+  // Hide drop call section by default (role check runs when panel opens)
+  const dcSection = document.getElementById('admin-drop-call-section');
+  if (dcSection) {
+    const r = localStorage.getItem('ce_user_role') || 'canvasser';
+    dcSection.style.display = (r === 'manager' || r === 'master_admin') ? '' : 'none';
+  }
 })();
 
 // ── v77: Seed test data REMOVED — was auto-populating fake reps on every fresh install ──
