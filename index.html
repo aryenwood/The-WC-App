@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#148f98" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -683,6 +683,10 @@
       font-size: 14px; font-weight: 700;
       letter-spacing: -0.01em;
     }
+
+    /* ── Hide all scrollbars globally ───────────────────────────────────── */
+    * { scrollbar-width: none; -ms-overflow-style: none; }
+    *::-webkit-scrollbar { display: none; }
 
     /* ── Base ────────────────────────────────────────────────────────────── */
     html {
@@ -2354,7 +2358,8 @@
     }
     .video-player-placeholder svg { width: 48px; height: 48px; }
     .video-playlist {
-      max-height: 320px; overflow-y: auto; padding: 6px 0;
+      max-height: 60vh; overflow-y: auto; padding: 6px 0;
+      -webkit-overflow-scrolling: touch;
     }
     .video-playlist-item {
       display: flex; align-items: center; gap: 12px;
@@ -2968,7 +2973,7 @@
     .log-filters {
       display: flex; gap: 8px; overflow-x: auto;
       padding-bottom: 2px; margin-bottom: 14px;
-      scrollbar-width: none;
+      scrollbar-width: none; -webkit-overflow-scrolling: touch;
     }
     .log-filters::-webkit-scrollbar { display: none; }
 
@@ -3179,12 +3184,14 @@
     /* ── CRM Sub-tabs ──────────────────────────────────────────────────────── */
     .crm-subtab-nav {
       display: flex;
-      justify-content: center;
       gap: 6px;
       padding: 14px 16px 0;
       border-bottom: 1px solid var(--g-border);
       margin-bottom: 0;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
     }
+    .crm-subtab-nav::-webkit-scrollbar { display: none; }
     .crm-subtab {
       flex: 0 0 auto;
       min-width: 88px;
@@ -3419,17 +3426,19 @@
       pointer-events: auto;
     }
 
+    /* ── Customer Detail Sheet — HubSpot-style redesign ─────────────────── */
+
     /* Sticky top bar */
     .cust-d-topbar {
-      display: flex; align-items: center; gap: 12px;
-      padding: 14px 16px 10px;
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px 12px;
       border-bottom: 1px solid var(--g-border);
       background: var(--bg);
       flex-shrink: 0;
       position: sticky; top: 0; z-index: 2;
     }
     .cust-d-back {
-      width: 34px; height: 34px; border-radius: 50%;
+      width: 32px; height: 32px; border-radius: 8px;
       border: 1px solid var(--g-border);
       background: var(--g1);
       display: flex; align-items: center; justify-content: center;
@@ -3437,8 +3446,8 @@
       transition: background 0.15s, transform 0.12s;
     }
     .cust-d-back:active { transform: scale(0.90); }
-    .cust-d-back svg { width: 16px; height: 16px; stroke: var(--text-2); stroke-width: 2.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-    .cust-d-topbar-title { font-size: 15px; font-weight: 700; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cust-d-back svg { width: 15px; height: 15px; stroke: var(--text-2); stroke-width: 2.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .cust-d-topbar-title { font-size: 14px; font-weight: 700; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* Scrollable body */
     .cust-detail-inner {
@@ -3447,115 +3456,127 @@
       padding-bottom: 60px;
     }
 
-    /* Hero band */
+    /* Hero band — left-aligned like HubSpot contact panel */
     .cust-d-hero {
-      padding: 20px 20px 16px;
-      border-bottom: 1px solid var(--g-border);
-      background: linear-gradient(160deg, rgba(20,143,152,0.06) 0%, transparent 60%);
+      padding: 18px 18px 0;
+      background: var(--bg);
     }
-    .cust-d-hero-row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+    .cust-d-hero-row { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
     .cust-d-avatar {
-      width: 62px; height: 62px; border-radius: 18px;
-      background: linear-gradient(135deg, #1e3a5f, var(--amber));
+      width: 52px; height: 52px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--amber));
       display: flex; align-items: center; justify-content: center;
-      font-size: 22px; font-weight: 800; color: #fff; flex-shrink: 0;
-      box-shadow: 0 4px 16px rgba(20,143,152,0.30);
+      font-size: 18px; font-weight: 800; color: #fff; flex-shrink: 0;
+      box-shadow: 0 2px 10px rgba(20,143,152,0.35);
     }
-    .cust-d-name { font-size: 20px; font-weight: 800; color: var(--text); line-height: 1.1; }
-    .cust-d-sub  { font-size: 12px; color: var(--text-2); margin-top: 3px; }
-    .cust-d-stat-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .cust-d-name { font-size: 20px; font-weight: 800; color: var(--text); line-height: 1.15; letter-spacing: -0.02em; }
+    .cust-d-sub  { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+    .cust-d-stat-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
     .cust-d-stat-chip {
-      padding: 4px 10px; border-radius: 20px;
+      padding: 3px 9px; border-radius: 20px;
       font-size: 11px; font-weight: 700;
-      display: flex; align-items: center; gap: 4px;
+      display: inline-flex; align-items: center; gap: 3px;
     }
 
-    /* Action buttons (Call / Text / Email) */
+    /* Action buttons — HubSpot icon strip */
     .cust-d-actions {
-      display: flex; gap: 8px;
-      padding: 14px 20px;
+      display: flex; gap: 6px;
+      padding: 0 18px 16px;
       border-bottom: 1px solid var(--g-border);
     }
     .cust-d-action-btn {
-      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
-      padding: 10px 6px; border-radius: 14px;
-      border: 1px solid var(--g-border); background: var(--g1);
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
+      padding: 10px 4px; border-radius: 12px;
+      border: 1.5px solid var(--g-border); background: var(--g1);
       cursor: pointer; font-size: 10px; font-weight: 700;
-      color: var(--text-2); font-family: var(--font-ui);
-      transition: background 0.15s, transform 0.12s, color 0.15s;
+      color: var(--text-3); font-family: var(--font-ui);
+      transition: all 0.15s;
       text-decoration: none;
     }
-    .cust-d-action-btn:active { transform: scale(0.93); background: var(--g2); }
-    .cust-d-action-btn svg { width: 20px; height: 20px; stroke: var(--amber); stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-    .cust-d-action-btn span { color: var(--text-2); }
+    .cust-d-action-btn:active { transform: scale(0.93); background: var(--g2); border-color: var(--primary); }
+    .cust-d-action-btn:hover { border-color: rgba(20,143,152,0.4); color: var(--primary); }
+    .cust-d-action-btn svg { width: 18px; height: 18px; stroke: var(--primary); stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .cust-d-action-btn span { color: inherit; font-size: 10px; font-weight: 600; }
 
-    /* Sub-tabs */
+    /* Sub-tabs — HubSpot underline tabs */
     .cust-d-tabs {
       display: flex; border-bottom: 1px solid var(--g-border);
-      background: var(--bg); position: sticky; top: 58px; z-index: 1;
+      background: var(--bg); position: sticky; top: 57px; z-index: 1;
+      padding: 0 4px; gap: 0;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
     }
     .cust-d-tab {
-      flex: 1; padding: 11px 4px;
-      font-size: 12px; font-weight: 700; font-family: var(--font-ui);
+      flex: 0 0 auto; padding: 12px 14px;
+      font-size: 13px; font-weight: 600; font-family: var(--font-ui);
       color: var(--text-3); border: none; background: transparent;
-      border-bottom: 2px solid transparent;
+      border-bottom: 2.5px solid transparent;
       cursor: pointer; transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap;
     }
-    .cust-d-tab--active { color: var(--amber); border-bottom-color: var(--amber); }
+    .cust-d-tab--active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 700; }
+    .cust-d-tab:hover:not(.cust-d-tab--active) { color: var(--text); }
 
     /* Tab panes */
     .cust-d-pane { display: none; padding: 16px 0 0; }
     .cust-d-pane--active { display: block; }
 
-    /* Contact info grid */
+    /* Contact info — HubSpot property list style */
     .cust-d-info-grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 8px; padding: 0 16px 16px;
+      display: flex; flex-direction: column;
+      gap: 0; padding: 0;
     }
     .cust-d-info-card {
-      background: var(--g1); border: 1px solid var(--g-border);
-      border-radius: 12px; padding: 10px 12px;
+      display: flex; align-items: baseline; gap: 12px;
+      padding: 10px 18px;
+      border-bottom: 1px solid var(--g-border);
+      background: transparent;
     }
+    .cust-d-info-card:last-child { border-bottom: none; }
     .cust-d-info-label {
-      font-size: 9px; font-weight: 800; text-transform: uppercase;
-      letter-spacing: 0.09em; color: var(--text-3); margin-bottom: 3px;
+      font-size: 11px; font-weight: 600;
+      color: var(--text-3); min-width: 90px; flex-shrink: 0;
     }
     .cust-d-info-value {
-      font-size: 13px; color: var(--text); word-break: break-word; line-height: 1.3;
+      font-size: 13px; color: var(--text); word-break: break-word; line-height: 1.4;
+      font-weight: 500;
     }
-    .cust-d-info-value a { color: var(--amber); text-decoration: none; }
-    .cust-d-info-full { grid-column: 1 / -1; }
+    .cust-d-info-value a { color: var(--primary); text-decoration: none; }
+    .cust-d-info-full { flex-direction: column; gap: 3px; }
+    .cust-d-info-full .cust-d-info-label { min-width: unset; }
 
     /* Section header inside pane */
     .cust-d-section-hd {
-      font-size: 10px; font-weight: 800; text-transform: uppercase;
-      letter-spacing: 0.09em; color: var(--text-3);
-      padding: 0 16px 8px; margin-top: 4px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--text-3);
+      padding: 4px 18px 10px; margin-top: 0;
+      border-bottom: 1px solid var(--g-border);
     }
 
-    /* Timeline */
-    .cust-d-timeline { padding: 0 16px; }
+    /* Timeline — clean HubSpot activity feed */
+    .cust-d-timeline { padding: 0; }
     .cust-d-tl-item {
-      display: flex; gap: 12px;
-      padding: 14px 0;
+      display: flex; gap: 14px;
+      padding: 14px 18px;
       border-bottom: 1px solid var(--g-border);
       position: relative;
     }
     .cust-d-tl-item:last-child { border-bottom: none; }
-    .cust-d-tl-left { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; width: 36px; }
+    .cust-d-tl-item--appt { background: rgba(20,143,152,0.025); }
+    .cust-d-tl-item--appt:active { background: rgba(20,143,152,0.07); }
+    .cust-d-tl-left { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; width: 34px; }
     .cust-d-tl-icon {
-      width: 32px; height: 32px; border-radius: 10px;
+      width: 30px; height: 30px; border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
     }
-    .cust-d-tl-icon svg { width: 15px; height: 15px; stroke: #fff; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-    .cust-d-tl-line { width: 2px; flex: 1; min-height: 8px; background: var(--g-border); border-radius: 1px; }
+    .cust-d-tl-icon svg { width: 14px; height: 14px; stroke: #fff; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .cust-d-tl-line { width: 2px; flex: 1; min-height: 10px; background: var(--g-border); border-radius: 1px; }
     .cust-d-tl-body { flex: 1; min-width: 0; }
     .cust-d-tl-title { font-size: 13px; font-weight: 700; color: var(--text); }
     .cust-d-tl-date  { font-size: 11px; color: var(--text-3); margin-top: 2px; }
-    .cust-d-tl-note  { font-size: 12px; color: var(--text-2); margin-top: 5px; font-style: italic; background: var(--g1); border-radius: 8px; padding: 6px 9px; border-left: 2px solid var(--g-border-hi); }
-    .cust-d-tl-chips { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
-    .cust-d-tl-chip  { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; }
+    .cust-d-tl-note  { font-size: 12px; color: var(--text-2); margin-top: 6px; line-height: 1.5; background: var(--g1); border-radius: 8px; padding: 8px 10px; border-left: 2.5px solid var(--g-border-hi); }
+    .cust-d-tl-chips { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 7px; }
+    .cust-d-tl-chip  { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
 
     /* Photo grid */
     .cust-d-photo-grid {
@@ -3615,6 +3636,16 @@
       color: #f87171;
       border-color: rgba(239,68,68,0.20);
       background: rgba(239,68,68,0.07);
+    }
+    .detail-btn--email {
+      color: #3b82f6;
+      border-color: rgba(59,130,246,0.28);
+      background: rgba(59,130,246,0.09);
+    }
+    .detail-btn--record {
+      color: var(--primary);
+      border-color: rgba(20,143,152,0.28);
+      background: rgba(20,143,152,0.09);
     }
 
     /* ── Bottom sheet ────────────────────────────────────────────────────── */
@@ -6971,7 +7002,7 @@
       </button>
 
       <!-- Quick links -->
-      <div class="dash-section-label">
+      <div class="dash-section-label" style="margin-top:20px">
         <span class="dash-section-title">Quick Links</span>
       </div>
 
@@ -7205,7 +7236,8 @@
           </button>
         </div>
 
-        <button class="btn-export-csv" id="btn-export-csv">
+        <!-- CSV export: master_admin only (shown via applyRoleUI) -->
+        <button class="btn-export-csv" id="btn-export-csv" style="display:none">
           <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Export to CSV
         </button>
@@ -7234,7 +7266,7 @@
         </div>
 
         <!-- Appointment filter pills -->
-        <div class="log-filters" role="group" aria-label="Filter appointments">
+        <div class="log-filters" role="group" aria-label="Filter appointments" style="justify-content:center">
           <button class="filter-pill active" data-appt-filter="all">All</button>
           <button class="filter-pill" data-appt-filter="upcoming">Upcoming</button>
           <button class="filter-pill" data-appt-filter="past">Past</button>
@@ -7415,12 +7447,12 @@
     </section>
 
     <!-- Admin -->
-    <!-- Sales Resources Panel -->
-    <section id="panel-resources" class="tab-panel" role="tabpanel" aria-label="Sales Resources">
+    <!-- The Hub Panel -->
+    <section id="panel-resources" class="tab-panel" role="tabpanel" aria-label="The Hub">
       <div class="res-header-row">
         <div>
-          <h1 class="section-heading">Sales Resources</h1>
-          <p class="section-sub">Books, training &amp; solar education</p>
+          <h1 class="section-heading">The Hub</h1>
+          <p class="section-sub">Team wins, books, training &amp; solar education</p>
         </div>
         <button id="res-close-btn" aria-label="Close resources" onclick="activateTab('dashboard')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -7431,7 +7463,8 @@
 
       <!-- ── Sub-tab nav ──────────────────────────────────────────────────── -->
       <div class="res-subtab-nav">
-        <button class="res-subtab res-subtab--active" data-pane="adders">Adders</button>
+        <button class="res-subtab res-subtab--active" data-pane="wins">🏆 Wins</button>
+        <button class="res-subtab" data-pane="adders">Adders</button>
         <button class="res-subtab" data-pane="books">Books</button>
         <button class="res-subtab" data-pane="utility">⚡ Utility</button>
         <button class="res-subtab" data-pane="videos">Videos</button>
@@ -7440,6 +7473,24 @@
         <button class="res-subtab" data-pane="palmetto">Palmetto</button>
         <button class="res-subtab" data-pane="checklist">Checklist</button>
         <button class="res-subtab" data-pane="docs">Docs</button>
+      </div>
+
+      <!-- ══ WINS pane (Wall of Wins — visible to all roles) ═══════════════ -->
+      <div class="res-pane" id="res-pane-wins">
+        <div style="padding:16px 0 4px">
+          <!-- Post input (all roles can post in Hub) -->
+          <div id="hub-wow-input" style="margin-bottom:16px">
+            <div class="wow-input-row">
+              <input type="text" class="wow-input" id="hub-wow-input-text" placeholder="Share a win with the team… 🏆" maxlength="160" autocomplete="off" />
+              <button class="wow-post-btn" id="hub-wow-post-btn">Post</button>
+            </div>
+          </div>
+          <div id="hub-wow-feed">
+            <div class="wow-empty">No wins posted yet — be the first! 🔥</div>
+          </div>
+          <!-- Clear button (managers only, shown via JS) -->
+          <button class="dash-section-action" id="hub-wow-clear" style="display:none;color:#f87171;margin-top:8px;width:100%;text-align:center;background:none;border:none;font-size:12px;cursor:pointer;padding:8px 0">🗑 Clear All Wins</button>
+        </div>
       </div>
 
       <!-- ══ BOOKS pane ══════════════════════════════════════════════════════ -->
@@ -8077,7 +8128,7 @@
       </div><!-- /.res-pane palmetto -->
 
       <!-- ══ ADDERS pane ═════════════════════════════════════════════════════ -->
-      <div class="res-pane" id="res-pane-adders">
+      <div class="res-pane res-pane--hidden" id="res-pane-adders">
       <!-- ── Adder Sheets ──────────────────────────────────────────────── -->
       <div class="resources-section-label">Adder Sheets</div>
       <p class="resources-section-sub">Live pricing reference — tap a state, search any adder</p>
@@ -8746,14 +8797,14 @@
       <span class="nav-label">CRM</span>
     </button>
 
-    <button class="nav-item" data-tab="resources" aria-label="Resources" aria-selected="false">
+    <button class="nav-item" data-tab="resources" aria-label="The Hub" aria-selected="false">
       <div class="nav-icon-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
           <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
         </svg>
       </div>
-      <span class="nav-label">Resources</span>
+      <span class="nav-label">The Hub</span>
     </button>
 
     <!-- Spacer reserves center space for the absolutely-positioned home button -->
@@ -9068,6 +9119,9 @@
       <div class="ma-section-title">🗄 Data Tools</div>
       <div class="ma-field">
         <button class="ma-btn" id="ma-export-btn">⬇ Export All Data (JSON)</button>
+      </div>
+      <div class="ma-field">
+        <button class="ma-btn" id="ma-export-csv-btn">📊 Export Activity Log (CSV)</button>
       </div>
       <div class="ma-field">
         <div class="ma-storage-info" id="ma-storage-info">Calculating…</div>
@@ -10836,6 +10890,7 @@ document.getElementById('btn-export-csv').addEventListener('click', () => {
     if (id === 'books') { renderBookCovers(); refreshBookBadges(); }
     if (id === 'checklist') { renderChecklistPane(); }
     if (id === 'adders')    { renderAdderPane(); }
+    if (id === 'wins')      { renderWallOfWins(); }
   }
 
   // Expose globally so other functions (e.g. Signed deal redirect) can call it
@@ -12091,7 +12146,16 @@ function renderLogList() {
     ].filter(Boolean).join('');
 
     const callBtn = e.phone
-      ? `<button class="detail-btn detail-btn--call" data-action="call" data-phone="${escHtml(e.phone)}">Call</button>`
+      ? `<button class="detail-btn detail-btn--call" data-action="call" data-phone="${escHtml(e.phone)}">📞 Call</button>`
+      : '';
+
+    const emailBtn = e.email
+      ? `<button class="detail-btn detail-btn--email" data-action="email" data-email="${escHtml(e.email)}">✉️ Email</button>`
+      : '';
+
+    const hasCustData = !!(e.phone || e.address || e.name);
+    const openRecordBtn = hasCustData
+      ? `<button class="detail-btn detail-btn--record" data-action="open-record" data-entry-id="${escHtml(e.id)}">👤 Open Record</button>`
       : '';
 
     const isContactEntry = ['made-contact','go-back','appointment','sold'].includes(e.status);
@@ -12139,6 +12203,8 @@ function renderLogList() {
             <div class="detail-grid">${fields}</div>
             <div class="detail-actions">
               ${callBtn}
+              ${emailBtn}
+              ${openRecordBtn}
               ${convertBtn}
               <button class="detail-btn" data-action="edit">Edit</button>
               <button class="detail-btn detail-btn--delete" data-action="delete">Delete</button>
@@ -12529,6 +12595,7 @@ function openCustomerDetail(idx) {
       return {
         time:   a.createdAt || dt.getTime(),
         type:   'appt',
+        apptId: a.id,
         icon:   `<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
         iconBg: color,
         title:  `${isFuture ? '🔜 Upcoming: ' : ''}Appointment — ${result}`,
@@ -12543,6 +12610,7 @@ function openCustomerDetail(idx) {
         ].filter(Boolean),
         chipColor: isFuture ? 'rgba(59,130,246,0.15)' : color + '22',
         chipTextColor: isFuture ? '#3b82f6' : color,
+        tapHint: '👆 Tap to open appointment',
       };
     }),
   ].sort((a, b) => b.time - a.time);
@@ -12578,6 +12646,15 @@ function openCustomerDetail(idx) {
     recBtn.onclick = function() { _startVoiceMemo(c.id); };
   })();
 
+  // Timeline appt tap → open appt via dispo/result sheet
+  inner.querySelectorAll('[data-tl-appt-id]').forEach(item => {
+    item.addEventListener('click', () => {
+      const apptId = item.dataset.tlApptId;
+      closeCustomerDetail();
+      setTimeout(() => openCustomerByApptId(apptId), 350);
+    });
+  });
+
   // Back button
   inner.querySelector('.cust-d-back')?.addEventListener('click', closeCustomerDetail);
 
@@ -12610,13 +12687,13 @@ function _buildCustDetailHTML({ c, initials, hasSigned, latestResult, latestColo
 
   // ── Timeline HTML ─────────────────────────────────────────────────────────
   const tlHTML = timeline.length ? timeline.map((t, i) => `
-    <div class="cust-d-tl-item">
+    <div class="cust-d-tl-item${t.type==='appt' ? ' cust-d-tl-item--appt' : ''}"${t.apptId ? ` data-tl-appt-id="${escHtml(t.apptId)}" style="cursor:pointer"` : ''}>
       <div class="cust-d-tl-left">
         <div class="cust-d-tl-icon" style="background:${t.iconBg}">${t.icon}</div>
         ${i < timeline.length - 1 ? '<div class="cust-d-tl-line"></div>' : ''}
       </div>
       <div class="cust-d-tl-body">
-        <div class="cust-d-tl-title">${escHtml(t.title)}</div>
+        <div class="cust-d-tl-title">${escHtml(t.title)}${t.apptId ? ' <span style="font-size:10px;color:var(--primary);font-weight:600">→ Open</span>' : ''}</div>
         <div class="cust-d-tl-date">${t.date}</div>
         ${t.chips.length ? `<div class="cust-d-tl-chips">${t.chips.map(ch=>`<span class="cust-d-tl-chip" style="background:${t.chipColor};color:${t.chipTextColor}">${escHtml(ch)}</span>`).join('')}</div>` : ''}
         ${t.note ? `<div class="cust-d-tl-note">"${escHtml(t.note)}"</div>` : ''}
@@ -12694,11 +12771,11 @@ function _buildCustDetailHTML({ c, initials, hasSigned, latestResult, latestColo
         </button>
       </div>
 
-      <!-- Sub-tabs -->
+      <!-- Sub-tabs — Activity first (HubSpot default) -->
       <div class="cust-d-tabs">
+        <button class="cust-d-tab cust-d-tab--active" data-tab="activity">Activity ${timeline.length ? `(${timeline.length})` : ''}</button>
         <button class="cust-d-tab" data-tab="overview">Overview</button>
-        <button class="cust-d-tab cust-d-tab--active" data-tab="activity">Activity (${timeline.length})</button>
-        <button class="cust-d-tab" data-tab="photos">Photos (${photos.length})</button>
+        <button class="cust-d-tab" data-tab="photos">Photos ${photos.length ? `(${photos.length})` : ''}</button>
         <button class="cust-d-tab" data-tab="files">Files</button>
       </div>
 
@@ -13100,6 +13177,24 @@ document.getElementById('log-list').addEventListener('click', e => {
     const action = actionBtn.dataset.action;
     if (action === 'call') {
       window.location.href = `tel:${actionBtn.dataset.phone}`;
+    } else if (action === 'email') {
+      window.location.href = `mailto:${actionBtn.dataset.email}`;
+    } else if (action === 'open-record') {
+      const entry = loadEntries().find(x => x.id === id);
+      if (entry) {
+        closeExpandedEntries();
+        const normPhone = p => (p || '').replace(/\D/g,'').slice(-10);
+        const normAddr  = a => (a || '').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,20);
+        const custKey   = normPhone(entry.phone) || normAddr(entry.address) || ('log-' + entry.id);
+        activateTab('log');
+        setTimeout(() => { switchCrmPane('customers'); }, 50);
+        setTimeout(() => {
+          const customers = buildCustomers();
+          window._custListCache = customers;
+          const idx = customers.findIndex(c => c.id === custKey);
+          if (idx >= 0) openCustomerDetail(idx);
+        }, 200);
+      }
     } else if (action === 'delete') {
       if (!confirm('Delete this entry? This cannot be undone.')) return;
       const entries = loadEntries().filter(x => x.id !== id);
@@ -14068,10 +14163,16 @@ function applyRoleUI() {
   if (reportsBtn) reportsBtn.style.display = isManager ? '' : 'none';
   // Dispo appt: closers + managers only (canvassers don't close deals)
   if (dispoBtn)   dispoBtn.style.display   = isCanv ? 'none' : '';
+  // Review button: span full width on canvasser (dispo hidden leaves gap)
+  const reviewBtn = document.getElementById('review-btn');
+  if (reviewBtn) reviewBtn.style.gridColumn = isCanv ? '1 / -1' : '';
 
-  // ── Show Rate stat card: closer + manager only ──
+  // ── Show Rate stat card: closer + manager only; spans both columns ──
   const srCard = document.getElementById('stat-card-show-rate');
-  if (srCard) srCard.style.display = (isCloser || isManager) ? '' : 'none';
+  if (srCard) {
+    srCard.style.display = (isCloser || isManager) ? '' : 'none';
+    srCard.style.gridColumn = (isCloser || isManager) ? '1 / -1' : '';
+  }
 
   // ── CRM Follow-Up tab: hide for managers (they see all reps, not personal queue) — keep for canvassers + closers ──
   const fqTab = document.getElementById('crm-tab-followup');
@@ -14088,6 +14189,10 @@ function applyRoleUI() {
   // ── Canvasser-specific: hide appointments CRM sub-tab (they don't run appts) ──
   const apptTab = document.getElementById('crm-tab-appointments');
   if (apptTab) apptTab.style.display = isCanv ? 'none' : '';
+
+  // ── CSV export: master_admin only ──
+  const csvBtn = document.getElementById('btn-export-csv');
+  if (csvBtn) csvBtn.style.display = (role === 'master_admin') ? '' : 'none';
 
   // ── Hub badge: personalize per role ──
   const hubBadge = document.getElementById('dash-hub-badge');
@@ -14364,8 +14469,8 @@ function openMasterAdmin() {
   const aboutEl = document.getElementById('ma-about-text');
   if (aboutEl) {
     aboutEl.textContent =
-      `App version:   capital-energy-v83\n` +
-      `SW cache:      capital-energy-v83\n` +
+      `App version:   capital-energy-v84\n` +
+      `SW cache:      capital-energy-v84\n` +
       `Build date:    ${new Date().toLocaleDateString()}\n` +
       `User role:     master_admin\n` +
       `localStorage:  ${Object.keys(localStorage).filter(k => k.startsWith('ce_')).length} keys`;
@@ -14733,6 +14838,11 @@ document.getElementById('ma-export-btn').addEventListener('click', () => {
   URL.revokeObjectURL(url);
 });
 
+// CSV export from master admin
+document.getElementById('ma-export-csv-btn').addEventListener('click', () => {
+  document.getElementById('btn-export-csv').click();
+});
+
 // Clear all data
 document.getElementById('ma-clear-btn').addEventListener('click', () => {
   if (!confirm('⚠️ This will erase ALL app data — logs, appointments, settings. This cannot be undone. Continue?')) return;
@@ -15058,18 +15168,30 @@ function _renderAchievements(name) {
       <div class="lb-ach-title">Achievements <span class="lb-ach-count">${earned.length}/${ACHIEVEMENTS.length}</span></div>
       <div class="lb-ach-grid">
         ${earned.map(a => `
-          <div class="lb-ach-badge lb-ach-earned" title="${a.desc}">
+          <div class="lb-ach-badge lb-ach-earned" data-ach-name="${escHtml(a.name)}" data-ach-desc="${escHtml(a.desc)}" data-ach-icon="${escHtml(a.icon)}" data-ach-earned="1" style="cursor:pointer" title="${escHtml(a.desc)}">
             <span class="lb-ach-icon">${a.icon}</span>
             <span class="lb-ach-name">${a.name}</span>
           </div>`).join('')}
         ${notEarned.map(a => `
-          <div class="lb-ach-badge lb-ach-locked" title="${a.desc}">
+          <div class="lb-ach-badge lb-ach-locked" data-ach-name="${escHtml(a.name)}" data-ach-desc="${escHtml(a.desc)}" data-ach-icon="${escHtml(a.icon)}" data-ach-earned="0" style="cursor:pointer" title="Locked: ${escHtml(a.desc)}">
             <span class="lb-ach-icon">🔒</span>
             <span class="lb-ach-name">${a.name}</span>
           </div>`).join('')}
       </div>
     </div>`;
 }
+
+// Achievement badge tap → show toast with how to earn
+document.addEventListener('click', function(e) {
+  const badge = e.target.closest('[data-ach-name]');
+  if (!badge) return;
+  const icon    = badge.dataset.achIcon || '🏆';
+  const name    = badge.dataset.achName || '';
+  const desc    = badge.dataset.achDesc || '';
+  const earned  = badge.dataset.achEarned === '1';
+  const prefix  = earned ? '✅ Earned: ' : '🔒 How to earn: ';
+  showToast(`${icon} ${name} — ${prefix}${desc}`, 3500);
+});
 
 function renderLeaderboard() {
   const role    = localStorage.getItem('ce_user_role') || 'canvasser';
@@ -17561,11 +17683,11 @@ function openDispoSheet() {
         document.getElementById('dispo-result-options').innerHTML = Object.entries(APPT_RESULT_COLORS)
           .map(([result, color]) => `
             <button class="dispo-result-opt" data-result="${escHtml(result)}"
-              style="padding:8px 16px;border-radius:50px;border:2px solid ${result === current ? color : 'var(--g-border)'};
-                     background:${result === current ? color : 'var(--g2)'};
-                     color:${result === current ? '#fff' : 'var(--text)'};
-                     font-size:13px;font-weight:700;cursor:pointer;">
-              ${escHtml(result)}
+              style="padding:10px 18px;border-radius:50px;border:2px solid ${color};
+                     background:${result === current ? color : color + '18'};
+                     color:${result === current ? '#fff' : color};
+                     font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.02em;">
+              ${result === current ? '✓ ' : ''}${escHtml(result)}
             </button>`).join('');
 
         document.getElementById('dispo-result-options').querySelectorAll('.dispo-result-opt').forEach(btn => {
@@ -18372,59 +18494,97 @@ function postWin(message) {
   postWinRaw(name, message || 'scored a win! 🏆');
 }
 
-function renderWallOfWins() {
-  const role    = getActiveRole();
-  const feedEl  = document.getElementById('dash-wow-feed');
-  const inputEl = document.getElementById('dash-wow-input');
-  const clearEl = document.getElementById('dash-wow-clear');
-  if (!feedEl) return;
-
-  // Show input only for manager/closer (they can post wins manually)
-  const canPost = role === 'manager' || role === 'master_admin' || role === 'closer';
-  if (inputEl) inputEl.style.display = canPost ? '' : 'none';
-
+function _renderWowFeed(feedEl, maxItems) {
   const wins = DataStore.loadWins();
   if (!wins.length) {
-    feedEl.innerHTML = '<div class="wow-empty">No wins posted yet — close a deal and it\'ll show here! 🔥</div>';
+    feedEl.innerHTML = '<div class="wow-empty">No wins posted yet — be the first! 🔥</div>';
     return;
   }
-  feedEl.innerHTML = wins.slice(0, 10).map(w => {
+  feedEl.innerHTML = wins.slice(0, maxItems || 10).map(w => {
     const initials = (w.who || '?').split(' ').map(p => p[0]).join('').slice(0,2).toUpperCase();
     const isLegend = (w.what || '').toLowerCase().includes('sign');
+    // Support GIFs / images embedded in message (detect URL)
+    const urlMatch = (w.what || '').match(/(https?:\/\/\S+\.(gif|jpg|jpeg|png|webp))(\s|$)/i);
+    const mediaHtml = urlMatch
+      ? `<div class="wow-media"><img src="${escHtml(urlMatch[0].trim())}" alt="" loading="lazy" style="max-width:100%;border-radius:10px;margin-top:6px"></div>`
+      : '';
+    const textOnly = urlMatch ? w.what.replace(urlMatch[0], '').trim() : (w.what || '');
     return `
       <div class="wow-card">
         <div class="wow-avatar${isLegend ? ' wow-avatar--legend' : ''}">${initials}</div>
         <div class="wow-body">
           <div class="wow-who">${escHtml(w.who)}</div>
-          <div class="wow-what">${escHtml(w.what)}</div>
+          ${textOnly ? `<div class="wow-what">${escHtml(textOnly)}</div>` : ''}
+          ${mediaHtml}
           <div class="wow-when">${timeAgo(w.when)}</div>
         </div>
       </div>`;
   }).join('');
+}
 
-  // Wire clear button (manager only)
-  if (clearEl) {
-    clearEl.style.display = (role === 'manager' || role === 'master_admin') ? '' : 'none';
-    clearEl.onclick = () => {
-      if (confirm('Clear the Wall of Wins?')) { DataStore.saveWins([]); renderWallOfWins(); }
-    };
+function renderWallOfWins() {
+  const role = getActiveRole();
+  const isManager = (role === 'manager' || role === 'master_admin');
+
+  // ── Dashboard feed (compact, last 5) ──
+  const dashFeed  = document.getElementById('dash-wow-feed');
+  const dashInput = document.getElementById('dash-wow-input');
+  const dashClear = document.getElementById('dash-wow-clear');
+  if (dashFeed) {
+    _renderWowFeed(dashFeed, 5);
+    if (dashInput) dashInput.style.display = (isManager || role === 'closer') ? '' : 'none';
+    if (dashClear) {
+      dashClear.style.display = isManager ? '' : 'none';
+      dashClear.onclick = () => {
+        if (confirm('Clear the Wall of Wins?')) { DataStore.saveWins([]); renderWallOfWins(); }
+      };
+    }
+  }
+
+  // ── Hub wins feed (full, all 50 wins) ──
+  const hubFeed  = document.getElementById('hub-wow-feed');
+  const hubClear = document.getElementById('hub-wow-clear');
+  if (hubFeed) {
+    _renderWowFeed(hubFeed, 50);
+    if (hubClear) {
+      hubClear.style.display = isManager ? '' : 'none';
+      hubClear.onclick = () => {
+        if (confirm('Clear the Wall of Wins?')) { DataStore.saveWins([]); renderWallOfWins(); }
+      };
+    }
   }
 }
 
-// Wire Wall of Wins post button
+// Wire Wall of Wins post buttons (dashboard + Hub)
 document.addEventListener('DOMContentLoaded', function() {
+  // Dashboard post button (manager/closer only)
   const postBtn = document.getElementById('wow-post-btn');
   const input   = document.getElementById('wow-input-text');
-  if (!postBtn || !input) return;
-  postBtn.addEventListener('click', function() {
-    const msg = input.value.trim();
-    if (!msg) return;
-    postWin(msg);
-    input.value = '';
-  });
-  input.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') { postBtn.click(); }
-  });
+  if (postBtn && input) {
+    postBtn.addEventListener('click', function() {
+      const msg = input.value.trim();
+      if (!msg) return;
+      postWin(msg);
+      input.value = '';
+    });
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') { postBtn.click(); }
+    });
+  }
+  // Hub post button (all roles can post)
+  const hubPostBtn = document.getElementById('hub-wow-post-btn');
+  const hubInput   = document.getElementById('hub-wow-input-text');
+  if (hubPostBtn && hubInput) {
+    hubPostBtn.addEventListener('click', function() {
+      const msg = hubInput.value.trim();
+      if (!msg) return;
+      postWin(msg);
+      hubInput.value = '';
+    });
+    hubInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') { hubPostBtn.click(); }
+    });
+  }
 });
 
 // ── v76: Rep Baseball Card ────────────────────────────────────────────────
