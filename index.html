@@ -9579,6 +9579,11 @@
         <input class="ma-input" type="url" id="ma-grid-url" placeholder="https://procfu.com/..." />
       </div>
       <div class="ma-field">
+        <label class="ma-label">AI CHAT API URL</label>
+        <input class="ma-input" type="url" id="ma-chat-api-url" placeholder="http://localhost:8080/api/chat" />
+        <span style="display:block;margin-top:4px;font-size:var(--fs-2xs);color:rgba(122,184,212,0.6);">Live voice agent endpoint — leave blank for local KB fallback</span>
+      </div>
+      <div class="ma-field">
         <button class="ma-btn" id="ma-save-links-btn">💾 Save Quick Links</button>
       </div>
     </div>
@@ -11724,7 +11729,9 @@ const TrainerBot = {
     var container = document.getElementById('trainer-messages');
     if (container) container.innerHTML = '';
 
-    this._addMessage("Hey! I'm your sales coach. Ask me anything about solar sales — objection handling, NEPQ techniques, door openers, closing strategies, or how to handle specific situations you've run into. What's on your mind?", 'bot');
+    var greeting = "Hey! I'm your AI sales coach. Ask me anything about solar sales — objection handling, NEPQ techniques, door openers, closing strategies, or how to handle specific situations you've run into. What's on your mind?";
+    this._addMessage(greeting, 'bot');
+    this.state.conversationHistory.push({ role: 'bot', text: greeting, topic: 'greeting' });
 
     var input = document.getElementById('trainer-input');
     if (input) { input.placeholder = 'Ask your coach anything...'; setTimeout(function() { input.focus(); }, 300); }
@@ -11793,6 +11800,33 @@ const TrainerBot = {
     if (input) { input.placeholder = 'Type your pitch...'; setTimeout(function() { input.focus(); }, 500); }
   },
 
+  // v99: API endpoint for live voice agent — configurable via dev console
+  _apiUrl: localStorage.getItem('ce_chat_api_url') || 'http://localhost:8080/api/chat',
+
+  // Build system prompt based on current mode/scenario
+  _buildSystemPrompt: function() {
+    if (this.state.mode === 'agent') {
+      return 'You are an expert solar sales coach for door-to-door reps at Capital Energy. You teach NEPQ (Neuro-Emotional Persuasion Questions), Cardone-style urgency, and consultative selling. Give actionable advice. Keep responses concise (2-4 sentences). Never mention a specific tax credit percentage or ITC number — say "check current federal incentives" instead.';
+    }
+    var sc = this.scenarios[this.state.scenario];
+    if (!sc) return '';
+    return 'You are roleplaying as a homeowner called "' + sc.name + '". Personality: ' + sc.personality + ' Warmth level: ' + this.state.warmthLevel + '/3 (0=cold, 3=ready to buy). You are talking to a door-to-door solar sales rep who knocked on your door. Stay in character. Keep responses to 1-3 sentences like a real person would talk. React naturally to what they say. Never mention a specific tax credit percentage. If warmth is 3, start showing buying signals.';
+  },
+
+  // Build messages array for API
+  _buildMessages: function(userText) {
+    var msgs = [{ role: 'system', content: this._buildSystemPrompt() }];
+    // Add conversation history (last 20 messages max)
+    var history = this.state.conversationHistory.slice(-20);
+    for (var i = 0; i < history.length; i++) {
+      var h = history[i];
+      if (h.role === 'user')  msgs.push({ role: 'user', content: h.text });
+      if (h.role === 'bot')   msgs.push({ role: 'assistant', content: h.text });
+    }
+    msgs.push({ role: 'user', content: userText });
+    return msgs;
+  },
+
   sendMessage: function() {
     var input = document.getElementById('trainer-input');
     if (!input) return;
@@ -11803,11 +11837,46 @@ const TrainerBot = {
     input.style.height = 'auto';
 
     this._addMessage(text, 'user');
+    this.state.conversationHistory.push({ role: 'user', text: text, topic: 'user' });
+    this.state.messageCount++;
 
     var self = this;
     this._addTypingIndicator();
-    var delay = 600 + Math.random() * 1200 + Math.min(text.length * 12, 1200);
-    setTimeout(function() {
+
+    // v99: Try live API first, fall back to local KB
+    var apiPayload = {
+      messages: this._buildMessages(text),
+      mode: this.state.mode,
+      scenario: this.state.scenario
+    };
+
+    fetch(this._apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(apiPayload),
+      signal: AbortSignal.timeout ? AbortSignal.timeout(15000) : undefined
+    })
+    .then(function(res) {
+      if (!res.ok) throw new Error('API ' + res.status);
+      return res.json();
+    })
+    .then(function(data) {
+      self._removeTypingIndicator();
+      var reply = data.reply || data.message || data.content || data.text || '';
+      if (!reply && data.choices && data.choices[0]) reply = data.choices[0].message?.content || data.choices[0].text || '';
+      if (!reply) throw new Error('Empty response');
+      self.state.conversationHistory.push({ role: 'bot', text: reply, topic: self.state.mode });
+      self._addMessage(reply, 'bot');
+      if (self.state.speakerOn) self._speak(reply);
+      // Update warmth in roleplay mode based on conversation length
+      if (self.state.mode === 'roleplay' && self.state.messageCount > 4) {
+        self.state.warmthLevel = Math.min(3, Math.floor(self.state.messageCount / 4));
+        self._updateWarmthUI();
+      }
+    })
+    .catch(function(err) {
+      // Fallback to local KB when API unavailable
+      console.warn('TrainerBot API unavailable, using local KB:', err.message);
       self._removeTypingIndicator();
       var result;
       if (self.state.mode === 'agent') {
@@ -11817,7 +11886,7 @@ const TrainerBot = {
       }
       self._addMessage(result.text, 'bot');
       if (self.state.speakerOn) self._speak(result.text);
-    }, delay);
+    });
   },
 
   reset: function() {
@@ -16949,6 +17018,7 @@ function openMasterAdmin() {
   const maColorHex  = document.getElementById('ma-color-hex');
   const maGoSolo    = document.getElementById('ma-gosolo-url');
   const maGrid      = document.getElementById('ma-grid-url');
+  const maChatApi   = document.getElementById('ma-chat-api-url');
 
   if (maAppName)    maAppName.value    = appName;
   if (maTagline)    maTagline.value    = tagline;
@@ -16964,6 +17034,7 @@ function openMasterAdmin() {
   applyGlassColor(glassColor);
   if (maGoSolo)     maGoSolo.value     = s.gosoloUrl || 'https://phx.gosolo.io/';
   if (maGrid)       maGrid.value       = s.gridUrl   || 'https://procfu.com/widgets/mcapp/qWhbwtv797R7';
+  if (maChatApi)    maChatApi.value    = localStorage.getItem('ce_chat_api_url') || '';
 
   // Storage info
   refreshStorageInfo();
@@ -16972,8 +17043,8 @@ function openMasterAdmin() {
   const aboutEl = document.getElementById('ma-about-text');
   if (aboutEl) {
     aboutEl.textContent =
-      `App version:   capital-energy-v92\n` +
-      `SW cache:      capital-energy-v92\n` +
+      `App version:   capital-energy-v100\n` +
+      `SW cache:      capital-energy-v100\n` +
       `Build date:    ${new Date().toLocaleDateString()}\n` +
       `User role:     master_admin\n` +
       `localStorage:  ${Object.keys(localStorage).filter(k => k.startsWith('ce_')).length} keys`;
@@ -17103,6 +17174,7 @@ document.getElementById('ma-reset-brand-btn').addEventListener('click', () => {
 document.getElementById('ma-save-links-btn').addEventListener('click', () => {
   const gosoloUrl = document.getElementById('ma-gosolo-url').value.trim();
   const gridUrl   = document.getElementById('ma-grid-url').value.trim();
+  const chatApiUrl = document.getElementById('ma-chat-api-url').value.trim();
   const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
   if (gosoloUrl) s.gosoloUrl = gosoloUrl;
   if (gridUrl)   s.gridUrl   = gridUrl;
@@ -17110,6 +17182,14 @@ document.getElementById('ma-save-links-btn').addEventListener('click', () => {
   // Update hidden admin fields so GoSolo/Grid buttons still work
   document.getElementById('admin-gosolo-url').value = gosoloUrl || s.gosoloUrl;
   document.getElementById('admin-grid-url').value   = gridUrl   || s.gridUrl;
+  // Save AI Chat API URL — updates TrainerBot live
+  if (chatApiUrl) {
+    localStorage.setItem('ce_chat_api_url', chatApiUrl);
+    if (window.TrainerBot) TrainerBot._apiUrl = chatApiUrl;
+  } else {
+    localStorage.removeItem('ce_chat_api_url');
+    if (window.TrainerBot) TrainerBot._apiUrl = 'http://localhost:8080/api/chat';
+  }
   const btn = document.getElementById('ma-save-links-btn');
   btn.textContent = '✓ Saved!';
   setTimeout(() => { btn.textContent = '💾 Save Quick Links'; }, 1500);
