@@ -853,7 +853,7 @@
     .nav-item--home {
       position: absolute;
       left: 50%; top: 0;
-      transform: translateX(-50%) translateY(-32%);
+      transform: translateX(-50%) translateY(-14%);
       display: flex; flex-direction: column; align-items: center;
       gap: 4px; padding: 0;
       border: none; background: none; cursor: pointer;
@@ -4435,7 +4435,7 @@
   ───────────────────────────────────────────────────────────────────────── */
   #master-admin-sheet {
     position: fixed; inset: 0; z-index: 9800;
-    background: #050a0e;
+    background: linear-gradient(180deg, #060d10 0%, #0a1214 100%);
     display: flex; flex-direction: column;
     overflow: hidden;
     transform: translateY(100%);
@@ -4447,57 +4447,62 @@
   #master-admin-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 56px 20px 16px;
-    border-bottom: 1px solid rgba(20,145,153,0.10);
+    border-bottom: 1px solid rgba(20,145,153,0.08);
     flex-shrink: 0;
+    background: rgba(0,0,0,0.3);
   }
   #master-admin-title {
-    font-size: 20px; font-weight: 700;
-    color: #1dd5e2; letter-spacing: 0.04em;
+    font-size: 18px; font-weight: 700;
+    color: #1dd5e2; letter-spacing: 0.06em;
+    font-family: var(--font-display);
   }
   #master-admin-badge {
-    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
-    background: rgba(20,145,153,0.12); color: #1dd5e2;
-    padding: 3px 8px; border-radius: 24px; margin-left: 8px;
-    border: 1px solid rgba(20,145,153,0.25);
+    font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+    background: rgba(20,145,153,0.10); color: rgba(29,213,226,0.8);
+    padding: 4px 8px; border-radius: 24px; margin-left: 8px;
+    border: 1px solid rgba(20,145,153,0.15);
   }
   #master-admin-close-btn {
     width: 36px; height: 36px; border-radius: 50%; border: none;
-    background: rgba(255,255,255,0.08); color: #f0f8ff;
+    background: rgba(255,255,255,0.06); color: rgba(240,248,255,0.6);
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; -webkit-tap-highlight-color: transparent;
-    font-size: 18px;
+    font-size: 16px;
+    transition: background 0.15s;
   }
+  #master-admin-close-btn:active { background: rgba(255,255,255,0.12); }
   #master-admin-body {
-    flex: 1; overflow-y: auto; padding: 16px 20px 40px;
+    flex: 1; overflow-y: auto; padding: 16px 16px 48px;
     -webkit-overflow-scrolling: touch;
   }
   .ma-section {
-    margin-bottom: 24px;
-    background: #0a1118; border-radius: 16px;
-    border: 1px solid rgba(20,145,153,0.10);
+    margin-bottom: 16px;
+    background: rgba(255,255,255,0.03); border-radius: var(--r-md);
+    border: 1px solid rgba(255,255,255,0.05);
     overflow: hidden;
   }
   .ma-section-title {
-    font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
-    text-transform: uppercase; color: rgba(20,145,153,0.6);
-    padding: 12px 16px 10px;
-    border-bottom: 1px solid rgba(20,145,153,0.08);
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: rgba(20,145,153,0.5);
+    padding: 12px 16px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
   }
-  .ma-field { padding: 12px 16px; border-bottom: 1px solid rgba(20,145,153,0.06); }
+  .ma-field { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.03); }
   .ma-field:last-child { border-bottom: none; }
   .ma-label {
-    font-size: 11px; color: rgba(240,248,255,0.5);
-    font-weight: 600; letter-spacing: 0.05em; margin-bottom: 8px;
-    display: block;
+    font-size: 10px; color: rgba(240,248,255,0.4);
+    font-weight: 600; letter-spacing: 0.06em; margin-bottom: 8px;
+    display: block; text-transform: uppercase;
   }
   .ma-input {
     width: 100%; padding: 10px 12px;
-    border-radius: 12px; border: 1px solid rgba(20,145,153,0.15);
-    background: rgba(0,0,0,0.4); color: #f0f8ff;
+    border-radius: var(--r-sm); border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04); color: #f0f4f5;
     font-size: 14px; font-family: inherit;
     outline: none; -webkit-appearance: none;
+    transition: border-color 0.15s;
   }
-  .ma-input:focus { border-color: rgba(20,145,153,0.5); }
+  .ma-input:focus { border-color: rgba(20,145,153,0.4); }
   .ma-color-row {
     display: flex; align-items: center; gap: 12px;
   }
@@ -4517,18 +4522,20 @@
   }
   .ma-btn {
     display: flex; align-items: center; justify-content: center; gap: 8px;
-    width: 100%; padding: 12px 16px; border-radius: 12px; border: none;
-    background: rgba(20,145,153,0.1); color: #1dd5e2;
-    font-size: 14px; font-weight: 600; font-family: inherit;
+    width: 100%; padding: 12px 16px; border-radius: var(--r-sm); border: none;
+    background: rgba(20,145,153,0.08); color: #1dd5e2;
+    font-size: 13px; font-weight: 600; font-family: inherit;
     cursor: pointer; -webkit-tap-highlight-color: transparent;
     transition: background 0.15s, transform 0.12s;
     margin-top: 8px;
+    border: 1px solid rgba(20,145,153,0.12);
   }
-  .ma-btn:active { transform: scale(0.97); background: rgba(20,145,153,0.18); }
+  .ma-btn:active { transform: scale(0.97); background: rgba(20,145,153,0.15); }
   .ma-btn--danger {
-    background: rgba(239,68,68,0.12); color: #f87171;
+    background: rgba(239,68,68,0.08); color: #f87171;
+    border-color: rgba(239,68,68,0.15);
   }
-  .ma-btn--danger:active { background: rgba(239,68,68,0.22); }
+  .ma-btn--danger:active { background: rgba(239,68,68,0.18); }
   .ma-storage-info {
     font-size: 12px; color: rgba(240,248,255,0.35);
     padding: 8px 0 0; font-family: 'Courier New', monospace;
@@ -6889,8 +6896,33 @@
   .trainer-scenarios-wrap { padding: 20px 16px calc(env(safe-area-inset-bottom,0px) + 90px); }
   .trainer-header { text-align:center; margin-bottom:24px; }
   .trainer-header-icon { font-size:48px; margin-bottom:8px; }
-  .trainer-title { font-family:'Outfit',sans-serif; font-size:28px; font-weight:700; letter-spacing:-0.03em; color:var(--text); margin:0; }
-  .trainer-subtitle { font-size:14px; color:var(--text-2); margin:6px 0 0; }
+
+  /* v99: AI Brain orb element */
+  .ai-brain-orb {
+    position:relative; width:72px; height:72px; margin:0 auto 12px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .ai-brain-ring {
+    position:absolute; inset:0; border-radius:50%;
+    border:2px solid rgba(20,145,153,0.25);
+    animation:brainPulse 3s ease-in-out infinite;
+  }
+  .ai-brain-ring::before {
+    content:''; position:absolute; inset:-4px; border-radius:50%;
+    border:1px solid rgba(20,145,153,0.10);
+    animation:brainPulse 3s ease-in-out infinite 0.5s;
+  }
+  .ai-brain-core { font-size:36px; position:relative; z-index:1; }
+  @keyframes brainPulse {
+    0%, 100% { transform:scale(1); opacity:0.6; }
+    50% { transform:scale(1.08); opacity:1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ai-brain-ring, .ai-brain-ring::before { animation:none; }
+  }
+
+  .trainer-title { font-family:'Outfit',sans-serif; font-size:22px; font-weight:700; letter-spacing:-0.02em; color:var(--text); margin:0; }
+  .trainer-subtitle { font-size:13px; color:var(--text-2); margin:8px 0 0; line-height:1.4; }
 
   /* Mode tabs */
   .trainer-mode-tabs { display:flex; gap:8px; margin:16px 0 12px; background:var(--g0); border-radius:12px; padding:4px; }
@@ -6936,8 +6968,9 @@
   /* Chat area */
   .trainer-chat-wrap {
     display:flex; flex-direction:column;
-    height:calc(100vh - var(--header-h) - var(--nav-h) - var(--safe-bottom));
+    height:calc(100vh - var(--header-h) - var(--nav-h) - var(--safe-bottom) - 24px);
     position:relative;
+    overflow:hidden;
   }
 
   .trainer-chat-header {
@@ -7022,7 +7055,7 @@
 
   /* Input area */
   .trainer-input-area {
-    flex-shrink:0; padding:8px 14px calc(env(safe-area-inset-bottom,0px) + 10px);
+    flex-shrink:0; padding:8px 16px 4px;
     background:var(--g1); border-top:1px solid var(--g-border);
     backdrop-filter:var(--blur-md); -webkit-backdrop-filter:var(--blur-md);
   }
@@ -7473,6 +7506,13 @@
           <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Export to CSV
         </button>
+
+        <!-- v99: Manager rep filter — shows all managed reps -->
+        <div id="mgr-rep-filter" style="display:none;margin-bottom:8px">
+          <select id="mgr-rep-select" style="width:100%;padding:8px 12px;border-radius:var(--r-sm);border:1px solid var(--g-border);background:var(--g1);color:var(--text);font-size:13px;font-family:inherit;">
+            <option value="all">👥 All Reps</option>
+          </select>
+        </div>
 
         <!-- Filter pills -->
         <div class="log-filters" role="group" aria-label="Filter entries by status">
@@ -8944,40 +8984,7 @@
         </div>
       </details>
 
-      <!-- Branding — Manager/Master Admin -->
-      <details class="admin-accordion" id="admin-branding-section">
-        <summary class="admin-accordion-header">
-          <span class="admin-accordion-icon">🖼️</span>
-          <span class="admin-accordion-label">Branding</span>
-          <svg class="admin-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-        </summary>
-        <div class="admin-accordion-body">
-          <div class="admin-field">
-            <label class="admin-label">Company Logo</label>
-            <div id="admin-logo-preview" style="display:none;margin-bottom:8px">
-              <img id="admin-logo-preview-img" style="max-height:48px;border-radius:8px" alt="Logo preview" />
-              <button class="admin-save-btn" id="admin-logo-remove" style="padding:4px 10px;font-size:11px;margin:0">Remove</button>
-            </div>
-            <label class="form-file-label" for="admin-logo-file" style="cursor:pointer">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              Upload Logo
-            </label>
-            <input type="file" id="admin-logo-file" accept="image/*" style="display:none" />
-          </div>
-          <div class="admin-field" style="margin-top:12px">
-            <label class="admin-label">App Icon</label>
-            <div id="admin-icon-preview" style="display:none;margin-bottom:8px">
-              <img id="admin-icon-preview-img" style="max-height:48px;border-radius:8px" alt="Icon preview" />
-              <button class="admin-save-btn" id="admin-icon-remove" style="padding:4px 10px;font-size:11px;margin:0">Remove</button>
-            </div>
-            <label class="form-file-label" for="admin-icon-file" style="cursor:pointer">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:middle;margin-right:4px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              Upload Icon
-            </label>
-            <input type="file" id="admin-icon-file" accept="image/*" style="display:none" />
-          </div>
-        </div>
-      </details>
+      <!-- Branding moved to secret menu (DEV CONSOLE) only — v99 -->
 
       <!-- Adder Sheets — Manager/Master Admin -->
       <details class="admin-accordion" id="admin-adder-section">
@@ -9159,9 +9166,13 @@
       <!-- Scenario selector (shown before chat starts) -->
       <div id="trainer-scenarios" class="trainer-scenarios-wrap">
         <div class="trainer-header">
-          <div class="trainer-header-icon">🎙️</div>
-          <h2 class="trainer-title">Sales Trainer</h2>
-          <p class="trainer-subtitle">Practice your pitch or ask your live agent anything</p>
+          <!-- v99: AI Brain custom element -->
+          <div class="ai-brain-orb" id="ai-brain-orb">
+            <div class="ai-brain-ring"></div>
+            <div class="ai-brain-core">🧠</div>
+          </div>
+          <h2 class="trainer-title">AI Sales Brain</h2>
+          <p class="trainer-subtitle">Your personal AI coach — roleplay scenarios or ask anything</p>
         </div>
 
         <!-- Mode tabs: Roleplay vs Live Agent -->
@@ -9170,7 +9181,7 @@
             🎭 Roleplay
           </button>
           <button class="trainer-mode-tab" id="trainer-mode-agent" onclick="TrainerBot.switchMode('agent')">
-            🧠 Live Agent
+            🧠 Ask AI
           </button>
         </div>
 
@@ -9208,12 +9219,12 @@
           </div>
         </div>
 
-        <!-- Live Agent section -->
+        <!-- Live Agent section — AI Brain -->
         <div id="trainer-agent-section" style="display:none;">
           <div class="trainer-agent-intro">
             <div class="trainer-agent-avatar">🧠</div>
-            <h3>Your Sales Coach</h3>
-            <p>Ask me anything about solar sales, objection handling, NEPQ techniques, closing strategies, or how to handle specific situations in the field.</p>
+            <h3>AI Sales Brain</h3>
+            <p>Objection handling, NEPQ techniques, closing strategies, door openers — ask me anything about solar sales.</p>
             <button class="trainer-agent-start-btn" onclick="TrainerBot.startAgent()">Start Conversation</button>
           </div>
           <div class="trainer-agent-topics">
@@ -11157,7 +11168,7 @@ const TrainerBot = {
     good: {
       cost: [
         "Huh, okay. So you're saying my payment could actually be less than what I'm paying now?",
-        "That makes more sense when you break it down that way. What about the tax credit?",
+        "That makes more sense when you break it down that way. Tell me more about the savings.",
         "I didn't realize there were $0-down options. Tell me more about that."
       ],
       roof: [
@@ -11296,7 +11307,7 @@ const TrainerBot = {
 
   // ── Answer quality keywords: what signals a good answer for each topic ──
   answerQuality: {
-    cost: { good: /\b(tax credit|itc|30%|zero down|\$0|payment.*less|lock.*rate|no.*increase|compare.*bill|replace.*bill|swap.*payment|offset)\b/i, strong: /\b(show.*bill|look.*usage|design.*free|custom.*quote|your.*specific)\b/i },
+    cost: { good: /\b(zero down|\$0|payment.*less|lock.*rate|no.*increase|compare.*bill|replace.*bill|swap.*payment|offset|save|lower)\b/i, strong: /\b(show.*bill|look.*usage|design.*free|custom.*quote|your.*specific)\b/i },
     roof: { good: /\b(waterproof|flash|mount|warranty.*intact|protect.*shingle|uv|secondary layer|ironridge|not.*void|engineering)\b/i, strong: /\b(structural.*engineer|roof.*warrant.*stay|inspect.*free|photos)\b/i },
     lease_vs_buy: { good: /\b(own|equity|asset|power plant|appreciat|transfer|your.*system|build.*value)\b/i, strong: /\b(compare.*rent.*own|mortgage.*analogy|your.*roof.*your.*power)\b/i },
     scam: { good: /\b(review|bbb|rating|year.*business|license|bond|insur|track record|referr|google)\b/i, strong: /\b(show.*you.*review|check.*us.*out|call.*customer|reference)\b/i },
@@ -11317,7 +11328,7 @@ const TrainerBot = {
     cost: "NEPQ: Don't defend the price. Ask 'What would it mean if your electric bill was locked in and never went up?' — shift from cost to value.",
     roof: "Solar Guide: Address head-on. 'We add a waterproof layer under each mount. Many roofs last LONGER because panels protect from UV.'",
     lease_vs_buy: "Strategy: Compare to renting vs owning. 'With a purchase, you own a power plant. With a lease, you're renting electricity.'",
-    timeline: "Cardone: Create urgency. 'The tax credit drops next year. Every month you wait is a month you pay full price to the utility.'",
+    timeline: "Cardone: Create urgency. 'Your utility just filed for another rate increase. Every month you wait is a month you pay more to the utility. Lock in now.'",
     savings: "NEPQ: Problem awareness question: 'How much will you pay the utility over 25 years if electricity goes up 3-4% per year?'",
     warranty: "Solar Guide: Stack them. '25-yr panel, 25-yr production, 10-yr inverter, plus our workmanship warranty.'",
     scam: "Cardone: Agreement kills resistance. 'I totally understand — bad companies ARE out there. That's why we [differentiator].'",
@@ -11351,7 +11362,7 @@ const TrainerBot = {
     ],
     closing: [
       { q: /close|closing|ask.*for.*sale|get.*them.*to.*sign|seal.*deal/i, a: "Closing isn't a moment — it's a natural conclusion. If you've done NEPQ right, the homeowner has already convinced themselves. The assumptive close: 'Based on everything we've talked about, it sounds like this makes sense for your family. The next step is just a quick design and site survey — takes about 30 minutes. Does tomorrow afternoon or Saturday morning work better for you?' Give two options, not yes/no." },
-      { q: /urgency|create.*urgency|without.*push/i, a: "Real urgency, not fake pressure: 'The federal tax credit is at 30% right now but it's scheduled to step down. And your utility just filed for another rate increase — that means every month you wait, you're paying more to the utility AND getting less back from the tax credit. I'm not trying to rush you, but the math genuinely gets worse the longer you wait.'" },
+      { q: /urgency|create.*urgency|without.*push/i, a: "Real urgency, not fake pressure: 'Your utility just filed for another rate increase — rates have gone up every year for the past decade. Every month you wait, you're paying more to the utility instead of locking in your own rate. I'm not trying to rush you, but the math genuinely gets worse the longer you wait.'" },
       { q: /trial.*close|temperature.*check|test.*close/i, a: "Sprinkle trial closes throughout: 'If the numbers worked out where your solar payment was actually less than your electric bill, is that something you'd want to explore?' or 'On a scale of 1-10, how interested would you say you are at this point?' Anything 6+ means keep going. Below 6 means you haven't addressed their real concern yet." },
       { q: /follow.*up|callback|second.*visit/i, a: "For the follow-up: 'I want to respect your time, so let me leave you with this: a custom design showing exactly how it would look on YOUR roof, YOUR savings numbers, and the payment options available to you. I'll send that over tonight. When you and [spouse] have had a chance to look at it, I'll give you a quick call — does tomorrow evening work, or would Wednesday be better?'" }
     ],
@@ -13083,7 +13094,7 @@ const UTILITY_DATA = {
     objections: [
       { q: '"I\'ll wait and see what happens with APS rates."', a: 'Waiting actually costs you — current NEM customers get grandfathered for 10 years at today\'s export rate. New customers after the next rate case may get less. Now is the time to lock in.' },
       { q: '"Is the battery rebate still available?"', a: 'APS offers up to $1,500 for battery storage, subject to available funds. I can check current availability — but these programs end when the budget is gone.' },
-      { q: '"My APS bill isn\'t that high."', a: 'APS rates have gone up 30% in the past 5 years. A 25-year solar agreement locks in your production cost and protects you from future increases.' },
+      { q: '"My APS bill isn\'t that high."', a: 'APS rates have gone up significantly over the past 5 years. A 25-year solar agreement locks in your production cost and protects you from future increases.' },
     ],
   },
   sce: {
@@ -13114,7 +13125,7 @@ const UTILITY_DATA = {
     ],
     objections: [
       { q: '"I heard NEM 3.0 made solar not worth it in CA."', a: 'That\'s true for solar-only. With storage, payback is actually better than ever because you\'re avoiding $0.35/kWh peak power, not just getting credit for exports. The math flipped in favor of storage.' },
-      { q: '"It costs too much now with the battery."', a: 'Federal tax credit covers 30% of the whole system including battery. SGIP may add $200/kWh more. Your net cost after incentives is often comparable to pre-NEM-3 solar-only.' },
+      { q: '"It costs too much now with the battery."', a: 'SGIP may add $200/kWh incentive. With available programs, your net cost after incentives is often comparable to pre-NEM-3 solar-only. We can run the exact numbers for your home.' },
     ],
   },
   sdge: {
@@ -13161,7 +13172,7 @@ const UTILITY_DATA = {
     battery: {
       value: 'SGIP incentive ($150–200/kWh income-qualified). Self-consumption of solar during peak saves 25–35¢/kWh vs 5¢ export credit.',
       peakShaving: 'PG&E TOU-C: 4–9PM weekdays.',
-      incentive: 'SGIP battery incentive program. Federal 30% ITC applies to battery.',
+      incentive: 'SGIP battery incentive program. Check current federal incentives with your installer.',
       pitch: '"PG&E\'s rates have gone up every year. Under the new rules, storage is what makes solar worth it — you store power during the day and use it at night when PG&E charges the most."',
     },
     rates: [
@@ -13190,7 +13201,7 @@ const UTILITY_DATA = {
     battery: {
       value: 'Texas had Winter Storm Uri (2021) — power outages for days. Battery storage for backup power is a very strong emotional pitch. Oncor customers value grid resilience.',
       peakShaving: 'Most TX REPs have TOU or demand plans. Battery helps avoid peak charges.',
-      incentive: 'No state tax credit. Federal 30% ITC. Property tax exemption on added value from solar in TX.',
+      incentive: 'No state incentive program. Property tax exemption on added value from solar in TX. Check current federal incentives.',
       pitch: '"After Winter Storm Uri, a lot of people in Texas realized the grid isn\'t as reliable as we thought. A solar + battery system means your lights stay on no matter what happens to the grid. And your property tax doesn\'t go up from the added home value."',
     },
     rates: [
@@ -13198,11 +13209,11 @@ const UTILITY_DATA = {
       ['Peak Rate', 'Varies by REP TOU plan'],
       ['Solar Buyback', '4–8¢/kWh (varies by REP)'],
       ['Property Tax Exemption', 'Yes — solar adds value tax-free in TX'],
-      ['Federal ITC', '30% of system cost'],
+      ['Federal Incentives', 'Check current programs with your installer'],
       ['Grid Event Risk', 'High — ERCOT grid has had multiple failures'],
     ],
     objections: [
-      { q: '"My electricity is already cheap in Texas."', a: 'Texas rates are lower than CA, but they spiked to $9/kWh during Winter Storm Uri. Solar + battery gives you energy independence from ERCOT. And TX has no state income tax credit, but the 30% federal tax credit still applies.' },
+      { q: '"My electricity is already cheap in Texas."', a: 'Texas rates are lower than CA, but they spiked to $9/kWh during Winter Storm Uri. Solar + battery gives you energy independence from ERCOT. Plus TX has a property tax exemption on solar — the added home value is tax-free.' },
       { q: '"Which REP gives me the best solar buyback?"', a: 'Great question — we can help you find REPs with the best solar buyback rates in your area. Some like Green Mountain and TXU offer competitive programs. We handle the whole process.' },
     ],
   },
@@ -13221,14 +13232,14 @@ const UTILITY_DATA = {
     battery: {
       value: 'Same backup power pitch as Oncor. West Texas has high solar irradiance — excellent production. Battery prevents waste of peak production hours.',
       peakShaving: 'REP TOU plans apply.',
-      incentive: 'Federal 30% ITC. TX property tax exemption on solar.',
+      incentive: 'TX property tax exemption on solar. Check current federal incentives with your installer.',
       pitch: '"West Texas has some of the best sun in the country — your system will produce more here than almost anywhere else. The question is who captures that value — you or the REP at 5 cents a kilowatt-hour."',
     },
     rates: [
       ['Avg Residential Rate', '~11–13¢/kWh'],
       ['Solar Irradiance', 'Excellent — some of highest in US'],
       ['Solar Buyback', '4–8¢/kWh (depends on REP)'],
-      ['Federal ITC', '30% of system cost'],
+      ['Federal Incentives', 'Check current programs with your installer'],
       ['TX Property Tax Exemption', 'Yes — applies statewide'],
     ],
     objections: [
@@ -13246,12 +13257,33 @@ function renderUtilityCheatsheet(utilityKey) {
   const nm = data.netMetering;
   const bat = data.battery;
 
+  // v99: Enhanced layout — quick stats banner + expanded sections
+  var importNum = (nm.importRate || '').match(/[\d.]+/);
+  var exportNum = (nm.exportRate || '').match(/[\d.]+/);
+  var spread = (importNum && exportNum) ? (parseFloat(importNum[0]) - parseFloat(exportNum[0])).toFixed(1) : null;
+
   body.innerHTML = `
+    <!-- Quick Stats Banner -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+      <div style="background:var(--g1);border-radius:var(--r-sm);padding:12px 8px;text-align:center;border:1px solid var(--g-border)">
+        <div style="font-size:18px;font-weight:700;color:${data.color}">${escHtml(nm.importRate.replace(/[~]/g,''))}</div>
+        <div style="font-size:10px;color:var(--text-3);margin-top:4px">Import Rate</div>
+      </div>
+      <div style="background:var(--g1);border-radius:var(--r-sm);padding:12px 8px;text-align:center;border:1px solid var(--g-border)">
+        <div style="font-size:18px;font-weight:700;color:var(--c-green)">${escHtml(nm.exportRate.replace(/[~]/g,''))}</div>
+        <div style="font-size:10px;color:var(--text-3);margin-top:4px">Export Credit</div>
+      </div>
+      <div style="background:var(--g1);border-radius:var(--r-sm);padding:12px 8px;text-align:center;border:1px solid var(--g-border)">
+        <div style="font-size:18px;font-weight:700;color:var(--c-amber)">${spread ? spread + '&cent;' : escHtml(nm.interconnect)}</div>
+        <div style="font-size:10px;color:var(--text-3);margin-top:4px">${spread ? 'Spread/kWh' : 'Interconnect'}</div>
+      </div>
+    </div>
+
     <div class="utility-cheat-section">
       <div class="utility-cheat-title" style="color:${data.color}">🏢 ${escHtml(data.name)}</div>
       <table class="utility-cheat-table">
         <tbody>
-          ${data.rates.map(([k,v]) => `<tr><td>${escHtml(k)}</td><td>${escHtml(v)}</td></tr>`).join('')}
+          ${data.rates.map(([k,v]) => '<tr><td>' + escHtml(k) + '</td><td>' + escHtml(v) + '</td></tr>').join('')}
         </tbody>
       </table>
     </div>
@@ -13266,34 +13298,55 @@ function renderUtilityCheatsheet(utilityKey) {
           <tr><td>Import Rate</td><td><span class="utility-highlight">${escHtml(nm.importRate)}</span></td></tr>
           <tr><td>Interconnect</td><td>${escHtml(nm.interconnect)}</td></tr>
           <tr><td>Credit</td><td>${escHtml(nm.credit)}</td></tr>
-          <tr><td>Key Notes</td><td>${escHtml(nm.notes)}</td></tr>
         </tbody>
       </table>
+      <div style="padding:8px 12px;background:rgba(20,145,153,0.04);border-radius:0 0 var(--r-sm) var(--r-sm);font-size:12px;color:var(--text-2);line-height:1.5">
+        <strong style="color:var(--text)">📋 Key Notes:</strong> ${escHtml(nm.notes)}
+      </div>
     </div>
 
     <div class="utility-cheat-section">
-      <div class="utility-cheat-title">🔋 Battery Storage Pitch</div>
+      <div class="utility-cheat-title">🔋 Battery Storage Strategy</div>
       <div class="utility-objection-card" style="background:rgba(20,145,153,0.06);border-color:rgba(20,145,153,0.20)">
-        <div class="utility-objection-q">💬 Ready-to-Use Script</div>
-        <div class="utility-objection-a">${escHtml(bat.pitch)}</div>
+        <div class="utility-objection-q">💬 Ready-to-Use Door Script</div>
+        <div class="utility-objection-a" style="font-style:italic">${escHtml(bat.pitch)}</div>
       </div>
       <table class="utility-cheat-table">
         <tbody>
-          <tr><td>Storage Value</td><td>${escHtml(bat.value)}</td></tr>
-          <tr><td>Peak Shaving</td><td>${escHtml(bat.peakShaving)}</td></tr>
+          <tr><td>Why Battery</td><td>${escHtml(bat.value)}</td></tr>
+          <tr><td>Peak Strategy</td><td>${escHtml(bat.peakShaving)}</td></tr>
           <tr><td>Incentives</td><td>${escHtml(bat.incentive)}</td></tr>
         </tbody>
       </table>
     </div>
 
+    <!-- Why Switch Now — urgency section -->
+    <div class="utility-cheat-section">
+      <div class="utility-cheat-title">🚀 Why Switch Now — Urgency Points</div>
+      <div style="padding:12px;display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <span style="font-size:16px;flex-shrink:0">📈</span>
+          <span style="font-size:12px;color:var(--text);line-height:1.5">Utility rates rise 3-5% annually. A 25-year lock means you avoid decades of increases.</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <span style="font-size:16px;flex-shrink:0">⏳</span>
+          <span style="font-size:12px;color:var(--text);line-height:1.5">Current net metering programs may change. Customers who install now get grandfathered in.</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <span style="font-size:16px;flex-shrink:0">🏠</span>
+          <span style="font-size:12px;color:var(--text);line-height:1.5">Zillow: solar homes sell 4.1% higher and 20% faster than comparable non-solar homes.</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <span style="font-size:16px;flex-shrink:0">⚡</span>
+          <span style="font-size:12px;color:var(--text);line-height:1.5">Battery storage = energy independence. Grid failures (like TX Winter Storm Uri) are becoming more common.</span>
+        </div>
+      </div>
+    </div>
+
     ${data.objections.length ? `
     <div class="utility-cheat-section">
       <div class="utility-cheat-title">🎯 Common Objections &amp; Rebuttals</div>
-      ${data.objections.map(o => `
-        <div class="utility-objection-card">
-          <div class="utility-objection-q">❓ ${escHtml(o.q)}</div>
-          <div class="utility-objection-a">✅ ${escHtml(o.a)}</div>
-        </div>`).join('')}
+      ${data.objections.map(function(o) { return '<div class="utility-objection-card"><div class="utility-objection-q">\u2753 ' + escHtml(o.q) + '</div><div class="utility-objection-a">\u2705 ' + escHtml(o.a) + '</div></div>'; }).join('')}
     </div>` : ''}
   `;
 }
@@ -14152,7 +14205,33 @@ logForm.addEventListener('submit', e => {
 // ── List rendering ────────────────────────────────────────────────────────
 function renderLogList() {
   syncNewEntryBtn();
-  const all      = loadEntries();
+  var all      = loadEntries();
+
+  // v99: Manager rep filter — populate dropdown and filter by selected rep
+  var role = getActiveRole();
+  var mgrFilter = document.getElementById('mgr-rep-filter');
+  var mgrSelect = document.getElementById('mgr-rep-select');
+  if (mgrFilter && mgrSelect) {
+    if (role === 'manager' || role === 'master_admin') {
+      mgrFilter.style.display = '';
+      // Build unique rep names
+      var repNames = {};
+      all.forEach(function(e) { var n = (e.repName || e.name || '').trim(); if (n) repNames[n.toLowerCase()] = n; });
+      var sorted = Object.values(repNames).sort();
+      var curVal = mgrSelect.value || 'all';
+      if (sorted.length && mgrSelect.options.length !== sorted.length + 1) {
+        mgrSelect.innerHTML = '<option value="all">\uD83D\uDC65 All Reps (' + all.length + ')</option>' + sorted.map(function(n) { return '<option value="' + escHtml(n.toLowerCase()) + '">' + escHtml(n) + '</option>'; }).join('');
+        mgrSelect.value = curVal;
+      }
+      // Filter by selected rep
+      if (curVal !== 'all') {
+        all = all.filter(function(e) { return (e.repName || e.name || '').toLowerCase() === curVal; });
+      }
+    } else {
+      mgrFilter.style.display = 'none';
+    }
+  }
+
   const sub      = document.getElementById('log-subtitle');
   sub.textContent = all.length === 1 ? '1 entry' : `${all.length} entries`;
 
@@ -15185,6 +15264,9 @@ function closeCustomerDetail() {
 
 // ── CRM event listeners (registered in _initApp to avoid null-ref crash) ──
 function _initCrmListeners() {
+  // v99: Manager rep filter change → re-render
+  document.getElementById('mgr-rep-select')?.addEventListener('change', function() { renderLogList(); });
+
   // Appointment card tap → open calendar on that date
   document.getElementById('appt-crm-list')?.addEventListener('click', e => {
     const card = e.target.closest('.appt-crm-card');
@@ -18257,16 +18339,12 @@ function saveAdminSettings() {
   const fSlider = document.getElementById('admin-font-size');
   if (fSlider) localStorage.setItem('ce_font_size', fSlider.value);
 
-  const msg = document.getElementById('admin-success');
-  if (msg) msg.classList.add('show');
-  setTimeout(() => {
-    if (msg) msg.classList.remove('show');
-    // Force-close admin panel and switch to dashboard
-    const ap = document.getElementById('panel-admin');
-    if (ap) ap.classList.remove('active');
-    activateTab('dashboard');
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  }, 900);
+  // v99: instant close — no delay
+  showToast('Settings saved!');
+  const ap = document.getElementById('panel-admin');
+  if (ap) ap.classList.remove('active');
+  activateTab('dashboard');
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 
