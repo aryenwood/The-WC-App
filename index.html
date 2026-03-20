@@ -9862,6 +9862,28 @@
       </div>
     </div>
 
+    <!-- Dev Tools -->
+    <div class="ma-section" style="border-color:rgba(239,68,68,0.2)">
+      <div class="ma-section-title" style="color:rgba(239,68,68,0.7);background:rgba(239,68,68,0.04)">⚠ Dev Tools — Troubleshooting Only</div>
+      <p style="font-size:11px;color:rgba(239,68,68,0.55);margin:0;padding:8px 16px 0;line-height:1.5">These actions clear specific localStorage keys. None touch Firestore or knock/appointment data unless noted.</p>
+      <div class="ma-field">
+        <button class="ma-btn ma-btn--danger" id="ma-dev-reset-onboarding">↺ Reset Onboarding</button>
+        <span style="display:block;margin-top:5px;font-size:11px;color:rgba(240,248,255,0.3)">Clears ce_onboarding_done + ce_user_role. Onboarding reruns on next reload.</span>
+      </div>
+      <div class="ma-field">
+        <button class="ma-btn ma-btn--danger" id="ma-dev-reset-role">↺ Reset Role Only</button>
+        <span style="display:block;margin-top:5px;font-size:11px;color:rgba(240,248,255,0.3)">Clears ce_user_role only. Forces role picker on next reload.</span>
+      </div>
+      <div class="ma-field">
+        <button class="ma-btn ma-btn--danger" id="ma-dev-reset-profile">↺ Reset User Profile</button>
+        <span style="display:block;margin-top:5px;font-size:11px;color:rgba(240,248,255,0.3)">Clears ce_user_phone, ce_user_region, ce_user_headshot. Does not touch Firebase auth or Firestore.</span>
+      </div>
+      <div class="ma-field">
+        <button class="ma-btn" id="ma-dev-force-drain" style="border-color:rgba(20,145,153,0.25)">⚡ Force Drain to Firestore</button>
+        <span style="display:block;margin-top:5px;font-size:11px;color:rgba(240,248,255,0.3)">Manually triggers drainToFirestore() now. Useful for debugging sync issues.</span>
+      </div>
+    </div>
+
     <!-- About -->
     <div class="ma-section">
       <div class="ma-section-title">ℹ About</div>
@@ -18087,6 +18109,47 @@ document.getElementById('ma-clear-btn').addEventListener('click', () => {
   if (!confirm('⚠️ This will erase ALL app data — logs, appointments, settings. This cannot be undone. Continue?')) return;
   Object.keys(localStorage).filter(k => k.startsWith('ce_')).forEach(k => localStorage.removeItem(k));
   location.reload();
+});
+
+// Dev Tools — Troubleshooting Only
+document.getElementById('ma-dev-reset-onboarding').addEventListener('click', () => {
+  if (!confirm('Reset Onboarding?\n\nThis clears ce_onboarding_done and ce_user_role from localStorage only. No knock entries, appointments, or Firestore data will be touched. The onboarding flow will run again on next reload.')) return;
+  localStorage.removeItem('ce_onboarding_done');
+  localStorage.removeItem('ce_user_role');
+  showToast('Onboarding reset — reloading…');
+  setTimeout(() => location.reload(), 900);
+});
+
+document.getElementById('ma-dev-reset-role').addEventListener('click', () => {
+  if (!confirm('Reset Role Only?\n\nThis clears ce_user_role from localStorage. The role picker will show on next reload. Nothing else is touched.')) return;
+  localStorage.removeItem('ce_user_role');
+  showToast('Role cleared — reloading…');
+  setTimeout(() => location.reload(), 900);
+});
+
+document.getElementById('ma-dev-reset-profile').addEventListener('click', () => {
+  if (!confirm('Reset User Profile?\n\nThis clears ce_user_phone, ce_user_region, and ce_user_headshot from localStorage. Firebase auth and Firestore are not touched.')) return;
+  ['ce_user_phone', 'ce_user_region', 'ce_user_headshot'].forEach(k => localStorage.removeItem(k));
+  showToast('User profile cleared — reloading…');
+  setTimeout(() => location.reload(), 900);
+});
+
+document.getElementById('ma-dev-force-drain').addEventListener('click', async () => {
+  if (!confirm('Force Drain to Firestore?\n\nThis immediately calls drainToFirestore() and writes any queued data. Check the browser console for results.')) return;
+  const btn = document.getElementById('ma-dev-force-drain');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Draining…'; }
+  try {
+    if (typeof drainToFirestore === 'function') {
+      await drainToFirestore();
+      showToast('Drain complete — check console for details.');
+    } else {
+      showToast('drainToFirestore not available.');
+    }
+  } catch(e) {
+    showToast('Drain error: ' + e.message);
+    console.error('[DevTools] Force drain error:', e);
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '⚡ Force Drain to Firestore'; }
 });
 
 // Change PIN
