@@ -699,7 +699,7 @@
       padding: 4px 12px;
       box-shadow: 0 2px 12px rgba(20,145,153,0.18), 0 1px 3px rgba(0,0,0,0.10);
     }
-    html.dark-mode #header-brand-img { background: rgba(255,255,255,0.06); box-shadow: 0 2px 12px rgba(20,145,153,0.12); }
+    html.dark-mode #header-brand-img { background: rgba(255,255,255,0.92); box-shadow: 0 2px 12px rgba(20,145,153,0.12); }
 
     /* Actions group — pushed to the far right */
     #header-actions {
@@ -4573,6 +4573,15 @@
     font-size: 12px; color: rgba(240,248,255,0.4);
     line-height: 1.8; font-family: 'Courier New', monospace;
   }
+  /* Monospace for URL/technical input fields */
+  #ma-chat-api-url, #ma-gosolo-url, #ma-grid-url {
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 12px; letter-spacing: 0.01em;
+  }
+  /* Cleaner section headers */
+  .ma-section-title {
+    background: rgba(20,145,153,0.04);
+  }
 
   /* PIN keypad overlay */
   #pin-overlay {
@@ -7377,6 +7386,20 @@
         <span id="dash-rank-score" style="font-size:11px;color:var(--text-3);white-space:nowrap">0 pts</span>
       </div>
 
+      <!-- ── On The Doors toggle card ──────────────────────────────────────── -->
+      <button class="otd-toggle-card" id="otd-toggle-card" onclick="otdToggleTap()" aria-label="On The Doors Mode">
+        <div class="otd-toggle-left">
+          <div class="otd-toggle-icon">🚪</div>
+          <div>
+            <div class="otd-toggle-name">On The Doors</div>
+            <div class="otd-toggle-desc" id="otd-toggle-desc">Tap to enter focus mode</div>
+          </div>
+        </div>
+        <div class="otd-toggle-switch">
+          <div class="otd-toggle-knob"></div>
+        </div>
+      </button>
+
       <!-- Log Door CTA — with daily goal progress -->
       <button class="quick-link-btn quick-link-btn--log-door" id="dash-log-door-btn" aria-label="Log a door knock">
         <div class="ql-icon ql-icon--log-door">
@@ -7392,20 +7415,6 @@
             <div class="goal-bar" id="goal-bar" style="width:0%"></div>
           </div>
           <div class="goal-label" id="goal-label" style="display:none"></div>
-        </div>
-      </button>
-
-      <!-- ── On The Doors toggle card ──────────────────────────────────────── -->
-      <button class="otd-toggle-card" id="otd-toggle-card" onclick="otdToggleTap()" aria-label="On The Doors Mode">
-        <div class="otd-toggle-left">
-          <div class="otd-toggle-icon">🚪</div>
-          <div>
-            <div class="otd-toggle-name">On The Doors</div>
-            <div class="otd-toggle-desc" id="otd-toggle-desc">Tap to enter focus mode</div>
-          </div>
-        </div>
-        <div class="otd-toggle-switch">
-          <div class="otd-toggle-knob"></div>
         </div>
       </button>
 
@@ -8555,18 +8564,17 @@
         <span style="font-size:12px;color:var(--text-2);margin-left:8px" id="adder-pdf-name"></span>
       </div>
 
-      <!-- State tabs -->
-      <div class="adder-tabs">
-        <button class="adder-tab adder-tab--active" data-state="az">AZ / NV</button>
-        <button class="adder-tab" data-state="ca">CA</button>
-        <button class="adder-tab" data-state="tx">TX</button>
-      </div>
+      <!-- State tabs — rendered dynamically from ce_adder_sheets -->
+      <div class="adder-tabs" id="adder-tabs-container"></div>
 
       <!-- Search -->
       <div class="adder-search-wrap">
         <svg class="adder-search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input class="adder-search" id="adder-search" type="search" placeholder="Search adders…" autocomplete="off" />
       </div>
+
+      <!-- Custom sheet panel (for dynamically-added tabs with PDFs) -->
+      <div id="adder-custom-panel" style="display:none;padding:16px 0"></div>
 
       <!-- AZ/NV -->
       <div class="adder-state-panel" id="adder-az">
@@ -9763,30 +9771,14 @@
     <!-- Adder Sheets -->
     <div class="ma-section">
       <div class="ma-section-title">📄 Adder Sheets</div>
-      <p style="font-size:12px;color:#7ab8d4;margin:0 0 14px;line-height:1.5">Upload custom adder sheet PDFs per state. Uploaded sheets appear in Resources → Adders.</p>
-      <div class="ma-field">
-        <label class="ma-label">AZ / NV ADDER SHEET</label>
-        <label style="display:inline-block;padding:8px 14px;border-radius:12px;background:rgba(20,145,153,0.08);color:#1dd5e2;font-size:13px;font-weight:600;cursor:pointer;border:1px solid rgba(20,145,153,0.2);">
-          Upload PDF
-          <input type="file" id="ma-adder-az-upload" accept=".pdf,image/*" style="display:none" />
-        </label>
-        <span id="ma-adder-az-status" style="display:block;margin-top:6px;font-size:12px;color:#7ab8d4"></span>
+      <p style="font-size:12px;color:#7ab8d4;margin:0 0 0;line-height:1.5;padding:10px 16px 0">Edit tab labels, upload a PDF for any tab, or add custom tabs.</p>
+      <div id="ma-adder-list"><!-- populated by JS --></div>
+      <div class="ma-field" style="display:flex;gap:8px;align-items:center">
+        <input class="ma-input" id="ma-adder-new-label" placeholder="New tab label…" style="flex:1;min-width:0" />
+        <button class="ma-btn" onclick="maAdderAdd()" style="white-space:nowrap;flex-shrink:0;padding:10px 14px">+ Add</button>
       </div>
       <div class="ma-field">
-        <label class="ma-label">CA ADDER SHEET</label>
-        <label style="display:inline-block;padding:8px 14px;border-radius:12px;background:rgba(20,145,153,0.08);color:#1dd5e2;font-size:13px;font-weight:600;cursor:pointer;border:1px solid rgba(20,145,153,0.2);">
-          Upload PDF
-          <input type="file" id="ma-adder-ca-upload" accept=".pdf,image/*" style="display:none" />
-        </label>
-        <span id="ma-adder-ca-status" style="display:block;margin-top:6px;font-size:12px;color:#7ab8d4"></span>
-      </div>
-      <div class="ma-field">
-        <label class="ma-label">TX ADDER SHEET</label>
-        <label style="display:inline-block;padding:8px 14px;border-radius:12px;background:rgba(20,145,153,0.08);color:#1dd5e2;font-size:13px;font-weight:600;cursor:pointer;border:1px solid rgba(20,145,153,0.2);">
-          Upload PDF
-          <input type="file" id="ma-adder-tx-upload" accept=".pdf,image/*" style="display:none" />
-        </label>
-        <span id="ma-adder-tx-status" style="display:block;margin-top:6px;font-size:12px;color:#7ab8d4"></span>
+        <button class="ma-btn" onclick="maAdderSaveLabels()" style="width:100%">💾 Save Labels</button>
       </div>
     </div>
 
@@ -12749,10 +12741,14 @@ function _initApp() {
 
   const params  = new URLSearchParams(location.search);
   const qTab    = params.get('tab');
+  const qAction = params.get('action');
   const stored  = localStorage.getItem('ce_active_tab');
   const initial = qTab || stored || 'dashboard';
   const valid   = ['dashboard', 'log', 'map', 'installs', 'leaderboard', 'resources', 'admin', 'calendar', 'trainer'];
   activateTab(valid.includes(initial) ? initial : 'dashboard');
+  // PWA shortcut actions
+  if (qAction === 'log') { activateTab('dashboard'); setTimeout(() => openSheet(), 400); }
+  else if (qAction === 'book') { activateTab('dashboard'); setTimeout(() => openBookingSheet(), 400); }
 
   // Dismiss splash — skip delay on first run so setup modal is immediately visible
   const splash = document.getElementById('splash');
@@ -12789,7 +12785,7 @@ if (document.readyState === 'complete') {
 
 // Render resource panes with any custom uploads
 renderChecklistPane();
-renderAdderPane();
+// renderAdderPane is called by renderAdderTabs() which runs inside the adder IIFE above
 
 // ── Block pinch-zoom globally except inside the PDF reader ────────────────
 document.addEventListener('touchmove', function(e) {
@@ -13576,7 +13572,7 @@ document.getElementById('btn-export-csv').addEventListener('click', () => {
     panes.forEach(p => p.classList.toggle('res-pane--hidden', p.id !== 'res-pane-' + id));
     if (id === 'books') { renderBookCovers(); refreshBookBadges(); }
     if (id === 'checklist') { renderChecklistPane(); }
-    if (id === 'adders')    { renderAdderPane(); }
+    if (id === 'adders')    { renderAdderTabs(); }
     if (id === 'wins')      { renderWallOfWins(); }
   }
 
@@ -14058,35 +14054,147 @@ function refreshBookBadges() {
   });
 }
 
-// ── Adder Sheets — tab switching & search ───────────────────────────────
-(function() {
-  const tabs   = document.querySelectorAll('.adder-tab');
-  const panels = { az: document.getElementById('adder-az'), ca: document.getElementById('adder-ca'), tx: document.getElementById('adder-tx') };
-  const search = document.getElementById('adder-search');
-  let activeState = 'az';
+// ── Adder Sheets — dynamic tabs & search ───────────────────────────────
+const _ADDER_DEFAULTS = [{key:'az',label:'AZ / NV'},{key:'ca',label:'CA'},{key:'tx',label:'TX'}];
 
-  function showState(state) {
-    activeState = state;
-    tabs.forEach(t => t.classList.toggle('adder-tab--active', t.dataset.state === state));
-    Object.entries(panels).forEach(([k, p]) => { if (p) p.classList.toggle('adder-state-panel--hidden', k !== state); });
-    if (search) { search.value = ''; filterRows(''); }
+function getAdderSheets() {
+  try { return JSON.parse(localStorage.getItem('ce_adder_sheets') || 'null') || _ADDER_DEFAULTS.map(s => ({...s})); }
+  catch(_) { return _ADDER_DEFAULTS.map(s => ({...s})); }
+}
+function saveAdderSheets(sheets) {
+  try { localStorage.setItem('ce_adder_sheets', JSON.stringify(sheets)); } catch(_) {}
+}
+
+let _adderActiveState = null;
+const _adderHardcodedPanels = { az: 'adder-az', ca: 'adder-ca', tx: 'adder-tx' };
+
+function renderAdderTabs(activeKey) {
+  const container = document.getElementById('adder-tabs-container');
+  if (!container) return;
+  const sheets = getAdderSheets();
+  if (!_adderActiveState || !sheets.find(s => s.key === _adderActiveState)) {
+    _adderActiveState = activeKey || sheets[0]?.key || 'az';
   }
+  const active = activeKey || _adderActiveState;
+  _adderActiveState = active;
+  container.innerHTML = sheets.map(s =>
+    `<button class="adder-tab${s.key === active ? ' adder-tab--active' : ''}" data-state="${s.key}">${s.label}</button>`
+  ).join('');
+  // Show/hide hardcoded panels
+  Object.entries(_adderHardcodedPanels).forEach(([k, id]) => {
+    const p = document.getElementById(id);
+    if (p) p.classList.toggle('adder-state-panel--hidden', k !== active);
+  });
+  // Show custom panel for non-hardcoded keys with PDF data
+  const cp = document.getElementById('adder-custom-panel');
+  const sheet = sheets.find(s => s.key === active);
+  if (cp) {
+    if (sheet && sheet.pdfData && !_adderHardcodedPanels[active]) {
+      cp.style.display = '';
+      const label = (sheet.label || active).replace(/'/g, '&#39;');
+      cp.innerHTML = `<button class="adder-pdf-link" onclick="openPdfViewer(getAdderSheets().find(s=>s.key==='${active}')?.pdfData||'','${label}')">📄 View ${label}</button>`;
+    } else {
+      cp.style.display = 'none';
+    }
+  }
+  renderAdderPane(active);
+}
+
+(function() {
+  const container = document.getElementById('adder-tabs-container');
+  const search    = document.getElementById('adder-search');
 
   function filterRows(q) {
-    const panel = panels[activeState];
+    const panel = document.getElementById(_adderHardcodedPanels[_adderActiveState]) ||
+                  document.getElementById('adder-custom-panel');
     if (!panel) return;
     const term = q.toLowerCase();
     panel.querySelectorAll('.adder-row').forEach(row => {
-      const name = row.querySelector('.adder-name');
+      const name  = row.querySelector('.adder-name');
       const price = row.querySelector('.adder-price');
-      const match = !term || (name && name.textContent.toLowerCase().includes(term)) || (price && price.textContent.toLowerCase().includes(term));
+      const match = !term || (name && name.textContent.toLowerCase().includes(term)) ||
+                    (price && price.textContent.toLowerCase().includes(term));
       row.classList.toggle('adder-row--hidden', !match);
     });
   }
 
-  tabs.forEach(tab => tab.addEventListener('click', () => { showState(tab.dataset.state); renderAdderPane(tab.dataset.state); }));
+  // Event delegation — works for dynamically-rendered tabs
+  if (container) container.addEventListener('click', e => {
+    const tab = e.target.closest('.adder-tab');
+    if (tab) { renderAdderTabs(tab.dataset.state); if (search) { search.value = ''; filterRows(''); } }
+  });
   if (search) search.addEventListener('input', () => filterRows(search.value));
+
+  // Initial render
+  renderAdderTabs();
 })();
+
+// Master admin adder sheet management
+function renderMaAdderList() {
+  const list = document.getElementById('ma-adder-list');
+  if (!list) return;
+  const sheets = getAdderSheets();
+  list.innerHTML = sheets.map((s, i) => `
+    <div class="ma-field" style="display:flex;align-items:center;gap:8px">
+      <input class="ma-input" style="flex:1;min-width:0" value="${(s.label||'').replace(/"/g,'&quot;')}" id="ma-adder-label-${i}" placeholder="Label" />
+      <label style="white-space:nowrap;padding:8px 12px;border-radius:var(--r-sm);background:rgba(20,145,153,0.08);color:#1dd5e2;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(20,145,153,0.2);flex-shrink:0">
+        ${s.pdfName ? '✓ PDF' : '↑ PDF'}
+        <input type="file" accept=".pdf,image/*" style="display:none" onchange="maAdderUpload(this,${i})" />
+      </label>
+      <button onclick="maAdderRemove(${i})" style="width:32px;height:32px;border-radius:50%;border:none;background:rgba(239,68,68,0.08);color:#ef4444;cursor:pointer;font-size:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+  `).join('');
+}
+
+window.maAdderUpload = function(input, idx) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const sheets = getAdderSheets();
+    if (!sheets[idx]) return;
+    sheets[idx].pdfData = e.target.result;
+    sheets[idx].pdfName = file.name;
+    saveAdderSheets(sheets);
+    renderMaAdderList();
+    renderAdderTabs();
+    showToast(`"${file.name}" uploaded`);
+  };
+  reader.readAsDataURL(file);
+};
+
+window.maAdderRemove = function(idx) {
+  const sheets = getAdderSheets();
+  sheets.splice(idx, 1);
+  saveAdderSheets(sheets);
+  renderMaAdderList();
+  renderAdderTabs();
+  showToast('Sheet removed');
+};
+
+function maAdderSaveLabels() {
+  const sheets = getAdderSheets();
+  sheets.forEach((s, i) => {
+    const el = document.getElementById(`ma-adder-label-${i}`);
+    if (el && el.value.trim()) s.label = el.value.trim();
+  });
+  saveAdderSheets(sheets);
+  renderAdderTabs();
+  showToast('Labels saved');
+}
+
+function maAdderAdd() {
+  const labelEl = document.getElementById('ma-adder-new-label');
+  const label = labelEl ? labelEl.value.trim() : '';
+  if (!label) return;
+  const key = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || ('sheet-' + Date.now());
+  const sheets = getAdderSheets();
+  sheets.push({ key, label });
+  saveAdderSheets(sheets);
+  if (labelEl) labelEl.value = '';
+  renderMaAdderList();
+  renderAdderTabs();
+  showToast(`"${label}" added`);
+}
 
 // ── Documents upload (Resources tab) ────────────────────────────────────
 (function() {
@@ -17861,28 +17969,7 @@ document.getElementById('ma-logo-upload').addEventListener('change', e => {
     if (btn) { btn.textContent = '✓ Saved!'; setTimeout(() => { btn.textContent = '💾 Save Branding'; }, 1500); }
   });
 
-  // Adder sheet uploads
-  ['az','ca','tx'].forEach(st => {
-    document.getElementById(`ma-adder-${st}-upload`)?.addEventListener('change', async e => {
-      const file = e.target.files[0]; if (!file) return;
-      const statusEl = document.getElementById(`ma-adder-${st}-status`);
-      if (statusEl) statusEl.textContent = 'Uploading…';
-      try {
-        const b64 = await _f2b64(file);
-        const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
-        if (!s.adderSheets) s.adderSheets = {};
-        s.adderSheets[st] = { name: file.name, data: b64, type: file.type };
-        localStorage.setItem('ce_admin', JSON.stringify(s));
-        if (statusEl) statusEl.textContent = `✓ ${file.name}`;
-        showToast(`${st.toUpperCase()} adder sheet uploaded!`);
-        if (typeof renderAdderPane === 'function') renderAdderPane();
-      } catch(_) { if (statusEl) statusEl.textContent = 'Upload failed — file too large?'; showToast('Upload failed.'); }
-    });
-    // Load current status
-    const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
-    const el = document.getElementById(`ma-adder-${st}-status`);
-    if (el && s.adderSheets?.[st]) el.textContent = `✓ ${s.adderSheets[st].name}`;
-  });
+  // Adder sheet uploads — now handled by renderMaAdderList() / maAdderUpload() in the dynamic adder section
 
   // Checklist PDF upload
   document.getElementById('ma-checklist-upload')?.addEventListener('change', async e => {
@@ -17944,6 +18031,7 @@ document.getElementById('ma-logo-upload').addEventListener('change', e => {
       if (maSheet.classList.contains('open')) {
         _loadMaBrandingStatus();
         _renderMaQuickLinks();
+        renderMaAdderList();
       }
     }).observe(maSheet, { attributes: true, attributeFilter: ['class'] });
   }
@@ -21024,6 +21112,17 @@ document.getElementById('dispo-appt-btn').addEventListener('click', openDispoShe
     const ov = document.getElementById('onboarding-overlay');
     if (ov) ov.classList.remove('open');
     localStorage.setItem('ce_onboarding_done', '1');
+    // Auto-add manager to team on first login
+    (function() {
+      const role = localStorage.getItem('ce_user_role') || '';
+      if (role !== 'manager' && role !== 'master_admin') return;
+      const name = localStorage.getItem('ce_user_name') || '';
+      if (!name) return;
+      const team = DataStore.loadTeam();
+      if (team.some(m => m.name === name)) return;
+      team.push({ name, role: 'manager' });
+      DataStore.saveTeam(team);
+    })();
   };
 
   document.addEventListener('DOMContentLoaded', function() {

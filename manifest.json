@@ -61,10 +61,17 @@
   "categories": ["business", "productivity"],
   "shortcuts": [
     {
-      "name": "New Log Entry",
-      "short_name": "New Entry",
-      "description": "Log a new door knock",
-      "url": "/index.html?tab=log",
+      "name": "Log Door",
+      "short_name": "Log Door",
+      "description": "Log a door knock",
+      "url": "/?action=log",
+      "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Book Appointment",
+      "short_name": "Book Appt",
+      "description": "Book a new appointment",
+      "url": "/?action=book",
       "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
     }
   ]
