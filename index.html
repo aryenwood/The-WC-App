@@ -11091,26 +11091,19 @@ function applyOrgSettings(data) {
     }
   });
 
-  // Google sign-in — redirect flow (signInWithPopup blocked by COOP on Netlify PWAs)
+  // Google sign-in — popup flow (COOP fixed via netlify.toml same-origin-allow-popups header)
   document.getElementById('login-google-btn').addEventListener('click', function() {
     showError('');
     var btn = document.getElementById('login-google-btn');
     if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
     var provider = new firebase.auth.GoogleAuthProvider();
-    fbAuth.signInWithRedirect(provider).catch(function(err) {
+    fbAuth.signInWithPopup(provider).then(function(result) {
+      console.log('[Firebase] Popup sign-in complete:', result.user.email);
+    }).catch(function(err) {
+      console.warn('[Firebase] Popup sign-in error:', err.code, err.message);
       showError(err.message);
       if (btn) { btn.disabled = false; btn.style.opacity = ''; }
     });
-  });
-
-  // Pick up the result when the page returns from the Google redirect
-  fbAuth.getRedirectResult().then(function(result) {
-    if (result && result.user) {
-      console.log('[Firebase] Redirect sign-in complete:', result.user.email);
-    }
-  }).catch(function(err) {
-    console.warn('[Firebase] Redirect result error:', err.code, err.message);
-    showError(err.message);
   });
 
   // Email / password sign-in
