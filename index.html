@@ -10715,6 +10715,10 @@ const fbDb   = firebase.firestore();
     if (user) {
       loginScreen.classList.add('hidden');
       appEl.style.display = '';
+      // First-time user: show role setup, which then triggers onboarding
+      if (!localStorage.getItem('ce_user_role')) {
+        setTimeout(function() { showFirstRunModal && showFirstRunModal(); }, 100);
+      }
     } else {
       loginScreen.classList.remove('hidden');
       appEl.style.display = 'none';
@@ -12368,13 +12372,9 @@ function _initApp() {
     if (brandImg) brandImg.alt = savedName;
   }
 
-  // Show role setup if no role has been selected yet
+  // Role UI applied after auth now — see onAuthStateChanged in Firebase block
   const _isFirstRun = !localStorage.getItem('ce_user_role');
-  if (_isFirstRun) {
-    showFirstRunModal();
-  } else {
-    applyRoleUI();
-  }
+  applyRoleUI();
 
   const params  = new URLSearchParams(location.search);
   const qTab    = params.get('tab');
