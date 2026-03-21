@@ -21635,6 +21635,7 @@ var _otdPendingMeta    = null;    // metadata for pending blob
 var _otdSessTimer      = null;    // setInterval for session clock
 var _otdSessSecs       = 0;       // total session seconds elapsed
 var _otdFinalCallback  = null;    // callback after final segment prompt
+var _otdIsRecording    = false;   // synchronous guard for mic toggle (set before async getUserMedia)
 
 /* ─── Dispo Drawer — toggle, swipe, open/close ─── */
 function otdToggleDrawer() {
@@ -21706,7 +21707,7 @@ function openOTD() {
   _otdStatus = null; _otdLat = null; _otdLng = null;
   _otdAddr = ''; _otdVoiceBlob = null; _otdEntryIdForSnap = null;
   _otdSessionDoors = 0; _otdSessionContact = 0;
-  _otdPendingBlob = null; _otdPendingMeta = null; _otdFinalCallback = null;
+  _otdPendingBlob = null; _otdPendingMeta = null; _otdFinalCallback = null; _otdIsRecording = false;
   _otdHideSaveSkip();
   _resetOTDUI();
   _otdUpdateCounters();
@@ -21746,7 +21747,7 @@ function closeOTD() {
   // Stop continuous session recording
   _otdStopSessionRecording();
   // Discard any pending recording prompt
-  _otdPendingBlob = null; _otdPendingMeta = null; _otdFinalCallback = null;
+  _otdPendingBlob = null; _otdPendingMeta = null; _otdFinalCallback = null; _otdIsRecording = false;
   _otdHideSaveSkip();
   // Close OTD booking sheet if open
   if (typeof otdCloseBookingSheet === 'function') otdCloseBookingSheet();
@@ -22274,15 +22275,15 @@ function otdSnapBill() {
 
 /* ─── Mic button toggle — tap to start/stop recording ─── */
 function otdToggleVoice() {
-  if (_otdSessActive) {
+  if (_otdIsRecording) {
     /* ── STOP ── */
-    var mimeType = (_otdSessRec && _otdSessRec.mimeType) || 'audio/webm';
+    _otdIsRecording = false;
+    _otdSessActive  = false;
+
+    var mimeType  = (_otdSessRec && _otdSessRec.mimeType) || 'audio/webm';
     var doorStart = _otdDoorRecStart;
 
-    // Mark inactive immediately to prevent re-entry
-    _otdSessActive = false;
-
-    // Flush remaining audio into dataavailable
+    // Flush remaining audio before stop
     if (_otdSessRec && _otdSessRec.state !== 'inactive') _otdSessRec.requestData();
     var capturedChunks = _otdDoorChunks.slice();
     _otdDoorChunks = [];
@@ -22290,17 +22291,16 @@ function otdToggleVoice() {
     // Freeze timer
     clearInterval(_otdSessTimer); _otdSessTimer = null;
 
-    // Reset UI to idle
-    var ring = document.getElementById('otd-session-ring');
-    if (ring) ring.classList.remove('active');
-    var hintEl = document.getElementById('otd-session-hint');
+    // Reset UI to idle immediately
+    var ring    = document.getElementById('otd-session-ring');
+    var hintEl  = document.getElementById('otd-session-hint');
+    var micEl   = document.getElementById('otd-session-mic');
+    if (ring)   ring.classList.remove('active');
     if (hintEl) hintEl.textContent = 'Tap to Record';
-    var micEl = document.getElementById('otd-session-mic');
-    if (micEl) micEl.textContent = '🎙️';
+    if (micEl)  micEl.textContent  = '🎙️';
 
-    // Wait 380ms for final dataavailable chunk, then build blob + show Save/Skip
+    // Wait for final dataavailable event, then build blob and show Save/Skip
     setTimeout(function() {
-      // Stop stream & recorder
       if (_otdSessStream) {
         _otdSessStream.getTracks().forEach(function(t) { t.stop(); });
         _otdSessStream = null;
@@ -22320,22 +22320,25 @@ function otdToggleVoice() {
       var duration = Math.max(1, Math.round((Date.now() - doorStart) / 1000));
       _otdPendingBlob = blob;
       _otdPendingMeta = {
-        status: _otdStatus || 'memo',
-        address: _otdAddr || '',
+        status:    _otdStatus || 'memo',
+        address:   _otdAddr || '',
         addressId: _otdEntryIdForSnap || null,
-        duration: duration,
-        lat: _otdLat,
-        lng: _otdLng,
+        duration:  duration,
+        lat:       _otdLat,
+        lng:       _otdLng,
       };
       _otdShowSaveSkip(duration, _otdPendingMeta.status, _otdPendingMeta.address);
     }, 380);
 
   } else {
     /* ── START ── */
-    _otdDoorChunks = [];
+    // Set flag synchronously before getUserMedia so a second tap can't re-enter
+    _otdIsRecording = true;
+
+    _otdDoorChunks  = [];
     _otdDoorRecStart = Date.now();
 
-    // Reset + start timer
+    // Start timer
     _otdSessSecs = 0;
     var timerEl = document.getElementById('otd-session-timer');
     if (timerEl) timerEl.textContent = '0:00';
@@ -22349,11 +22352,40 @@ function otdToggleVoice() {
 
     // Update UI to recording state
     var hintEl = document.getElementById('otd-session-hint');
+    var micEl  = document.getElementById('otd-session-mic');
     if (hintEl) hintEl.textContent = 'Recording...';
-    var micEl = document.getElementById('otd-session-mic');
-    if (micEl) micEl.textContent = '⏹️';
+    if (micEl)  micEl.textContent  = '⏹️';
 
-    _otdStartSessionRecording();
+    // Request mic and start MediaRecorder
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      _otdIsRecording = false;
+      clearInterval(_otdSessTimer); _otdSessTimer = null;
+      if (hintEl) hintEl.textContent = 'No mic available';
+      if (micEl)  micEl.textContent  = '🎙️';
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+      _otdSessStream = stream;
+      var mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' :
+                     MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '';
+      _otdSessRec = new MediaRecorder(stream, mimeType ? { mimeType: mimeType } : {});
+      _otdSessRec.addEventListener('dataavailable', function(e) {
+        if (e.data && e.data.size > 0) _otdDoorChunks.push(e.data);
+      });
+      _otdSessRec.start(500); // 500ms timeslice
+      _otdSessActive = true;
+      var ring = document.getElementById('otd-session-ring');
+      if (ring) ring.classList.add('active');
+    }).catch(function(err) {
+      console.warn('[OTD] Mic permission denied:', err);
+      _otdIsRecording = false;
+      _otdSessActive  = false;
+      clearInterval(_otdSessTimer); _otdSessTimer = null;
+      var hintEl2 = document.getElementById('otd-session-hint');
+      var micEl2  = document.getElementById('otd-session-mic');
+      if (hintEl2) hintEl2.textContent = 'Mic denied';
+      if (micEl2)  micEl2.textContent  = '🎙️';
+    });
   }
 }
 
