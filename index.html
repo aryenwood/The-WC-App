@@ -6468,7 +6468,11 @@
   }
   .otd-session-inner {
     display: flex; flex-direction: column; align-items: center; gap: 6px;
+    background: none; border: none; cursor: pointer; padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .14s var(--spring);
   }
+  .otd-session-inner:active { transform: scale(0.93); }
   .otd-session-mic { font-size: 28px; line-height: 1; }
   .otd-session-timer {
     font-family: var(--font-display); font-size: 32px; font-weight: 700;
@@ -10365,11 +10369,11 @@
     </div>
     <div class="otd-center">
       <div class="otd-session-ring" id="otd-session-ring">
-        <div class="otd-session-inner">
-          <span class="otd-session-mic">🎙️</span>
+        <button class="otd-session-inner" id="otd-mic-btn" onclick="otdToggleVoice()">
+          <span class="otd-session-mic" id="otd-session-mic">🎙️</span>
           <div class="otd-session-timer" id="otd-session-timer">0:00</div>
-          <div class="otd-session-hint" id="otd-session-hint">Recording</div>
-        </div>
+          <div class="otd-session-hint" id="otd-session-hint">Tap to Record</div>
+        </button>
       </div>
       <button class="otd-dispo-trigger" onclick="otdOpenDispoSheet()">
         <span>📋</span>
@@ -21718,25 +21722,16 @@ function openOTD() {
     if (desc) desc.textContent = 'Active — tap to return';
   }
   otdRefreshGPS();
-  // Start session clock
+  // Reset mic UI to idle — recording only starts on explicit tap
   _otdSessSecs = 0;
   var timerEl = document.getElementById('otd-session-timer');
   if (timerEl) timerEl.textContent = '0:00';
-  _otdSessTimer = setInterval(function() {
-    _otdSessSecs++;
-    var m = Math.floor(_otdSessSecs / 60);
-    var s = _otdSessSecs % 60;
-    if (timerEl) timerEl.textContent = m + ':' + (s < 10 ? '0' : '') + s;
-  }, 1000);
-  // Update hint text based on consent
   var hintEl = document.getElementById('otd-session-hint');
-  if (hintEl) hintEl.textContent = localStorage.getItem('ce_recording_consent') === 'allow' ? 'Recording' : 'On The Doors';
-  // Start continuous session recording if consent given
-  if (localStorage.getItem('ce_recording_consent') === 'allow') {
-    _otdDoorChunks = [];
-    _otdDoorRecStart = Date.now();
-    _otdStartSessionRecording();
-  }
+  if (hintEl) hintEl.textContent = 'Tap to Record';
+  var micEl = document.getElementById('otd-session-mic');
+  if (micEl) micEl.textContent = '🎙️';
+  var ring = document.getElementById('otd-session-ring');
+  if (ring) ring.classList.remove('active');
 }
 
 function closeOTD() {
@@ -21792,6 +21787,14 @@ function _resetOTDUI() {
   });
   var banner = document.getElementById('otd-saved-banner');
   if (banner) banner.classList.remove('otd-visible');
+  // Reset mic to idle state
+  clearInterval(_otdSessTimer); _otdSessTimer = null;
+  var timerEl = document.getElementById('otd-session-timer');
+  if (timerEl) timerEl.textContent = '0:00';
+  var hintEl2 = document.getElementById('otd-session-hint');
+  if (hintEl2 && !_otdSessActive) hintEl2.textContent = 'Tap to Record';
+  var micEl2 = document.getElementById('otd-session-mic');
+  if (micEl2 && !_otdSessActive) micEl2.textContent = '🎙️';
 }
 
 /* ─── Counters ─── */
@@ -22269,8 +22272,90 @@ function otdSnapBill() {
   });
 }
 
-/* ─── Voice memo — removed, session recording handles mic capture ─── */
-function otdToggleVoice() { /* no-op — button removed from new flow */ }
+/* ─── Mic button toggle — tap to start/stop recording ─── */
+function otdToggleVoice() {
+  if (_otdSessActive) {
+    /* ── STOP ── */
+    var mimeType = (_otdSessRec && _otdSessRec.mimeType) || 'audio/webm';
+    var doorStart = _otdDoorRecStart;
+
+    // Mark inactive immediately to prevent re-entry
+    _otdSessActive = false;
+
+    // Flush remaining audio into dataavailable
+    if (_otdSessRec && _otdSessRec.state !== 'inactive') _otdSessRec.requestData();
+    var capturedChunks = _otdDoorChunks.slice();
+    _otdDoorChunks = [];
+
+    // Freeze timer
+    clearInterval(_otdSessTimer); _otdSessTimer = null;
+
+    // Reset UI to idle
+    var ring = document.getElementById('otd-session-ring');
+    if (ring) ring.classList.remove('active');
+    var hintEl = document.getElementById('otd-session-hint');
+    if (hintEl) hintEl.textContent = 'Tap to Record';
+    var micEl = document.getElementById('otd-session-mic');
+    if (micEl) micEl.textContent = '🎙️';
+
+    // Wait 380ms for final dataavailable chunk, then build blob + show Save/Skip
+    setTimeout(function() {
+      // Stop stream & recorder
+      if (_otdSessStream) {
+        _otdSessStream.getTracks().forEach(function(t) { t.stop(); });
+        _otdSessStream = null;
+      }
+      if (_otdSessRec && _otdSessRec.state !== 'inactive') {
+        try { _otdSessRec.stop(); } catch(_) {}
+      }
+      _otdSessRec = null;
+
+      var allChunks = capturedChunks.concat(_otdDoorChunks.slice(0, 5));
+      _otdDoorChunks = [];
+
+      if (allChunks.length === 0) return;
+      var blob = new Blob(allChunks, { type: mimeType });
+      if (blob.size < 500) return;
+
+      var duration = Math.max(1, Math.round((Date.now() - doorStart) / 1000));
+      _otdPendingBlob = blob;
+      _otdPendingMeta = {
+        status: _otdStatus || 'memo',
+        address: _otdAddr || '',
+        addressId: _otdEntryIdForSnap || null,
+        duration: duration,
+        lat: _otdLat,
+        lng: _otdLng,
+      };
+      _otdShowSaveSkip(duration, _otdPendingMeta.status, _otdPendingMeta.address);
+    }, 380);
+
+  } else {
+    /* ── START ── */
+    _otdDoorChunks = [];
+    _otdDoorRecStart = Date.now();
+
+    // Reset + start timer
+    _otdSessSecs = 0;
+    var timerEl = document.getElementById('otd-session-timer');
+    if (timerEl) timerEl.textContent = '0:00';
+    clearInterval(_otdSessTimer);
+    _otdSessTimer = setInterval(function() {
+      _otdSessSecs++;
+      var m = Math.floor(_otdSessSecs / 60);
+      var s = _otdSessSecs % 60;
+      if (timerEl) timerEl.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+    }, 1000);
+
+    // Update UI to recording state
+    var hintEl = document.getElementById('otd-session-hint');
+    if (hintEl) hintEl.textContent = 'Recording...';
+    var micEl = document.getElementById('otd-session-mic');
+    if (micEl) micEl.textContent = '⏹️';
+
+    _otdStartSessionRecording();
+  }
+}
 
 /* ─── OTD Recording Consent ─── */
 function _otdShowConsentSheet() {
