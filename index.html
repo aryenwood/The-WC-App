@@ -22380,9 +22380,8 @@ function otdToggleVoice() {
     }
     navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
       _otdSessStream = stream;
-      var mimeType = MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' :
-                     MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' :
-                     MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+      var mimeType = ['audio/mp4;codecs=aac','audio/mp4','audio/webm;codecs=opus','audio/webm']
+                     .find(function(t){ return MediaRecorder.isTypeSupported(t); }) || '';
       _otdSessRec = new MediaRecorder(stream, mimeType ? { mimeType: mimeType } : {});
       _otdSessRec.addEventListener('dataavailable', function(e) {
         if (e.data && e.data.size > 0) _otdDoorChunks.push(e.data);
@@ -22438,9 +22437,8 @@ function _otdStartSessionRecording() {
   _otdSessActive = false;
   navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
     _otdSessStream = stream;
-    var mimeType = MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' :
-                   MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' :
-                   MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+    var mimeType = ['audio/mp4;codecs=aac','audio/mp4','audio/webm;codecs=opus','audio/webm']
+                   .find(function(t){ return MediaRecorder.isTypeSupported(t); }) || '';
     _otdDoorChunks = [];
     _otdDoorRecStart = Date.now();
     _otdSessRec = new MediaRecorder(stream, mimeType ? { mimeType: mimeType } : {});
@@ -22556,7 +22554,7 @@ function _otdUploadToStorage(blob, meta) {
   var user = fbAuth.currentUser;
   var uid  = user.uid;
   var today = new Date().toISOString().slice(0, 10);
-  var ext   = (blob.type || 'audio/webm').includes('mp4') ? 'mp4' : 'webm';
+  var ext   = (blob.type || 'audio/webm').includes('mp4') ? 'm4a' : 'webm';
   var ts    = Date.now();
   var addressId = meta.addressId || ('addr_' + ts.toString(36));
   var path  = 'recordings/' + uid + '/' + uid + '/' + today + '/' + addressId + '-' + ts + '.' + ext;
