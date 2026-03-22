@@ -11114,6 +11114,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
 <script>
 // ── Firebase: init ────────────────────────────────────────────────────────
 const firebaseConfig = {
@@ -21754,15 +21755,14 @@ async function _initFCM() {
 // Firebase Cloud Function that calls the FCM HTTP v1 API:
 //   POST https://fcm.googleapis.com/v1/projects/wc-app-alpha/messages:send
 // This client-side function is a placeholder stub until that function exists.
-function sendNotification(uid, title, body, data) {
-  if (typeof fbDb === 'undefined' || !uid) return;
-  fbDb.collection('users').doc(uid).get().then(function(snap) {
-    if (!snap.exists) return;
-    var token = snap.data().fcmToken;
-    if (!token) { console.log('[FCM] No token for uid', uid, '— notification not delivered'); return; }
-    // TODO: invoke Cloud Function with { token, title, body, data }
-    console.log('[FCM] sendNotification →', uid, '|', title, '|', body, '| token:', token.slice(0, 20) + '…');
-  }).catch(function(e) { console.warn('[FCM] sendNotification read failed:', e); });
+async function sendNotification(targetUid, title, body, data) {
+  try {
+    var sendPush = firebase.functions().httpsCallable('sendPushNotification');
+    var result = await sendPush({ targetUid, title, body, data: data || {} });
+    console.log('[FCM] Notification sent:', result);
+  } catch (err) {
+    console.error('[FCM] Send failed:', err);
+  }
 }
 
 // ── Invite System ────────────────────────────────────────────────────────
