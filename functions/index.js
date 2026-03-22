@@ -1,9 +1,14 @@
+process.env.GOOGLE_CLOUD_PROJECT = 'wc-app-alpha';
+
 const { onDocumentUpdated, onDocumentCreated } = require('firebase-functions/v2/firestore');
-const { initializeApp } = require('firebase-admin/app');
+const { initializeApp, applicationDefault } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
 
-initializeApp();
+initializeApp({
+  credential: applicationDefault(),
+  projectId: 'wc-app-alpha'
+});
 
 // Triggered by client writing to notifications/{notifId} — sends push then deletes the doc.
 // No direct HTTP call from client = no CORS issues.
