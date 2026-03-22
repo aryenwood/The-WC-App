@@ -5996,10 +5996,21 @@
     color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 600; cursor: pointer;
     margin-top: 8px; font-family: var(--font-body);
   }
+  .invite-code-tap {
+    display: flex; flex-direction: column; align-items: center;
+    cursor: pointer; padding: 12px 0 4px; border-radius: 14px;
+    transition: background .15s;
+  }
+  .invite-code-tap:active { background: rgba(20,145,153,0.1); }
   .invite-code-display {
     font-family: var(--font-display); font-size: 52px; font-weight: 800;
     color: var(--amber); letter-spacing: 0.18em; text-align: center;
-    padding: 22px 0 8px; line-height: 1;
+    line-height: 1; display: block;
+  }
+  .invite-code-tap-hint {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 12px; color: rgba(255,255,255,0.35); margin-top: 8px;
+    letter-spacing: 0.03em;
   }
   .invite-code-sub { font-size: 12px; color: rgba(255,255,255,0.35); text-align: center; margin-bottom: 22px; letter-spacing: 0.04em; }
   .invite-copy-btn {
@@ -9962,7 +9973,13 @@
 <div id="invite-code-sheet">
   <div class="invite-handle"></div>
   <div class="invite-title">✅ Invite Ready</div>
-  <div class="invite-code-display" id="invite-code-display">——</div>
+  <div class="invite-code-tap" onclick="copyInviteCode()">
+    <span class="invite-code-display" id="invite-code-display">——</span>
+    <div class="invite-code-tap-hint" id="invite-code-tap-hint">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      Tap to copy
+    </div>
+  </div>
   <div class="invite-code-sub">Expires in 7 days · Single use</div>
   <button class="invite-copy-btn" id="invite-copy-btn" onclick="copyInviteCode()">📋 Copy Code</button>
   <button class="invite-sms-btn" onclick="shareInviteViaMessage()">💬 Share via Message</button>
@@ -21675,6 +21692,7 @@ document.getElementById('dispo-appt-btn').addEventListener('click', openDispoShe
 // ── Invite System ────────────────────────────────────────────────────────
 
 var _currentInviteCode = '';
+var _currentInviteRepName = '';
 var _pendingInvite = null; // set pre-auth, applied after onAuthStateChanged
 
 // Lookup an invite code WITHOUT requiring auth (Firestore rules: allow read: if true on invites)
@@ -21830,6 +21848,7 @@ function generateInviteCode() {
     usedBy:        null
   }).then(function() {
     _currentInviteCode = code;
+    _currentInviteRepName = (document.getElementById('invite-rep-name') || {}).value || '';
     closeInviteSheet();
     var display = document.getElementById('invite-code-display');
     if (display) display.textContent = code;
@@ -21846,26 +21865,35 @@ function generateInviteCode() {
 
 function copyInviteCode() {
   if (!_currentInviteCode) return;
-  var btn = document.getElementById('invite-copy-btn');
-  navigator.clipboard.writeText(_currentInviteCode).then(function() {
-    if (btn) { btn.textContent = '✅ Copied!'; setTimeout(function(){ btn.textContent = '📋 Copy Code'; }, 2000); }
-  }).catch(function() {
-    // Fallback for older mobile browsers
+  var btn  = document.getElementById('invite-copy-btn');
+  var hint = document.getElementById('invite-code-tap-hint');
+  function _flashCopied() {
+    if (btn)  { btn.textContent  = '✅ Copied!'; setTimeout(function(){ btn.textContent  = '📋 Copy Code'; }, 2000); }
+    if (hint) { hint.innerHTML   = '✓ Copied!';  setTimeout(function(){ hint.innerHTML   = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Tap to copy'; }, 2000); }
+  }
+  navigator.clipboard.writeText(_currentInviteCode).then(_flashCopied).catch(function() {
     var ta = document.createElement('textarea');
     ta.value = _currentInviteCode;
     ta.style.position = 'fixed'; ta.style.opacity = '0';
     document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); if (btn) { btn.textContent = '✅ Copied!'; setTimeout(function(){ btn.textContent = '📋 Copy Code'; }, 2000); } } catch(_) {}
+    try { document.execCommand('copy'); _flashCopied(); } catch(_) {}
     document.body.removeChild(ta);
   });
 }
 
 function shareInviteViaMessage() {
   if (!_currentInviteCode) return;
-  var s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
-  var orgName = s.companyName || 'Capital Energy';
-  var msg = "You've been invited to join " + orgName + " on WC App. " +
-            "Download the app at cptlenergy.netlify.app and use invite code: " + _currentInviteCode;
+  var s           = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  var orgName     = s.companyName || 'Capital Energy';
+  var managerName = localStorage.getItem('ce_user_name') || 'Your manager';
+  var repName     = (_currentInviteRepName || '').trim() || 'there';
+  var msg =
+    'Hey ' + repName + '! 👋\n\n' +
+    managerName + ' has invited you to join ' + orgName + ' on WC App — the field sales platform built for D2D pros.\n\n' +
+    'Your invite code:\n' + _currentInviteCode + '\n\n' +
+    'Tap the link below to get started:\n' +
+    'https://cptlenergy.netlify.app\n\n' +
+    'Code expires in 7 days. See you on the doors! 🚪';
   window.open('sms:?body=' + encodeURIComponent(msg), '_self');
 }
 
