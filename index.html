@@ -11114,7 +11114,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
 <script>
 // ── Firebase: init ────────────────────────────────────────────────────────
 const firebaseConfig = {
@@ -21980,63 +21979,6 @@ function shareInviteViaMessage() {
   window.open('sms:?body=' + encodeURIComponent(msg), '_self');
 }
 
-function _redeemInviteCode(code) {
-  return new Promise(function(resolve, reject) {
-    if (!code) { reject(new Error('Enter a code')); return; }
-    if (typeof fbDb === 'undefined' || !fbAuth || !fbAuth.currentUser) {
-      reject(new Error('Not signed in')); return;
-    }
-    var user = fbAuth.currentUser;
-    fbDb.collection('invites').doc(code).get().then(function(snap) {
-      if (!snap.exists) { reject(new Error('Invalid code')); return; }
-      var data = snap.data();
-      if (data.used) { reject(new Error('Code already used')); return; }
-      var expiry = data.expiresAt && data.expiresAt.toDate ? data.expiresAt.toDate() : null;
-      if (expiry && expiry < new Date()) { reject(new Error('Code has expired')); return; }
-
-      var role    = data.role || 'canvasser';
-      var orgId   = data.orgId;
-      var orgName = data.orgName || '';
-      var repName = localStorage.getItem('ce_user_name') || user.displayName || '';
-
-      // Set role + org locally
-      localStorage.setItem('ce_user_role', role);
-      localStorage.setItem('ce_org_id', orgId);
-
-      // Add rep to org team in Firestore
-      fbDb.collection('organizations').doc(orgId)
-        .collection('team').doc(user.uid)
-        .set({
-          name:       repName,
-          email:      user.email || '',
-          role:       role,
-          repUid:     user.uid,
-          joinedAt:   firebase.firestore.FieldValue.serverTimestamp(),
-          inviteCode: code
-        }, { merge: true })
-        .catch(function(e) { console.warn('[Invite] team write:', e); });
-
-      // Mark invite as used
-      fbDb.collection('invites').doc(code).update({
-        used:   true,
-        usedBy: user.uid,
-        usedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }).catch(function(e) { console.warn('[Invite] mark used:', e); });
-
-      // Notify the manager that a new rep joined
-      sendNotification(
-        orgId,
-        'New Rep Joined 🎉',
-        (repName || 'Someone') + ' just joined your team as ' + role,
-        { type: 'rep_joined', repUid: user.uid }
-      );
-
-      resolve({ role: role, orgName: orgName, orgId: orgId });
-    }).catch(function(err) {
-      reject(new Error('Could not verify code'));
-    });
-  });
-}
 
 // ── F6: SMS Handoff Card ──────────────────────────────────────────────────
 function showHandoffCard(appt) {
