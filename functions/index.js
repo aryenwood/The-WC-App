@@ -3,11 +3,15 @@ const { onDocumentUpdated } = require('firebase-functions/v2/firestore');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
+const cors = require('cors')({ origin: true });
 
 initializeApp();
 
 // Send push notification to a specific user by uid
-exports.wcSendPush = onCall({ cors: true }, async (request) => {
+exports.wcSendPush = onCall({
+  cors: true,
+  invoker: 'public'
+}, async (request) => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'Must be signed in');
   }
