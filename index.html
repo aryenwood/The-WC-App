@@ -7401,13 +7401,13 @@
   html.dark-mode .trainer-mic-btn.recording { background:rgba(239,68,68,0.12); }
 
   /* ── Login Screen ───────────────────────────────────────────────────────── */
-  #login-screen {
+  #login-screen, #invite-gate-screen {
     position: fixed; inset: 0; z-index: 9000;
     display: flex; align-items: center; justify-content: center;
     background: var(--bg);
     transition: opacity 0.3s ease;
   }
-  #login-screen.hidden { opacity: 0; pointer-events: none; }
+  #login-screen.hidden, #invite-gate-screen.hidden { opacity: 0; pointer-events: none; }
 
   .login-card {
     width: min(400px, 92vw);
@@ -11373,6 +11373,8 @@ function applyOrgSettings(data) {
   fbAuth.onAuthStateChanged(function(user) {
     if (user) {
       loginScreen.classList.add('hidden');
+      var _gateEl = document.getElementById('invite-gate-screen');
+      if (_gateEl) _gateEl.classList.add('hidden');
       appEl.style.display = '';
 
       // 1. Write user profile to Firestore users/{uid}
@@ -11451,8 +11453,9 @@ function applyOrgSettings(data) {
     } else {
       appEl.style.display = 'none';
       _clearFirebaseIdentity();
-      // New users see the invite gate first; returning users (onboarding done) go straight to login
-      if (!localStorage.getItem('ce_onboarding_done')) {
+      // Show invite gate only for brand-new users (no role and no onboarding done)
+      var _isNewUser = !localStorage.getItem('ce_onboarding_done') && !localStorage.getItem('ce_user_role');
+      if (_isNewUser) {
         var gateScr = document.getElementById('invite-gate-screen');
         if (gateScr) { gateScr.classList.remove('hidden'); }
         else { loginScreen.classList.remove('hidden'); }
