@@ -21757,7 +21757,7 @@ async function _initFCM() {
 // This client-side function is a placeholder stub until that function exists.
 async function sendNotification(targetUid, title, body, data) {
   try {
-    var sendPush = firebase.functions().httpsCallable('sendPushNotification');
+    var sendPush = firebase.functions().httpsCallable('wcSendPush');
     var result = await sendPush({ targetUid, title, body, data: data || {} });
     console.log('[FCM] Notification sent:', result);
   } catch (err) {

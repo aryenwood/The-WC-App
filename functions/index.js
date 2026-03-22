@@ -7,7 +7,7 @@ const { getMessaging } = require('firebase-admin/messaging');
 initializeApp();
 
 // Send push notification to a specific user by uid
-exports.sendPushNotification = onCall({
+exports.wcSendPush = onCall({
   cors: [
     'https://cptlenergy.netlify.app',
     'https://testcptlapp.netlify.app',
@@ -59,7 +59,7 @@ exports.sendPushNotification = onCall({
 });
 
 // Triggered when a rep redeems an invite
-exports.onInviteRedeemed = onDocumentUpdated('invites/{code}', async (event) => {
+exports.wcInviteRedeemed = onDocumentUpdated('invites/{code}', async (event) => {
   const before = event.data.before.data();
   const after = event.data.after.data();
 
