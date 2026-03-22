@@ -11113,6 +11113,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
 <script>
 // ── Firebase: init ────────────────────────────────────────────────────────
 const firebaseConfig = {
@@ -11127,6 +11128,7 @@ firebase.initializeApp(firebaseConfig);
 const fbAuth    = firebase.auth();
 const fbDb      = firebase.firestore();
 const fbStorage = firebase.storage();
+const fbMsg     = firebase.messaging();
 
 // ── Firebase identity helpers ─────────────────────────────────────────────
 function _applyFirebaseIdentity(user) {
@@ -11428,6 +11430,9 @@ function applyOrgSettings(data) {
       // 3. Wire photo + name into UI
       _applyFirebaseIdentity(user);
 
+      // 3b. Init push notifications (requests permission, saves FCM token)
+      setTimeout(function() { typeof _initFCM === 'function' && _initFCM(); }, 2000);
+
       // 4. Drain any queued entities to Firestore (online only)
       if (navigator.onLine) drainToFirestore();
 
@@ -11472,6 +11477,14 @@ function applyOrgSettings(data) {
               usedBy: user.uid,
               usedAt: firebase.firestore.FieldValue.serverTimestamp()
             }).catch(function(e) { console.warn('[Invite] mark used:', e); });
+
+            // Notify the manager that a new rep joined
+            sendNotification(
+              pi.orgId,
+              'New Rep Joined 🎉',
+              (_piRepName || 'Someone') + ' just joined your team as ' + pi.role,
+              { type: 'rep_joined', repUid: user.uid }
+            );
           }
           setTimeout(function() { showOnboarding && showOnboarding(); }, 100);
         } else {
@@ -21695,6 +21708,56 @@ document.getElementById('dispo-appt-btn').addEventListener('click', openDispoShe
   });
 })();
 
+// ── FCM: push notification setup ─────────────────────────────────────────
+// Replace YOUR_VAPID_KEY_HERE with the key from Firebase Console →
+// Project Settings → Cloud Messaging → Web Push certificates → Key pair
+var _FCM_VAPID_KEY = 'YOUR_VAPID_KEY_HERE';
+
+function _initFCM() {
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+  if (typeof fbMsg === 'undefined' || !fbAuth || !fbAuth.currentUser) return;
+  var user = fbAuth.currentUser;
+
+  Notification.requestPermission().then(function(permission) {
+    if (permission !== 'granted') {
+      console.log('[FCM] Notification permission denied');
+      return;
+    }
+    fbMsg.getToken({ vapidKey: _FCM_VAPID_KEY }).then(function(token) {
+      if (!token) { console.log('[FCM] No token received — check VAPID key and SW registration'); return; }
+      console.log('[FCM] Token obtained, saving to Firestore');
+      fbDb.collection('users').doc(user.uid).set(
+        { fcmToken: token },
+        { merge: true }
+      ).catch(function(e) { console.warn('[FCM] Token save failed:', e); });
+    }).catch(function(e) { console.warn('[FCM] getToken failed:', e); });
+  });
+
+  // Foreground messages — show as in-app toast
+  fbMsg.onMessage(function(payload) {
+    var title = (payload.notification && payload.notification.title) || 'New notification';
+    var body  = (payload.notification && payload.notification.body)  || '';
+    try { showToast(title + (body ? ' — ' + body : '')); } catch(_) {}
+  });
+}
+
+// ── Push notification sender ──────────────────────────────────────────────
+// Reads the target user's FCM token from Firestore and logs what would be sent.
+// IMPORTANT: Actual FCM delivery requires a server-side call — implement a
+// Firebase Cloud Function that calls the FCM HTTP v1 API:
+//   POST https://fcm.googleapis.com/v1/projects/wc-app-alpha/messages:send
+// This client-side function is a placeholder stub until that function exists.
+function sendNotification(uid, title, body, data) {
+  if (typeof fbDb === 'undefined' || !uid) return;
+  fbDb.collection('users').doc(uid).get().then(function(snap) {
+    if (!snap.exists) return;
+    var token = snap.data().fcmToken;
+    if (!token) { console.log('[FCM] No token for uid', uid, '— notification not delivered'); return; }
+    // TODO: invoke Cloud Function with { token, title, body, data }
+    console.log('[FCM] sendNotification →', uid, '|', title, '|', body, '| token:', token.slice(0, 20) + '…');
+  }).catch(function(e) { console.warn('[FCM] sendNotification read failed:', e); });
+}
+
 // ── Invite System ────────────────────────────────────────────────────────
 
 var _currentInviteCode = '';
@@ -21945,6 +22008,14 @@ function _redeemInviteCode(code) {
         usedBy: user.uid,
         usedAt: firebase.firestore.FieldValue.serverTimestamp()
       }).catch(function(e) { console.warn('[Invite] mark used:', e); });
+
+      // Notify the manager that a new rep joined
+      sendNotification(
+        orgId,
+        'New Rep Joined 🎉',
+        (repName || 'Someone') + ' just joined your team as ' + role,
+        { type: 'rep_joined', repUid: user.uid }
+      );
 
       resolve({ role: role, orgName: orgName, orgId: orgId });
     }).catch(function(err) {
