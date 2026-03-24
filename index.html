@@ -13733,7 +13733,7 @@ async function _saGenMasterAdminInvite() {
 <span style="color:rgba(255,255,255,0.38)">Role: master_admin &nbsp;·&nbsp; Org: ${orgName}<br>Expires: ${expiresAt.toLocaleDateString()}</span>
 <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
   <button class="sa-copy-btn" onclick="navigator.clipboard.writeText('${code}').then(()=>showToast('Code copied!'))">COPY CODE</button>
-  <button class="sa-copy-btn" onclick="if(navigator.share){navigator.share({text:decodeURIComponent('${smsEncoded}')})}else{navigator.clipboard.writeText(decodeURIComponent('${smsEncoded}')).then(()=>showToast('SMS text copied!'))}">SHARE SMS</button>
+  <button class="sa-copy-btn" onclick="(function(){var t=decodeURIComponent('${smsEncoded}');var a=document.createElement('a');a.href='sms:?body=${smsEncoded}';document.body.appendChild(a);a.click();document.body.removeChild(a);navigator.clipboard&&navigator.clipboard.writeText(t);showToast('SMS text copied + Messages opened');})()">SHARE SMS</button>
 </div>`;
     result.classList.add('visible');
     showToast('Invite generated!');
