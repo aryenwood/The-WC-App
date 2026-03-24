@@ -9703,6 +9703,16 @@
           <p style="font-size:13px;color:var(--text-3);margin:0 0 10px;line-height:1.5">Enable notifications that fire even when the app is closed.</p>
           <button class="admin-save-btn" id="admin-enable-bg-reminders" style="margin-top:0">Enable Background Reminders</button>
           <div id="admin-bg-reminder-status" style="font-size:12px;color:var(--text-3);margin-top:6px"></div>
+
+          <div id="admin-dispo-email-section" style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
+            <p style="font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-3);margin:0 0 10px">Dispo Email Notifications</p>
+            <label style="font-size:13px;color:var(--text-2);display:block;margin-bottom:4px">Send dispo results to</label>
+            <input type="email" id="admin-dispo-email-to" placeholder="manager@company.com"
+              style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-size:14px;background:var(--bg-2);color:var(--text-1);margin-bottom:10px">
+            <label style="font-size:13px;color:var(--text-2);display:block;margin-bottom:4px">Send from (must match your SMTP account)</label>
+            <input type="email" id="admin-dispo-email-from" placeholder="noreply@company.com"
+              style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-size:14px;background:var(--bg-2);color:var(--text-1)">
+          </div>
         </div>
       </details>
 
@@ -11739,14 +11749,16 @@ function saveOrgSettingsToFirestore() {
   var s = {};
   try { s = JSON.parse(localStorage.getItem('ce_admin') || '{}'); } catch(_) {}
   var payload = {
-    companyName:  s.companyName  || '',
-    tagline:      s.tagline      || '',
-    gosoloUrl:    s.gosoloUrl    || '',
-    gridUrl:      s.gridUrl      || '',
-    themePrimary: localStorage.getItem('ce_theme_primary') || '',
-    glassColor:   localStorage.getItem('ce_glass_color')   || '',
-    appName:      localStorage.getItem('ce_app_name')      || '',
-    updatedAt:    firebase.firestore.FieldValue.serverTimestamp()
+    companyName:    s.companyName    || '',
+    tagline:        s.tagline        || '',
+    gosoloUrl:      s.gosoloUrl      || '',
+    gridUrl:        s.gridUrl        || '',
+    themePrimary:   localStorage.getItem('ce_theme_primary') || '',
+    glassColor:     localStorage.getItem('ce_glass_color')   || '',
+    appName:        localStorage.getItem('ce_app_name')      || '',
+    dispoEmailTo:   s.dispoEmailTo   || '',
+    dispoEmailFrom: s.dispoEmailFrom || '',
+    updatedAt:      firebase.firestore.FieldValue.serverTimestamp()
   };
   fbDb.collection('organizations').doc(user.uid).set(payload, { merge: true })
     .then(function() {
@@ -11764,11 +11776,19 @@ function applyOrgSettings(data) {
   var s = {};
   try { s = JSON.parse(localStorage.getItem('ce_admin') || '{}'); } catch(_) {}
 
-  if (data.companyName) s.companyName = data.companyName;
-  if (data.tagline)     s.tagline     = data.tagline;
-  if (data.gosoloUrl)   s.gosoloUrl   = data.gosoloUrl;
-  if (data.gridUrl)     s.gridUrl     = data.gridUrl;
+  if (data.companyName)    s.companyName    = data.companyName;
+  if (data.tagline)        s.tagline        = data.tagline;
+  if (data.gosoloUrl)      s.gosoloUrl      = data.gosoloUrl;
+  if (data.gridUrl)        s.gridUrl        = data.gridUrl;
+  if (data.dispoEmailTo)   s.dispoEmailTo   = data.dispoEmailTo;
+  if (data.dispoEmailFrom) s.dispoEmailFrom = data.dispoEmailFrom;
   try { localStorage.setItem('ce_admin', JSON.stringify(s)); } catch(_) {}
+
+  // Populate admin settings inputs if visible
+  var _det = document.getElementById('admin-dispo-email-to');
+  var _def = document.getElementById('admin-dispo-email-from');
+  if (_det && data.dispoEmailTo)   _det.value = data.dispoEmailTo;
+  if (_def && data.dispoEmailFrom) _def.value = data.dispoEmailFrom;
 
   if (data.appName) {
     try { localStorage.setItem('ce_app_name', data.appName); } catch(_) {}
@@ -20225,6 +20245,10 @@ function loadAdminSettings() {
   document.getElementById('admin-rep-phone').value     = s.repPhone    || '';
   document.getElementById('admin-rep-email').value     = s.repEmail    || '';
   document.getElementById('admin-review-url').value    = s.reviewUrl   || ADMIN_DEFAULTS.reviewUrl;
+  const _detEl = document.getElementById('admin-dispo-email-to');
+  const _defEl = document.getElementById('admin-dispo-email-from');
+  if (_detEl) _detEl.value = s.dispoEmailTo   || '';
+  if (_defEl) _defEl.value = s.dispoEmailFrom || '';
 
   // Role selector — show current role (not master_admin)
   // v95: canvassers cannot change their own role — only a manager can upgrade them
@@ -20281,11 +20305,13 @@ function saveAdminSettings() {
     tagline:     document.getElementById('admin-tagline').value.trim()       || ADMIN_DEFAULTS.tagline,
     gosoloUrl:   document.getElementById('admin-gosolo-url').value.trim()    || ADMIN_DEFAULTS.gosoloUrl,
     gridUrl:     document.getElementById('admin-grid-url').value.trim()      || ADMIN_DEFAULTS.gridUrl,
-    repName:     document.getElementById('admin-rep-name').value.trim(),
-    repTitle:    document.getElementById('admin-rep-title').value.trim()     || ADMIN_DEFAULTS.repTitle,
-    repPhone:    document.getElementById('admin-rep-phone').value.trim(),
-    repEmail:    document.getElementById('admin-rep-email').value.trim(),
-    reviewUrl:   document.getElementById('admin-review-url').value.trim(),
+    repName:        document.getElementById('admin-rep-name').value.trim(),
+    repTitle:       document.getElementById('admin-rep-title').value.trim()     || ADMIN_DEFAULTS.repTitle,
+    repPhone:       document.getElementById('admin-rep-phone').value.trim(),
+    repEmail:       document.getElementById('admin-rep-email').value.trim(),
+    reviewUrl:      document.getElementById('admin-review-url').value.trim(),
+    dispoEmailTo:   (document.getElementById('admin-dispo-email-to')   || {}).value?.trim()  || '',
+    dispoEmailFrom: (document.getElementById('admin-dispo-email-from') || {}).value?.trim()  || '',
   };
   const s = Object.assign(existing, updates);
   localStorage.setItem('ce_admin', JSON.stringify(s));
@@ -20350,7 +20376,7 @@ function renderTeamList() {
   const teamSection = document.getElementById('admin-team-section');
   if (teamSection) teamSection.style.display = isMgr ? '' : 'none';
   // v93: Show/hide branding, adder, checklist, quick links sections for manager only
-  ['admin-branding-section','admin-adder-section','admin-checklist-section','admin-ql-section'].forEach(id => {
+  ['admin-branding-section','admin-adder-section','admin-checklist-section','admin-ql-section','admin-dispo-email-section'].forEach(id => {
     const sec = document.getElementById(id);
     if (sec) sec.style.display = isMgr ? '' : 'none';
   });
@@ -23398,6 +23424,10 @@ function _otdAttachVoice(entry) {
 /* ─── Email dispo results to manager ─── */
 function _sendApptDispoEmail(appt, result) {
   if (typeof fbDb === 'undefined') return;
+  if (window.location.hostname !== 'tritonenergy.netlify.app') return;
+  var _s = {}; try { _s = JSON.parse(localStorage.getItem('ce_admin') || '{}'); } catch(_) {}
+  var _toEmail   = _s.dispoEmailTo   || 'Olashawan@tritonenergyllc.net';
+  var _fromEmail = _s.dispoEmailFrom || '';
   var repName = localStorage.getItem('ce_user_name') || 'Rep';
   var custName = [appt.firstName, appt.lastName].filter(Boolean).join(' ') || '—';
   var date = appt.date || appt.apptDate || '';
@@ -23430,17 +23460,17 @@ function _sendApptDispoEmail(appt, result) {
     '<p style="color:#bbb;font-size:11px;text-align:center;margin-top:12px">Sent automatically by WC App</p>' +
     '</div>';
 
-  fbDb.collection('mail').add({
-    to: 'Olashawan@tritonenergyllc.net',
-    message: {
-      subject: '[WC App] Appt ' + result + ' — ' + custName + ' (' + repName + ')',
-      html: html
-    }
-  }).catch(function(e) { console.warn('[ApptDispoEmail] Failed to queue:', e.message); });
+  var _apptMailDoc = { to: _toEmail, message: { subject: '[WC App] Appt ' + result + ' — ' + custName + ' (' + repName + ')', html: html } };
+  if (_fromEmail) _apptMailDoc.from = _fromEmail;
+  fbDb.collection('mail').add(_apptMailDoc).catch(function(e) { console.warn('[ApptDispoEmail] Failed to queue:', e.message); });
 }
 
 function _sendDispoEmail(entry) {
   if (typeof fbDb === 'undefined') return;
+  if (window.location.hostname !== 'tritonenergy.netlify.app') return;
+  var _s = {}; try { _s = JSON.parse(localStorage.getItem('ce_admin') || '{}'); } catch(_) {}
+  var _toEmail   = _s.dispoEmailTo   || 'Olashawan@tritonenergyllc.net';
+  var _fromEmail = _s.dispoEmailFrom || '';
   var statusLabels = {
     'not-home':       'Not Home',
     'dq':             'DQ',
@@ -23479,13 +23509,9 @@ function _sendDispoEmail(entry) {
     '<p style="color:#bbb;font-size:11px;text-align:center;margin-top:12px">Sent automatically by WC App</p>' +
     '</div>';
 
-  fbDb.collection('mail').add({
-    to: 'Olashawan@tritonenergyllc.net',
-    message: {
-      subject: '[WC App] ' + statusLabel + ' — ' + (entry.address || 'No address') + ' (' + (entry.repName || 'Rep') + ')',
-      html: html
-    }
-  }).catch(function(e) { console.warn('[DispoEmail] Failed to queue:', e.message); });
+  var _otdMailDoc = { to: _toEmail, message: { subject: '[WC App] ' + statusLabel + ' — ' + (entry.address || 'No address') + ' (' + (entry.repName || 'Rep') + ')', html: html } };
+  if (_fromEmail) _otdMailDoc.from = _fromEmail;
+  fbDb.collection('mail').add(_otdMailDoc).catch(function(e) { console.warn('[DispoEmail] Failed to queue:', e.message); });
 }
 
 function _otdSaveEntry(entry) {
