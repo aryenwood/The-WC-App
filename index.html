@@ -4685,11 +4685,13 @@
   ───────────────────────────────────────────────────────────────────────── */
   #super-admin-panel {
     position: fixed; inset: 0; z-index: 10600;
-    background: #010508;
+    background: #1a1f2e;
     display: flex; flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;
     opacity: 0; pointer-events: none;
     transition: opacity 0.25s ease;
+    border: 1px solid rgba(26,157,184,0.35);
+    box-shadow: inset 0 0 60px rgba(26,157,184,0.07);
   }
   #super-admin-panel.open { opacity: 1; pointer-events: auto; }
 
@@ -4733,10 +4735,11 @@
   }
   .sa-section-header {
     font-family: var(--font-mono); font-size: 10px; font-weight: 700;
-    color: rgba(32,216,236,0.60); letter-spacing: 0.16em;
-    padding: 11px 14px;
+    color: #20d8ec; letter-spacing: 0.16em;
+    padding: 11px 14px 11px 12px;
     background: rgba(26,157,184,0.05);
     border-bottom: 1px solid rgba(26,157,184,0.08);
+    border-left: 3px solid rgba(26,157,184,0.55);
   }
   .sa-section-body { padding: 14px; display: flex; flex-direction: column; gap: 11px; }
 
@@ -4747,7 +4750,7 @@
   }
   .sa-input, .sa-select {
     width: 100%; padding: 10px 12px;
-    background: rgba(0,0,0,0.55); border: 1px solid rgba(26,157,184,0.18);
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(26,157,184,0.18);
     border-radius: 8px; color: #e8f4f6;
     font-family: var(--font-mono); font-size: 13px;
     outline: none; transition: border-color 0.15s;
@@ -4770,6 +4773,12 @@
   .sa-btn:active { transform: scale(0.97); }
   .sa-btn:disabled { opacity: 0.40; cursor: not-allowed; transform: none !important; }
   .sa-btn--full { width: 100%; text-align: center; }
+  .sa-btn--primary {
+    background: linear-gradient(135deg, #1a9db8 0%, #20d8ec 100%);
+    border-color: transparent; color: #fff;
+    box-shadow: 0 0 14px rgba(26,157,184,0.35);
+  }
+  .sa-btn--primary:hover { background: linear-gradient(135deg, #20afc9 0%, #34eeff 100%); border-color: transparent; box-shadow: 0 0 28px rgba(32,216,236,0.55) !important; }
 
   .sa-result {
     display: none; padding: 13px 14px;
@@ -10734,7 +10743,7 @@
             <input class="sa-input" id="sa-org-logo-file" type="file" accept="image/*" style="padding:8px;cursor:pointer;font-size:12px" />
           </div>
         </div>
-        <button class="sa-btn sa-btn--full" id="sa-create-org-btn" onclick="_saCreateOrg()">CREATE ORG →</button>
+        <button class="sa-btn sa-btn--full sa-btn--primary" id="sa-create-org-btn" onclick="_saCreateOrg()">Create Org →</button>
         <div class="sa-result" id="sa-create-org-result"></div>
       </div>
     </div>
