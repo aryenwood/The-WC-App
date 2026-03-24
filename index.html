@@ -13790,10 +13790,17 @@ async function _saLoadOrgs() {
   if (!listEl || !isSuperAdmin()) return;
   listEl.innerHTML = '<div class="sa-status">Loading…</div>';
   try {
-    const snap = await fbDb.collection('organizations').orderBy('createdAt', 'desc').get();
+    const snap = await fbDb.collection('organizations').get();
     if (snap.empty) { listEl.innerHTML = '<div class="sa-status">No orgs found</div>'; return; }
     listEl.innerHTML = '';
-    snap.forEach(function(doc) {
+    const docs = [];
+    snap.forEach(function(doc) { docs.push(doc); });
+    docs.sort((a, b) => {
+      const ta = a.data().createdAt?.toMillis ? a.data().createdAt.toMillis() : 0;
+      const tb = b.data().createdAt?.toMillis ? b.data().createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+    docs.forEach(function(doc) {
       const d       = doc.data();
       const name    = d.name || d.companyName || doc.id;
       const niche   = d.niche || '—';
