@@ -82,7 +82,16 @@ exports.wcInviteRedeemed = onDocumentUpdated('invites/{code}', async (event) => 
 });
 
 // AI Brain trainer — callable from client, proxies to Claude API
-exports.wcAiChat = onCall({ secrets: [anthropicKey], cors: true }, async (request) => {
+exports.wcAiChat = onCall({
+  secrets: [anthropicKey],
+  cors: [
+    'https://cptlenergy.netlify.app',
+    'https://testcptlapp.netlify.app',
+    'https://tritonenergy.netlify.app',
+    'http://localhost'
+  ],
+  invoker: 'public'
+}, async (request) => {
   const { messages, system } = request.data;
 
   if (!Array.isArray(messages) || messages.length === 0) {
