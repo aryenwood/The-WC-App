@@ -13806,13 +13806,40 @@ async function _saLoadOrgs() {
             <div class="sa-org-name">${name}</div>
             <div class="sa-org-meta">${niche} &nbsp;·&nbsp; ${doc.id} &nbsp;·&nbsp; ${created}</div>
           </div>
-          <button class="sa-org-view-btn" onclick="_saViewOrgTeam('${doc.id}', this)">VIEW</button>
+          <div style="display:flex;gap:6px;flex-shrink:0">
+            <button class="sa-org-view-btn" onclick="_saViewOrgTeam('${doc.id}', this)">VIEW</button>
+            <button class="sa-org-view-btn" style="border-color:rgba(239,68,68,0.25);color:rgba(248,113,113,0.70)" onclick="_saDeleteOrg('${doc.id}','${name.replace(/'/g,"\\'")}',this)">DELETE</button>
+          </div>
         </div>
         <div class="sa-team-list" id="sa-team-${doc.id}"></div>`;
       listEl.appendChild(row);
     });
   } catch(e) {
     listEl.innerHTML = '<div class="sa-status">Error: ' + e.message + '</div>';
+  }
+}
+
+async function _saDeleteOrg(orgId, orgName, btn) {
+  if (!isSuperAdmin()) return;
+  if (!confirm(`DELETE ORG: "${orgName}"\nOrg ID: ${orgId}\n\nThis will delete the org document and all subcollections (team, invites, settings).\n\nThis cannot be undone. Continue?`)) return;
+  btn.textContent = '…'; btn.disabled = true;
+  try {
+    // Delete subcollections: team, invites, settings, adderSheets
+    const subcols = ['team', 'invites', 'settings', 'adderSheets'];
+    for (const col of subcols) {
+      const snap = await fbDb.collection('organizations').doc(orgId).collection(col).get();
+      const batch = fbDb.batch();
+      snap.forEach(d => batch.delete(d.ref));
+      if (!snap.empty) await batch.commit();
+    }
+    await fbDb.collection('organizations').doc(orgId).delete();
+    // Remove the row from the UI
+    const row = btn.closest('.sa-org-row');
+    if (row) row.remove();
+    showToast('Org deleted: ' + orgId);
+  } catch(e) {
+    showToast('Error: ' + e.message);
+    btn.textContent = 'DELETE'; btn.disabled = false;
   }
 }
 
