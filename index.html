@@ -3938,7 +3938,7 @@
     /* ── Splash screen — Sprint 2: Branded dark gradient ─────────────────── */
     #splash {
       position: fixed; inset: 0; z-index: 9999;
-      background: var(--splash-gradient);
+      background: #030c12;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       gap: 0;
@@ -3950,53 +3950,78 @@
       transform: scale(1.05);
       pointer-events: none;
     }
-    /* Ambient glow blob behind logo */
+    /* Galaxy nebula clouds — slow rotating */
     #splash::before {
       content: '';
       position: absolute;
-      top: 38%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 320px; height: 320px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(30,200,213,0.14) 0%, transparent 70%);
+      inset: -60%;
       pointer-events: none;
-      animation: splashGlowPulse 3s ease-in-out infinite;
+      background:
+        radial-gradient(ellipse 65% 45% at 32% 58%, rgba(26,107,122,0.38) 0%, transparent 65%),
+        radial-gradient(ellipse 45% 65% at 70% 26%, rgba(30,200,213,0.18) 0%, transparent 58%),
+        radial-gradient(ellipse 85% 38% at 50% 88%, rgba(10,50,65,0.55) 0%, transparent 65%),
+        radial-gradient(ellipse 32% 52% at 16% 20%, rgba(30,200,213,0.12) 0%, transparent 55%),
+        radial-gradient(ellipse 55% 32% at 82% 72%, rgba(26,107,122,0.28) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 58% 42%, rgba(20,145,153,0.10) 0%, transparent 50%);
+      animation: nebulaRotate 40s linear infinite;
     }
-    /* Starfield behind splash — tiny dots drifting up */
+    /* Dense starfield — twinkling */
     #splash::after {
       content: '';
       position: absolute;
       inset: 0;
       pointer-events: none;
       background-image:
-        radial-gradient(1px 1px at 10% 20%, rgba(20,145,153,0.50) 50%, transparent 100%),
-        radial-gradient(1px 1px at 30% 65%, rgba(255,255,255,0.35) 50%, transparent 100%),
-        radial-gradient(1px 1px at 55% 15%, rgba(20,145,153,0.40) 50%, transparent 100%),
-        radial-gradient(1px 1px at 70% 80%, rgba(255,255,255,0.30) 50%, transparent 100%),
-        radial-gradient(1px 1px at 85% 40%, rgba(20,145,153,0.45) 50%, transparent 100%),
-        radial-gradient(1px 1px at 20% 90%, rgba(139,92,246,0.30) 50%, transparent 100%),
-        radial-gradient(1.5px 1.5px at 42% 45%, rgba(20,145,153,0.35) 50%, transparent 100%),
-        radial-gradient(1px 1px at 90% 10%, rgba(255,255,255,0.25) 50%, transparent 100%);
-      background-size: 200px 200px;
-      animation: starScroll 20s linear infinite;
+        radial-gradient(1px 1px at 4%  8%,  rgba(30,200,213,0.90) 50%, transparent 100%),
+        radial-gradient(1px 1px at 11% 31%, rgba(255,255,255,0.75) 50%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 17% 72%, rgba(30,200,213,0.85) 50%, transparent 100%),
+        radial-gradient(1px 1px at 23% 14%, rgba(255,255,255,0.60) 50%, transparent 100%),
+        radial-gradient(1px 1px at 29% 88%, rgba(30,200,213,0.70) 50%, transparent 100%),
+        radial-gradient(2px 2px at 36% 48%, rgba(255,255,255,0.90) 50%, transparent 100%),
+        radial-gradient(1px 1px at 41% 5%,  rgba(30,200,213,0.65) 50%, transparent 100%),
+        radial-gradient(1px 1px at 46% 63%, rgba(255,255,255,0.55) 50%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 53% 27%, rgba(30,200,213,0.80) 50%, transparent 100%),
+        radial-gradient(1px 1px at 59% 79%, rgba(255,255,255,0.70) 50%, transparent 100%),
+        radial-gradient(1px 1px at 64% 17%, rgba(30,200,213,0.60) 50%, transparent 100%),
+        radial-gradient(2px 2px at 71% 52%, rgba(255,255,255,0.85) 50%, transparent 100%),
+        radial-gradient(1px 1px at 76% 93%, rgba(30,200,213,0.75) 50%, transparent 100%),
+        radial-gradient(1px 1px at 83% 36%, rgba(255,255,255,0.50) 50%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 89% 61%, rgba(30,200,213,0.88) 50%, transparent 100%),
+        radial-gradient(1px 1px at 94% 22%, rgba(255,255,255,0.65) 50%, transparent 100%),
+        radial-gradient(1px 1px at 97% 76%, rgba(30,200,213,0.55) 50%, transparent 100%),
+        radial-gradient(1px 1px at 7%  55%, rgba(255,255,255,0.45) 50%, transparent 100%),
+        radial-gradient(1px 1px at 49% 96%, rgba(30,200,213,0.70) 50%, transparent 100%),
+        radial-gradient(2px 2px at 15% 42%, rgba(255,255,255,0.80) 50%, transparent 100%),
+        radial-gradient(1px 1px at 63% 38%, rgba(30,200,213,0.50) 50%, transparent 100%),
+        radial-gradient(1px 1px at 31% 24%, rgba(255,255,255,0.40) 50%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 78% 11%, rgba(30,200,213,0.95) 50%, transparent 100%),
+        radial-gradient(1px 1px at 9%  83%, rgba(255,255,255,0.60) 50%, transparent 100%),
+        radial-gradient(1px 1px at 55% 58%, rgba(30,200,213,0.45) 50%, transparent 100%),
+        radial-gradient(1px 1px at 87% 44%, rgba(255,255,255,0.35) 50%, transparent 100%),
+        radial-gradient(2px 2px at 44% 19%, rgba(30,200,213,0.80) 50%, transparent 100%),
+        radial-gradient(1px 1px at 68% 67%, rgba(255,255,255,0.70) 50%, transparent 100%);
+      background-size: 100% 100%;
+      animation: starTwinkle 3.5s ease-in-out infinite alternate;
     }
-    @keyframes starScroll {
-      0%   { transform: translateY(0); }
-      100% { transform: translateY(-200px); }
+    @keyframes nebulaRotate {
+      0%   { transform: rotate(0deg) scale(1); }
+      50%  { transform: rotate(180deg) scale(1.06); }
+      100% { transform: rotate(360deg) scale(1); }
     }
-
-    @keyframes splashGlowPulse {
-      0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
-      50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.14); }
+    @keyframes starTwinkle {
+      0%   { opacity: 0.55; }
+      100% { opacity: 1; }
     }
-    @keyframes splashLogoIn {
-      0%   { opacity: 0; transform: scale(0.68) translateY(12px); }
-      65%  { opacity: 1; transform: scale(1.05) translateY(-2px); }
-      100% { opacity: 1; transform: scale(1) translateY(0); }
+    @keyframes splashLogoFlash {
+      0%   { opacity: 0; transform: scale(0.72); filter: brightness(6) blur(12px); }
+      30%  { opacity: 1; transform: scale(1.10); filter: brightness(2.5) blur(0px); }
+      60%  { opacity: 1; transform: scale(1.04); filter: brightness(1.4) blur(0px); }
+      100% { opacity: 1; transform: scale(1);    filter: brightness(1) blur(0px); }
     }
-    @keyframes splashWordIn {
-      0%   { opacity: 0; transform: translateY(10px); letter-spacing: 0.30em; }
-      100% { opacity: 1; transform: translateY(0);    letter-spacing: 0.22em; }
+    @keyframes logoFlashBurst {
+      0%   { opacity: 0;   transform: translate(-50%, -50%) scale(0.2); }
+      18%  { opacity: 0.9; transform: translate(-50%, -50%) scale(1.1); }
+      100% { opacity: 0;   transform: translate(-50%, -50%) scale(2.4); }
     }
     @keyframes splashTaglineIn {
       0%   { opacity: 0; transform: translateY(8px); }
@@ -4016,19 +4041,31 @@
       align-items: center; gap: 22px;
       position: relative; z-index: 1;
     }
-    #splash-logo {
-      width: 200px; height: auto;
-      border-radius: 0;
-      animation: splashLogoIn 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+    /* Flash burst that radiates out from behind the logo */
+    #splash-logo-wrap::before {
+      content: '';
+      position: absolute;
+      top: 40%; left: 50%;
+      width: 280px; height: 280px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(30,200,213,0.55) 35%, transparent 70%);
+      pointer-events: none;
+      animation: logoFlashBurst 0.85s ease-out 0.15s both;
+      z-index: -1;
     }
-    /* #splash-wordmark removed — logo.png contains the wordmark */
+    #splash-logo {
+      width: 180px; height: auto;
+      border-radius: 0;
+      animation: splashLogoFlash 0.90s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+    }
     #splash-tagline {
       font-family: var(--font-body);
       font-size: 12px; font-weight: 400;
-      color: rgba(30, 200, 213, 0.75);
-      letter-spacing: 0.08em;
+      color: rgba(30, 200, 213, 0.80);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
       margin-top: -12px;
-      animation: splashTaglineIn 0.50s var(--ease-out) 0.80s both;
+      animation: splashTaglineIn 0.50s var(--ease-out) 0.90s both;
     }
     #splash-bar-wrap {
       position: absolute; bottom: 12%; left: 50%;
@@ -4041,8 +4078,8 @@
     }
     #splash-bar {
       height: 100%; width: 0%; border-radius: 99px;
-      background: linear-gradient(90deg, var(--amber) 0%, #1ec8d5 50%, #a78bfa 100%);
-      box-shadow: 0 0 12px rgba(30,200,213,0.70), 0 0 24px rgba(30,200,213,0.30);
+      background: linear-gradient(90deg, #1a6b7a 0%, #1ec8d5 50%, #30e8f5 100%);
+      box-shadow: 0 0 12px rgba(30,200,213,0.80), 0 0 28px rgba(30,200,213,0.35);
       animation: splashBarFill 1.3s cubic-bezier(0.4, 0, 0.2, 1) 0.35s both;
     }
   /* ── Business Card Modal ─────────────────────────────────────────────── */
