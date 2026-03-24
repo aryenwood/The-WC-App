@@ -21867,6 +21867,7 @@ function openResultSheet(apptId) {
       const appts = loadAppointments();
       const idx   = appts.findIndex(a => a.id === editingApptId);
       if (idx !== -1) { appts[idx].result = btn.dataset.result; saveAppointments(appts); }
+      _sendApptDispoEmail(idx !== -1 ? appts[idx] : {}, btn.dataset.result);
       document.getElementById('appt-result-sheet').classList.remove('open');
       mapInstance && mapInstance.closePopup();
       renderMapPins();
@@ -22289,6 +22290,7 @@ function openDispoSheet() {
             if (idx !== -1) {
               appts[idx].result = btn.dataset.result;
               saveAppointments(appts);
+              _sendApptDispoEmail(appts[idx], btn.dataset.result);
             }
             closeDIspoSheet();
             renderDashboard();
@@ -23393,6 +23395,99 @@ function _otdAttachVoice(entry) {
 }
 
 /* ─── Save to DataStore + counter update ─── */
+/* ─── Email dispo results to manager ─── */
+function _sendApptDispoEmail(appt, result) {
+  if (typeof fbDb === 'undefined') return;
+  var repName = localStorage.getItem('ce_user_name') || 'Rep';
+  var custName = [appt.firstName, appt.lastName].filter(Boolean).join(' ') || '—';
+  var date = appt.date || appt.apptDate || '';
+  var time = appt.time || appt.apptTime || '';
+  var rows = [
+    ['Result',    '<strong>' + result + '</strong>'],
+    ['Customer',  custName],
+    ['Address',   appt.address || appt.street || '—'],
+    ['Appt Date', date + (time ? ' @ ' + time : '')],
+    ['Rep/Closer',repName],
+  ];
+  if (appt.phone)  rows.push(['Phone',    appt.phone]);
+  if (appt.email)  rows.push(['Email',    appt.email]);
+  if (appt.notes)  rows.push(['Notes',    appt.notes]);
+
+  var tableRows = rows.map(function(r) {
+    return '<tr><td style="padding:5px 16px 5px 0;color:#888;font-weight:600;white-space:nowrap;vertical-align:top">' +
+           r[0] + '</td><td style="padding:5px 0;color:#1a1a1a">' + r[1] + '</td></tr>';
+  }).join('');
+
+  var resultColors = { 'Signed': '#22c55e', 'No Show': '#ef4444', 'Reschedule': '#a855f7', 'Confirmed': '#3b82f6', 'Pending': '#64748b' };
+  var headerColor = resultColors[result] || '#1a9db8';
+
+  var html = '<div style="font-family:sans-serif;max-width:520px;margin:0 auto">' +
+    '<div style="background:' + headerColor + ';padding:16px 20px;border-radius:10px 10px 0 0">' +
+    '<h2 style="color:#fff;margin:0;font-size:16px">📅 Appt Result: ' + result + '</h2></div>' +
+    '<div style="background:#f9f9f9;border:1px solid #e5e5e5;border-top:none;border-radius:0 0 10px 10px;padding:20px">' +
+    '<table style="border-collapse:collapse;font-size:14px;width:100%">' + tableRows + '</table>' +
+    '</div>' +
+    '<p style="color:#bbb;font-size:11px;text-align:center;margin-top:12px">Sent automatically by WC App</p>' +
+    '</div>';
+
+  fbDb.collection('mail').add({
+    to: 'Olashawan@tritonenergyllc.net',
+    message: {
+      subject: '[WC App] Appt ' + result + ' — ' + custName + ' (' + repName + ')',
+      html: html
+    }
+  }).catch(function(e) { console.warn('[ApptDispoEmail] Failed to queue:', e.message); });
+}
+
+function _sendDispoEmail(entry) {
+  if (typeof fbDb === 'undefined') return;
+  var statusLabels = {
+    'not-home':       'Not Home',
+    'dq':             'DQ',
+    'not-interested': 'Not Interested',
+    'go-back':        'Go Back',
+    'made-contact':   'Made Contact'
+  };
+  var statusLabel = statusLabels[entry.status] || entry.status || 'Unknown';
+  var date = new Date(entry.timestamp).toLocaleString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric',
+    hour: 'numeric', minute: '2-digit', hour12: true
+  });
+  var rows = [
+    ['Status',   '<strong>' + statusLabel + '</strong>'],
+    ['Address',  entry.address || '—'],
+    ['Rep',      entry.repName || '—'],
+    ['Time',     date],
+  ];
+  if (entry.name)  rows.push(['HO Name',  entry.name]);
+  if (entry.phone) rows.push(['HO Phone', entry.phone]);
+  if (entry.email) rows.push(['HO Email', entry.email]);
+  if (entry.bill)  rows.push(['Avg Bill',  entry.bill]);
+  if (entry.notes) rows.push(['Notes',    entry.notes]);
+
+  var tableRows = rows.map(function(r) {
+    return '<tr><td style="padding:5px 16px 5px 0;color:#888;font-weight:600;white-space:nowrap;vertical-align:top">' +
+           r[0] + '</td><td style="padding:5px 0;color:#1a1a1a">' + r[1] + '</td></tr>';
+  }).join('');
+
+  var html = '<div style="font-family:sans-serif;max-width:520px;margin:0 auto">' +
+    '<div style="background:#1a9db8;padding:16px 20px;border-radius:10px 10px 0 0">' +
+    '<h2 style="color:#fff;margin:0;font-size:16px">🚪 Dispo: ' + statusLabel + '</h2></div>' +
+    '<div style="background:#f9f9f9;border:1px solid #e5e5e5;border-top:none;border-radius:0 0 10px 10px;padding:20px">' +
+    '<table style="border-collapse:collapse;font-size:14px;width:100%">' + tableRows + '</table>' +
+    '</div>' +
+    '<p style="color:#bbb;font-size:11px;text-align:center;margin-top:12px">Sent automatically by WC App</p>' +
+    '</div>';
+
+  fbDb.collection('mail').add({
+    to: 'Olashawan@tritonenergyllc.net',
+    message: {
+      subject: '[WC App] ' + statusLabel + ' — ' + (entry.address || 'No address') + ' (' + (entry.repName || 'Rep') + ')',
+      html: html
+    }
+  }).catch(function(e) { console.warn('[DispoEmail] Failed to queue:', e.message); });
+}
+
 function _otdSaveEntry(entry) {
   var entries = DataStore.loadEntries();
   entries.unshift(entry);
@@ -23403,6 +23498,9 @@ function _otdSaveEntry(entry) {
 
   // Persist voice memo if present
   if (_otdVoiceBlob) { _otdAttachVoice(entry); }
+
+  // Email dispo results to manager
+  _sendDispoEmail(entry);
 
   var banner = document.getElementById('otd-saved-banner');
   if (banner) banner.classList.add('otd-visible');
