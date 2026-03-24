@@ -12080,12 +12080,14 @@ if (_urlOrgId) {
             .then(function(doc) {
               if (doc.exists) {
                 var _saOrg = doc.data();
+                // Strip iconUrl before applyOrgSettings so it never gets cached for SA
                 applyOrgSettings(Object.assign({}, _saOrg, {
                   companyName:  _saOrg.companyName  || _saOrg.name         || '',
-                  themePrimary: _saOrg.themePrimary || _saOrg.primaryColor || ''
+                  themePrimary: _saOrg.themePrimary || _saOrg.primaryColor || '',
+                  iconUrl: ''
                 }));
                 console.log('[Branding] SA preview:', (_saOrg.companyName || _saOrg.name || '—'), '| logo:', (_saOrg.logoUrl || 'none'));
-                // SA view: show org logo, keep SA's own icon (W.png)
+                // SA view: org logo in header, W.png in icon slot
                 if (_saOrg.logoUrl) {
                   var _hblSA = document.getElementById('header-brand-img');
                   if (_hblSA) _hblSA.src = _saOrg.logoUrl;
@@ -12093,7 +12095,6 @@ if (_urlOrgId) {
                   if (_spSA) _spSA.src = _saOrg.logoUrl;
                   document.querySelectorAll('.login-logo img').forEach(function(i){ i.src = _saOrg.logoUrl; });
                 }
-                // Keep SA icon as WC App default — never replace with org icon
                 var _hliSA = document.getElementById('header-logo');
                 if (_hliSA) { var _hliSAImg = _hliSA.querySelector('img'); if (_hliSAImg) _hliSAImg.src = 'W.png'; }
               }
@@ -14077,8 +14078,9 @@ function _initApp() {
     if (_splashLogoEl) _splashLogoEl.src = _cachedLogo;
     document.querySelectorAll('.login-logo img').forEach(function(img) { img.src = _cachedLogo; });
   }
+  // Only apply cached icon if user belongs to an org (not SA viewing via ?org= param)
   const _cachedIcon = _cachedAdmin.iconUrl;
-  if (_cachedIcon) {
+  if (_cachedIcon && localStorage.getItem('ce_org_id')) {
     const _hli = document.getElementById('header-logo');
     if (_hli) { const _hliImg = _hli.querySelector('img'); if (_hliImg) _hliImg.src = _cachedIcon; }
   }
