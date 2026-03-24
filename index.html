@@ -10738,6 +10738,12 @@
             <input class="sa-input" id="sa-org-logo-file" type="file" accept="image/*" style="padding:8px;cursor:pointer;font-size:12px" />
           </div>
         </div>
+        <div class="sa-row">
+          <div class="sa-field" style="grid-column:1/-1">
+            <label class="sa-label">Icon (optional)</label>
+            <input class="sa-input" id="sa-org-icon-file" type="file" accept="image/*" style="padding:8px;cursor:pointer;font-size:12px" />
+          </div>
+        </div>
         <button class="sa-btn sa-btn--full sa-btn--primary" id="sa-create-org-btn" onclick="_saCreateOrg()">Create Org →</button>
         <div class="sa-result" id="sa-create-org-result"></div>
       </div>
@@ -13597,12 +13603,14 @@ async function _saCreateOrg() {
   const niche  = document.getElementById('sa-org-niche')?.value || 'Solar';
   const color  = document.getElementById('sa-org-color')?.value || '#1a9db8';
   const logoInput = document.getElementById('sa-org-logo-file');
+  const iconInput = document.getElementById('sa-org-icon-file');
 
   if (!name) { showToast('Enter an org name'); return; }
   btn.disabled = true; btn.textContent = 'CREATING…';
 
   const orgId = Date.now().toString(36);
   let logoUrl = '';
+  let iconUrl = '';
 
   if (logoInput?.files[0]) {
     try {
@@ -13612,9 +13620,17 @@ async function _saCreateOrg() {
     } catch(e) { console.warn('[SA] Logo upload failed:', e); }
   }
 
+  if (iconInput?.files[0]) {
+    try {
+      const ref = fbStorage.ref('orgs/' + orgId + '/icon.png');
+      await ref.put(iconInput.files[0]);
+      iconUrl = await ref.getDownloadURL();
+    } catch(e) { console.warn('[SA] Icon upload failed:', e); }
+  }
+
   try {
     await fbDb.collection('organizations').doc(orgId).set({
-      name, niche, primaryColor: color, logoUrl,
+      name, niche, primaryColor: color, logoUrl, iconUrl,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       createdBy: SUPER_ADMIN_UID
     });
