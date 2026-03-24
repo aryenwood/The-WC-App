@@ -11480,6 +11480,23 @@ function isSuperAdmin() {
   return !!(fbAuth.currentUser && fbAuth.currentUser.uid === SUPER_ADMIN_UID);
 }
 
+// Last-generated invite context — set in _saGenMasterAdminInvite, read by share button
+var _saLastCode      = '';
+var _saLastOrgId     = '';
+var _saLastOrgName   = '';
+var _saLastAdminName = '';
+
+function superAdminShareInvite() {
+  var name = _saLastAdminName || 'there';
+  var msg  = 'Hey ' + name + '! 👋\n\n' +
+    "You've been set up as the admin for " + _saLastOrgName + ' on WC App.\n\n' +
+    'Your setup code:\n' + _saLastCode + '\n\n' +
+    'Get started here:\n' +
+    'https://tritonenergy.netlify.app?org=' + _saLastOrgId + '\n\n' +
+    'Code expires in 30 days.\n— Aryen, WC App';
+  window.open('sms:?body=' + encodeURIComponent(msg));
+}
+
 // ── Firebase identity helpers ─────────────────────────────────────────────
 function _applyFirebaseIdentity(user) {
   // Header avatar: swap SVG for photo if available
@@ -13647,6 +13664,12 @@ async function _saGenMasterAdminInvite() {
   const code      = _genSuperInviteCode();
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
+  // Store for share button
+  _saLastCode      = code;
+  _saLastOrgId     = orgId;
+  _saLastOrgName   = orgName;
+  _saLastAdminName = adminName;
+
   try {
     await fbDb.collection('invites').doc(code).set({
       code, orgId, orgName, role: 'master_admin',
@@ -13656,15 +13679,12 @@ async function _saGenMasterAdminInvite() {
       used: false, usedBy: null
     });
 
-    const smsText = `Hey ${adminName}! 👋\n\nYou've been set up as the admin for ${orgName} on WC App.\n\nYour setup code:\n${code}\n\nGet started here:\nhttps://tritonenergy.netlify.app?org=${orgId}\n\nCode expires in 30 days.\n— Aryen, WC App`;
-    const smsEncoded = encodeURIComponent(smsText);
-
     result.innerHTML = `<span style="color:rgba(32,216,236,0.75)">CODE GENERATED</span>
 <span class="sa-result-code">${code}</span>
 <span style="color:rgba(255,255,255,0.38)">Role: master_admin &nbsp;·&nbsp; Org: ${orgName}<br>Expires: ${expiresAt.toLocaleDateString()}</span>
 <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
   <button class="sa-copy-btn" onclick="navigator.clipboard.writeText('${code}').then(()=>showToast('Code copied!'))">COPY CODE</button>
-  <button class="sa-copy-btn" onclick="(function(){var t=decodeURIComponent('${smsEncoded}');var a=document.createElement('a');a.href='sms:?body=${smsEncoded}';document.body.appendChild(a);a.click();document.body.removeChild(a);navigator.clipboard&&navigator.clipboard.writeText(t);showToast('SMS text copied + Messages opened');})()">SHARE SMS</button>
+  <button class="sa-copy-btn" onclick="superAdminShareInvite()">SHARE SMS</button>
 </div>`;
     result.classList.add('visible');
     showToast('Invite generated!');
