@@ -1,9 +1,14 @@
 process.env.GOOGLE_CLOUD_PROJECT = 'wc-app-alpha';
 
 const { onDocumentUpdated, onDocumentCreated } = require('firebase-functions/v2/firestore');
+const { onCall } = require('firebase-functions/v2/https');
+const { defineSecret } = require('firebase-functions/params');
 const { initializeApp, applicationDefault } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
+const Anthropic = require('@anthropic-ai/sdk');
+
+const anthropicKey = defineSecret('ANTHROPIC_API_KEY');
 
 initializeApp({
   credential: applicationDefault(),
@@ -74,4 +79,25 @@ exports.wcInviteRedeemed = onDocumentUpdated('invites/{code}', async (event) => 
     return getMessaging().send(message);
   }
   return null;
+});
+
+// AI Brain trainer — callable from client, proxies to Claude API
+exports.wcAiChat = onCall({ secrets: [anthropicKey], cors: true }, async (request) => {
+  const { messages, system } = request.data;
+
+  if (!Array.isArray(messages) || messages.length === 0) {
+    throw new Error('messages array required');
+  }
+
+  const client = new Anthropic({ apiKey: anthropicKey.value() });
+
+  const response = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 1024,
+    system: system || '',
+    messages: messages
+  });
+
+  const reply = response.content[0]?.text || '';
+  return { reply };
 });

@@ -13190,14 +13190,11 @@ const TrainerBot = {
     this.startAgent();
     var self = this;
     setTimeout(function() {
-      self._addMessage(question, 'user');
-      self._addTypingIndicator();
-      setTimeout(function() {
-        self._removeTypingIndicator();
-        var answer = self.getAgentResponse(question);
-        self._addMessage(answer, 'bot');
-        if (self.state.speakerOn) self._speak(answer);
-      }, 800 + Math.random() * 600);
+      var input = document.getElementById('trainer-input');
+      if (input) {
+        input.value = question;
+        self.sendMessage();
+      }
     }, 600);
   },
 
@@ -13292,40 +13289,34 @@ const TrainerBot = {
     var self = this;
     this._addTypingIndicator();
 
-    // v99: Try live API first, fall back to local KB
-    var apiPayload = {
-      messages: this._buildMessages(text),
-      mode: this.state.mode,
-      scenario: this.state.scenario
-    };
+    // Build messages for Claude (no system message in array — passed separately)
+    var systemPrompt = this._buildSystemPrompt();
+    var msgs = [];
+    var history = this.state.conversationHistory.slice(-20);
+    for (var i = 0; i < history.length; i++) {
+      var h = history[i];
+      if (h.role === 'user') msgs.push({ role: 'user', content: h.text });
+      if (h.role === 'bot')  msgs.push({ role: 'assistant', content: h.text });
+    }
+    msgs.push({ role: 'user', content: text });
 
-    fetch(this._apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(apiPayload),
-      signal: AbortSignal.timeout ? AbortSignal.timeout(15000) : undefined
-    })
-    .then(function(res) {
-      if (!res.ok) throw new Error('API ' + res.status);
-      return res.json();
-    })
-    .then(function(data) {
+    var wcAiChatFn = firebase.functions().httpsCallable('wcAiChat');
+    wcAiChatFn({ messages: msgs, system: systemPrompt })
+    .then(function(result) {
       self._removeTypingIndicator();
-      var reply = data.reply || data.message || data.content || data.text || '';
-      if (!reply && data.choices && data.choices[0]) reply = data.choices[0].message?.content || data.choices[0].text || '';
+      var reply = result.data.reply;
       if (!reply) throw new Error('Empty response');
       self.state.conversationHistory.push({ role: 'bot', text: reply, topic: self.state.mode });
       self._addMessage(reply, 'bot');
       if (self.state.speakerOn) self._speak(reply);
-      // Update warmth in roleplay mode based on conversation length
       if (self.state.mode === 'roleplay' && self.state.messageCount > 4) {
         self.state.warmthLevel = Math.min(3, Math.floor(self.state.messageCount / 4));
         self._updateWarmthUI();
       }
     })
     .catch(function(err) {
-      // Fallback to local KB when API unavailable
-      console.warn('TrainerBot API unavailable, using local KB:', err.message);
+      // Fallback to local KB when Cloud Function unavailable
+      console.warn('TrainerBot callable failed, using local KB:', err.message);
       self._removeTypingIndicator();
       var result;
       if (self.state.mode === 'agent') {
