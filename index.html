@@ -11934,19 +11934,29 @@ if (_urlOrgId) {
       // 4. Drain any queued entities to Firestore (online only)
       if (navigator.onLine) drainToFirestore();
 
-      // 5. Read org settings from Firestore → apply to this device (falls back to
-      //    localStorage if offline or doc not found yet)
+      // 5. Read org settings from Firestore → apply to this device (managers/SA only;
+      //    reps load from ce_org_id in step 7 below)
       if (navigator.onLine) {
         fbDb.collection('organizations').doc(user.uid).get()
           .then(function(doc) {
             if (doc.exists) {
-              applyOrgSettings(doc.data());
+              var _d5 = doc.data();
+              applyOrgSettings(Object.assign({}, _d5, {
+                companyName:  _d5.companyName  || _d5.name         || '',
+                themePrimary: _d5.themePrimary || _d5.primaryColor || ''
+              }));
+              console.log('[Branding] Applied (own org):', (_d5.companyName || _d5.name || '—'), '| logo:', (_d5.logoUrl || 'none'));
             } else {
-              console.log('[Firestore] No org settings doc yet for', user.uid, '— using localStorage defaults');
+              console.log('[Firestore] No org settings doc yet for', user.uid);
             }
+            // Dismiss splash for managers (ce_org_id === user.uid) and SA (no ce_org_id)
+            var _oid5 = localStorage.getItem('ce_org_id');
+            if (!_oid5 || _oid5 === user.uid) _dismissSplash();
           })
           .catch(function(e) {
             console.warn('[Firestore] Org settings read failed (using localStorage):', e.code, e.message);
+            var _oid5c = localStorage.getItem('ce_org_id');
+            if (!_oid5c || _oid5c === user.uid) _dismissSplash();
           });
       }
 
@@ -12018,43 +12028,55 @@ if (_urlOrgId) {
       }
 
       // 7. Load org branding from ce_org_id (reps belong to a different org than their own uid)
-      // Step 5 above reads organizations/{user.uid} — correct for managers/admins.
-      // This step covers reps/canvassers whose ce_org_id is the manager's org, not their own uid.
       var _orgIdForBrand = localStorage.getItem('ce_org_id');
-      console.log('[OrgBrand] user.uid:', user.uid, '| ce_org_id:', _orgIdForBrand);
-      if (_orgIdForBrand && _orgIdForBrand !== user.uid && navigator.onLine) {
-        console.log('[OrgBrand] Fetching org branding from organizations/' + _orgIdForBrand);
-        fbDb.collection('organizations').doc(_orgIdForBrand).get()
-          .then(function(doc) {
-            if (doc.exists) {
-              console.log('[OrgBrand] Doc found — fields:', Object.keys(doc.data()));
-              var org = doc.data();
-              // Normalize field names: SA creates docs with 'name'/'primaryColor';
-              // applyOrgSettings() expects 'companyName'/'themePrimary'
-              applyOrgSettings(Object.assign({}, org, {
-                companyName:  org.companyName  || org.name         || '',
-                themePrimary: org.themePrimary || org.primaryColor || ''
-              }));
-              // Direct fallbacks — belt-and-suspenders after applyOrgSettings
-              if (org.logoUrl) {
-                var _hbl = document.getElementById('header-brand-img');
-                if (_hbl) { _hbl.src = org.logoUrl; console.log('[OrgBrand] Logo applied:', org.logoUrl); }
-                var _sp = document.getElementById('splash-logo');
-                if (_sp) _sp.src = org.logoUrl;
-                document.querySelectorAll('.login-logo img').forEach(function(i){ i.src = org.logoUrl; });
+      console.log('[Branding] user.uid:', user.uid, '| ce_org_id:', _orgIdForBrand);
+      if (_orgIdForBrand && _orgIdForBrand !== user.uid) {
+        if (navigator.onLine) {
+          console.log('[Branding] Loading org ' + _orgIdForBrand + '...');
+          fbDb.collection('organizations').doc(_orgIdForBrand).get()
+            .then(function(doc) {
+              if (doc.exists) {
+                var org = doc.data();
+                applyOrgSettings(Object.assign({}, org, {
+                  companyName:  org.companyName  || org.name         || '',
+                  themePrimary: org.themePrimary || org.primaryColor || ''
+                }));
+                console.log('[Branding] Applied:', (org.companyName || org.name || '—'), '| logo:', (org.logoUrl || 'none'));
+                if (org.logoUrl) {
+                  var _hbl = document.getElementById('header-brand-img');
+                  if (_hbl) _hbl.src = org.logoUrl;
+                  var _sp = document.getElementById('splash-logo');
+                  if (_sp) _sp.src = org.logoUrl;
+                  document.querySelectorAll('.login-logo img').forEach(function(i){ i.src = org.logoUrl; });
+                }
+                if (org.iconUrl) {
+                  var _hli = document.getElementById('header-logo');
+                  if (_hli) { var _hliImg = _hli.querySelector('img'); if (_hliImg) _hliImg.src = org.iconUrl; }
+                }
+              } else {
+                console.warn('[Branding] No doc at organizations/' + _orgIdForBrand + ' — check Firestore');
               }
-              if (org.iconUrl) {
-                var _hli = document.getElementById('header-logo');
-                if (_hli) { var _hliImg = _hli.querySelector('img'); if (_hliImg) { _hliImg.src = org.iconUrl; console.log('[OrgBrand] Icon applied:', org.iconUrl); } }
-              }
-            } else {
-              console.warn('[OrgBrand] No doc at organizations/' + _orgIdForBrand + ' — check Firestore');
-            }
-          })
-          .catch(function(e) { console.warn('[OrgBrand] Load failed:', e.code, e.message); });
+              _dismissSplash();
+            })
+            .catch(function(e) {
+              console.warn('[Branding] Load failed:', e.code, e.message);
+              _dismissSplash();
+            });
+        } else {
+          // Offline — use cached branding already in localStorage
+          console.log('[Branding] Offline — using cached branding for org', _orgIdForBrand);
+          _dismissSplash();
+        }
       } else if (!_orgIdForBrand) {
-        console.log('[OrgBrand] No ce_org_id in localStorage — skipping rep branding load');
+        // SA or unaffiliated — reset to WC App defaults
+        console.log('[Branding] No ce_org_id — showing WC App defaults');
+        var _defBrand = document.getElementById('header-brand-img');
+        var _defSplashImg2 = document.getElementById('splash-logo');
+        if (_defBrand) _defBrand.src = 'W.png';
+        if (_defSplashImg2) _defSplashImg2.src = 'W.png';
+        _dismissSplash();
       }
+      // else: ce_org_id === user.uid (manager) — splash dismissed by step 5's .then()
     } else {
       appEl.style.display = 'none';
       _clearFirebaseIdentity();
@@ -13975,6 +13997,17 @@ let gpsWatchId = null;
 // guaranteed ready before we try to render anything. Critical for PWA cold
 // launches from iPhone home screen where scripts may arrive from SW cache.
 var _appInitDone = false;
+var _splashDismissed = false;
+var _splashFallbackTimer = null;
+function _dismissSplash() {
+  if (_splashDismissed) return;
+  _splashDismissed = true;
+  if (_splashFallbackTimer) { clearTimeout(_splashFallbackTimer); _splashFallbackTimer = null; }
+  var _sp = document.getElementById('splash');
+  if (!_sp) return;
+  _sp.classList.add('splash--hidden');
+  setTimeout(function() { _sp.style.display = 'none'; }, 460);
+}
 function _initApp() {
   if (_appInitDone) return; // Guard against double-init
   _appInitDone = true;
@@ -14021,14 +14054,15 @@ function _initApp() {
   if (qAction === 'log') { activateTab('dashboard'); setTimeout(() => openSheet(), 400); }
   else if (qAction === 'book') { activateTab('dashboard'); setTimeout(() => openBookingSheet(), 400); }
 
-  // Dismiss splash — skip delay on first run so setup modal is immediately visible
+  // Dismiss splash — first run: immediate. Returning users: wait for branding to load from Firestore.
+  // onAuthStateChanged calls _dismissSplash() after branding resolves; 3500ms safety fallback.
   const splash = document.getElementById('splash');
   if (splash) {
-    const splashDelay = _isFirstRun ? 0 : 1400;
-    setTimeout(() => {
-      splash.classList.add('splash--hidden');
-      setTimeout(() => { splash.style.display = 'none'; }, 460);
-    }, splashDelay);
+    if (_isFirstRun) {
+      _dismissSplash();
+    } else {
+      _splashFallbackTimer = setTimeout(_dismissSplash, 3500);
+    }
   }
 
   // Init CRM event listeners (must run after DOM is ready)
