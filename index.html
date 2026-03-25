@@ -11778,7 +11778,7 @@ function saveOrgSettingsToFirestore() {
   var user = (typeof fbAuth !== 'undefined') ? fbAuth.currentUser : null;
   if (!user || !navigator.onLine) return;
   var s = {};
-  try { s = JSON.parse(localStorage.getItem('ce_admin') || '{}'); } catch(_) {}
+  try { s = _safeAdminSettings(); } catch(_) {}
   var payload = {
     companyName:    s.companyName    || '',
     tagline:        s.tagline        || '',
@@ -11805,7 +11805,7 @@ function saveOrgSettingsToFirestore() {
 function applyOrgSettings(data) {
   if (!data) return;
   var s = {};
-  try { s = JSON.parse(localStorage.getItem('ce_admin') || '{}'); } catch(_) {}
+  try { s = _safeAdminSettings(); } catch(_) {}
 
   if (data.companyName) {
     s.companyName = data.companyName;
@@ -11841,7 +11841,7 @@ function applyOrgSettings(data) {
 
   if (data.logoUrl) {
     try {
-      var _ls = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+      var _ls = _safeAdminSettings();
       _ls.logoUrl = data.logoUrl;
       localStorage.setItem('ce_admin', JSON.stringify(_ls));
     } catch(_) {}
@@ -11856,7 +11856,7 @@ function applyOrgSettings(data) {
 
   if (data.iconUrl) {
     try {
-      var _ls2 = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+      var _ls2 = _safeAdminSettings();
       _ls2.iconUrl = data.iconUrl;
       localStorage.setItem('ce_admin', JSON.stringify(_ls2));
     } catch(_) {}
@@ -14456,7 +14456,7 @@ function _initApp() {
   }
 
   // Apply cached org branding immediately (covers returning users before auth resolves)
-  const _cachedAdmin = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  const _cachedAdmin = _safeAdminSettings();
   const _cachedLogo = _cachedAdmin.logoUrl || _cachedAdmin.customLogo;
   if (_cachedLogo) {
     const _hbl = document.getElementById('header-brand-img');
@@ -15336,7 +15336,7 @@ document.querySelectorAll('.training-toggle').forEach(btn => {
 
 // ── Custom Training links (added via Master Admin) ─────────────────────
 function renderCustomTrainingLinks() {
-  const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  const s = _safeAdminSettings();
   const links = s.customTrainingLinks || [];
   const container = document.getElementById('custom-training-list');
   if (!container) return;
@@ -15355,7 +15355,7 @@ function renderCustomTrainingLinks() {
 
 // ── Custom Videos (added via Master Admin) ─────────────────────────────
 function renderCustomVideos() {
-  const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  const s = _safeAdminSettings();
   const vids = s.customVideos || [];
   const container = document.getElementById('custom-videos-list');
   if (!container) return;
@@ -16130,6 +16130,10 @@ function captureLocation() {
     },
     { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
   );
+}
+
+function _safeAdminSettings() {
+  try { return _safeAdminSettings(); } catch(_) { return {}; }
 }
 
 function lockBodyScroll() {
@@ -19273,7 +19277,7 @@ document.getElementById('role-setup-go').addEventListener('click', () => {
   localStorage.setItem('ce_user_name', name);
   // Also save name into ce_admin.repName so business card picks it up
   try {
-    const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+    const s = _safeAdminSettings();
     if (!s.repName) { s.repName = name; localStorage.setItem('ce_admin', JSON.stringify(s)); }
   } catch(_) {}
   migrateDataV1();
@@ -19465,7 +19469,7 @@ function openMasterAdmin() {
   if (!sheet) return;
 
   // Populate fields
-  const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  const s = _safeAdminSettings();
   const maGoSolo  = document.getElementById('ma-gosolo-url');
   const maGrid    = document.getElementById('ma-grid-url');
   const maChatApi = document.getElementById('ma-chat-api-url');
@@ -19559,7 +19563,7 @@ document.getElementById('ma-save-links-btn').addEventListener('click', () => {
   const gosoloUrl = document.getElementById('ma-gosolo-url').value.trim();
   const gridUrl   = document.getElementById('ma-grid-url').value.trim();
   const chatApiUrl = document.getElementById('ma-chat-api-url').value.trim();
-  const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  const s = _safeAdminSettings();
   if (gosoloUrl) s.gosoloUrl = gosoloUrl;
   if (gridUrl)   s.gridUrl   = gridUrl;
   localStorage.setItem('ce_admin', JSON.stringify(s));
@@ -19656,7 +19660,7 @@ document.getElementById('ma-logo-upload')?.addEventListener('change', e => {
     return new Promise((res, rej) => { const r = new FileReader(); r.onload = e => res(e.target.result); r.onerror = rej; r.readAsDataURL(file); });
   }
   function _loadMaBrandingStatus() {
-    const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+    const s = _safeAdminSettings();
     const hls = document.getElementById('ma-header-logo-status');
     const ais = document.getElementById('ma-app-icon-status');
     const cnf = document.getElementById('ma-company-name-field');
@@ -19674,7 +19678,7 @@ document.getElementById('ma-logo-upload')?.addEventListener('change', e => {
     const file = e.target.files[0]; if (!file) return;
     try {
       const b64 = await _f2b64(file);
-      const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+      const s = _safeAdminSettings();
       s.customLogo = b64; localStorage.setItem('ce_admin', JSON.stringify(s));
       _applyBranding(s); _loadMaBrandingStatus(); showToast('Logo updated!');
       // Upload to Firebase Storage and persist URL to Firestore
@@ -19697,7 +19701,7 @@ document.getElementById('ma-logo-upload')?.addEventListener('change', e => {
     const file = e.target.files[0]; if (!file) return;
     try {
       const b64 = await _f2b64(file);
-      const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+      const s = _safeAdminSettings();
       s.customIcon = b64; localStorage.setItem('ce_admin', JSON.stringify(s));
       _applyBranding(s); _loadMaBrandingStatus(); showToast('App icon updated!');
     } catch(_) { showToast('Upload failed.'); }
@@ -19705,7 +19709,7 @@ document.getElementById('ma-logo-upload')?.addEventListener('change', e => {
 
   // Save branding (company name + any pending updates)
   document.getElementById('ma-save-branding-btn')?.addEventListener('click', () => {
-    const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+    const s = _safeAdminSettings();
     const name = document.getElementById('ma-company-name-field')?.value.trim();
     if (name) s.companyName = name;
     localStorage.setItem('ce_admin', JSON.stringify(s));
@@ -19721,7 +19725,7 @@ document.getElementById('ma-logo-upload')?.addEventListener('change', e => {
     const file = e.target.files[0]; if (!file) return;
     try {
       const b64 = await _f2b64(file);
-      const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+      const s = _safeAdminSettings();
       s.checklistPdf = { name: file.name, data: b64, type: file.type };
       localStorage.setItem('ce_admin', JSON.stringify(s));
       const el = document.getElementById('ma-checklist-status');
@@ -19732,7 +19736,7 @@ document.getElementById('ma-logo-upload')?.addEventListener('change', e => {
   });
   // Load current checklist status
   (function() {
-    const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+    const s = _safeAdminSettings();
     const el = document.getElementById('ma-checklist-status');
     if (el) el.textContent = s.checklistPdf ? `✓ ${s.checklistPdf.name}` : 'No custom checklist — default shown.';
   })();
@@ -19782,7 +19786,7 @@ document.getElementById('ma-logo-upload')?.addEventListener('change', e => {
   }
 
   // Apply branding on startup
-  _applyBranding(JSON.parse(localStorage.getItem('ce_admin') || '{}'));
+  _applyBranding(_safeAdminSettings());
 })();
 
 // Export all data
@@ -20748,7 +20752,7 @@ const ADMIN_DEFAULTS = {
 };
 
 function loadAdminSettings() {
-  const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  const s = _safeAdminSettings();
   // Hidden backward-compat fields (now managed by Master Admin)
   document.getElementById('admin-company-name').value = s.companyName || ADMIN_DEFAULTS.companyName;
   document.getElementById('admin-tagline').value       = s.tagline     || ADMIN_DEFAULTS.tagline;
@@ -20814,7 +20818,7 @@ function loadAdminSettings() {
 
 function saveAdminSettings() {
   // v93: merge into existing ce_admin instead of replacing — preserves logos, adder sheets, checklist, etc.
-  const existing = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  const existing = _safeAdminSettings();
   const updates = {
     companyName: document.getElementById('admin-company-name').value.trim() || ADMIN_DEFAULTS.companyName,
     tagline:     document.getElementById('admin-tagline').value.trim()       || ADMIN_DEFAULTS.tagline,
@@ -20936,7 +20940,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
 // ── Admin: Logo & Icon upload ─────────────────────────────────────────────
 (function initAdminBranding() {
   function _loadAdminAssets() {
-    const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+    const s = _safeAdminSettings();
     // Logo
     const logoPreview = document.getElementById('admin-logo-preview');
     const logoImg = document.getElementById('admin-logo-preview-img');
@@ -20985,7 +20989,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
       const file = logoFile.files[0];
       try {
         const b64 = await _fileToBase64(file);
-        const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+        const s = _safeAdminSettings();
         s.customLogo = b64;
         localStorage.setItem('ce_admin', JSON.stringify(s));
         _loadAdminAssets();
@@ -21012,7 +21016,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
       if (!iconFile.files[0]) return;
       try {
         const b64 = await _fileToBase64(iconFile.files[0]);
-        const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+        const s = _safeAdminSettings();
         s.customIcon = b64;
         localStorage.setItem('ce_admin', JSON.stringify(s));
         _loadAdminAssets();
@@ -21024,7 +21028,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
   const logoRemove = document.getElementById('admin-logo-remove');
   if (logoRemove) {
     logoRemove.addEventListener('click', async () => {
-      const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+      const s = _safeAdminSettings();
       delete s.customLogo;
       delete s.logoUrl;
       localStorage.setItem('ce_admin', JSON.stringify(s));
@@ -21048,7 +21052,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
   const iconRemove = document.getElementById('admin-icon-remove');
   if (iconRemove) {
     iconRemove.addEventListener('click', () => {
-      const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+      const s = _safeAdminSettings();
       delete s.customIcon;
       localStorage.setItem('ce_admin', JSON.stringify(s));
       const iconPreview = document.getElementById('admin-icon-preview');
@@ -21096,7 +21100,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
   }
 
   function _loadAdderStatuses() {
-    const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+    const s = _safeAdminSettings();
     ['az','ca','tx'].forEach(st => {
       const d = (s.adderSheets || {})[st];
       _setAdderStatus(st, d ? d.name : '');
@@ -21112,7 +21116,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
       _setAdderStatus(stateKey, 'Uploading…');
       try {
         const b64 = await _fileToBase64(file);
-        const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+        const s = _safeAdminSettings();
         if (!s.adderSheets) s.adderSheets = {};
         s.adderSheets[stateKey] = { name: file.name, data: b64, type: file.type };
         localStorage.setItem('ce_admin', JSON.stringify(s));
@@ -21139,7 +21143,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
   }
 
   function _loadChecklistStatus() {
-    const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+    const s = _safeAdminSettings();
     const el = document.getElementById('admin-checklist-status');
     if (!el) return;
     if (s.checklistPdf) {
@@ -21158,7 +21162,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
       const file = inp.files[0];
       try {
         const b64 = await _fileToBase64(file);
-        const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+        const s = _safeAdminSettings();
         s.checklistPdf = { name: file.name, data: b64, type: file.type };
         localStorage.setItem('ce_admin', JSON.stringify(s));
         _loadChecklistStatus();
@@ -21328,7 +21332,7 @@ document.getElementById('admin-review-url').addEventListener('input', () => {
 // ── Business Card ───────────────────────────────────────────────────────────
 // ── Business Card helpers ───────────────────────────────────────────────────
 function _bcardCurrentData() {
-  const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  const s = _safeAdminSettings();
   return {
     name:    s.repName     || 'Your Name',
     title:   s.repTitle    || 'Solar Energy Consultant',
@@ -21389,7 +21393,7 @@ function _bcardRefreshStaticView(d) {
   // v76: review CTA — v93: only show if review URL is configured
   const reviewCta = document.getElementById('bcard-review-cta');
   if (reviewCta) {
-    const adminData = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+    const adminData = _safeAdminSettings();
     reviewCta.style.display = adminData.reviewUrl ? '' : 'none';
   }
 }
@@ -21397,7 +21401,7 @@ function _bcardRefreshStaticView(d) {
 function openBcard() {
   // Fix 8: auto-populate from onboarding ce_user_* keys if rep card fields are still empty
   (function() {
-    const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+    const s = _safeAdminSettings();
     let changed = false;
     if (!s.repName  && localStorage.getItem('ce_user_name'))  { s.repName  = localStorage.getItem('ce_user_name');  changed = true; }
     if (!s.repPhone && localStorage.getItem('ce_user_phone')) { s.repPhone = localStorage.getItem('ce_user_phone'); changed = true; }
@@ -21492,7 +21496,7 @@ function _bcardSaveEdits() {
   const li      = (document.getElementById('bcard-edit-li')?.value || '').trim();
 
   // Persist to admin settings
-  const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  const s = _safeAdminSettings();
   if (name)    s.repName     = name;
   if (title)   s.repTitle    = title;
   if (company) s.companyName = company;
@@ -21617,7 +21621,7 @@ function showToast(msg, duration) {
 
 // ── Checklist pane rendering ──────────────────────────────────────────────
 function renderChecklistPane() {
-  const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  const s = _safeAdminSettings();
   const pdfView = document.getElementById('checklist-pdf-view');
   const defaultWrap = document.getElementById('checklist-default-wrap');
   const pdfLink = document.getElementById('checklist-pdf-link');
@@ -21635,7 +21639,7 @@ function renderChecklistPane() {
 // ── Adder pane PDF rendering ──────────────────────────────────────────────
 function renderAdderPane(stateKey) {
   const currentState = stateKey || (document.querySelector('.adder-tab--active')?.dataset.state) || 'az';
-  const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  const s = _safeAdminSettings();
   const sheets = s.adderSheets || {};
   const pdf = sheets[currentState];
   const banner = document.getElementById('adder-pdf-banner');
@@ -21654,7 +21658,7 @@ function renderAdderPane(stateKey) {
 
 // ── Review Request — sub-menu ───────────────────────────────────────────────
 function openReviewMenu() {
-  const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  const s = _safeAdminSettings();
   if (!s.reviewUrl) {
     showToast('Add your Google Review link in Admin → My Profile first.');
     return;
@@ -21676,7 +21680,7 @@ document.getElementById('review-btn').addEventListener('click', openReviewMenu);
 // QR code option
 document.getElementById('review-opt-qr').addEventListener('click', () => {
   closeReviewMenu();
-  const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  const s = _safeAdminSettings();
   _drawQR(document.getElementById('review-qr-canvas'), s.reviewUrl, 200);
   document.getElementById('review-qr-overlay').classList.add('open');
   lockBodyScroll();
@@ -21685,7 +21689,7 @@ document.getElementById('review-opt-qr').addEventListener('click', () => {
 // Text (SMS) option
 document.getElementById('review-opt-sms').addEventListener('click', () => {
   closeReviewMenu();
-  const s    = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  const s    = _safeAdminSettings();
   const name = s.repName || 'your consultant';
   const body = encodeURIComponent(
     `Hey! Thanks for going solar with ${s.companyName || 'Capital Energy'}. If ${name} took great care of you, a quick review would mean the world 🙏\n${s.reviewUrl}`
@@ -21696,7 +21700,7 @@ document.getElementById('review-opt-sms').addEventListener('click', () => {
 // Email option
 document.getElementById('review-opt-email').addEventListener('click', () => {
   closeReviewMenu();
-  const s       = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  const s       = _safeAdminSettings();
   const name    = s.repName || 'your consultant';
   const company = s.companyName || 'Capital Energy';
   const subject = encodeURIComponent(`How was your experience with ${company}?`);
@@ -21709,7 +21713,7 @@ document.getElementById('review-opt-email').addEventListener('click', () => {
 // Open Review Link option
 document.getElementById('review-opt-link').addEventListener('click', () => {
   closeReviewMenu();
-  const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  const s = _safeAdminSettings();
   if (s.reviewUrl) window.open(s.reviewUrl, '_blank', 'noopener');
 });
 
@@ -21778,11 +21782,11 @@ function closeBrowser() {
 }
 document.getElementById('browser-close').addEventListener('click', closeBrowser);
 document.getElementById('gosolo-btn').addEventListener('click', () => {
-  const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  const s = _safeAdminSettings();
   window.open(s.gosoloUrl || 'https://phx.gosolo.io/', '_blank', 'noopener,noreferrer');
 });
 document.getElementById('cptl-grid-btn').addEventListener('click', () => {
-  const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  const s = _safeAdminSettings();
   openBrowser(s.gridUrl || 'https://procfu.com/widgets/mcapp/qWhbwtv797R7', 'CPTL Grid');
 });
 
@@ -22942,7 +22946,7 @@ document.getElementById('dispo-appt-btn').addEventListener('click', openDispoShe
     if (phone)  localStorage.setItem('ce_user_phone',  phone);
     if (region) localStorage.setItem('ce_user_region', region);
     // Mirror into ce_admin so rep card picks it up immediately
-    const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+    const s = _safeAdminSettings();
     if (phone  && !s.repPhone)  { s.repPhone  = phone; }
     if (region && !s.repRegion) { s.repRegion = region; }
     if (!s.repName) { s.repName = localStorage.getItem('ce_user_name') || ''; }
@@ -23331,7 +23335,7 @@ function generateInviteCode() {
   var role = (document.getElementById('invite-role') || {}).value || 'canvasser';
   var user = fbAuth.currentUser;
   var uid  = user.uid;
-  var s    = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  var s    = _safeAdminSettings();
   var orgName   = s.companyName || 'Capital Energy';
   var repName   = localStorage.getItem('ce_user_name') || user.displayName || '';
   var code      = _genInviteCode();
@@ -23386,7 +23390,7 @@ function copyInviteCode() {
 
 function shareInviteViaMessage() {
   if (!_currentInviteCode) return;
-  var s           = JSON.parse(localStorage.getItem('ce_admin') || '{}');
+  var s           = _safeAdminSettings();
   var orgName     = s.companyName || 'Capital Energy';
   var managerName = localStorage.getItem('ce_user_name') || 'Your manager';
   var repName     = (_currentInviteRepName || '').trim() || 'there';
@@ -23941,7 +23945,7 @@ function _otdAttachVoice(entry) {
 function _sendApptDispoEmail(appt, result) {
   if (typeof fbDb === 'undefined') return;
   if (window.location.hostname !== 'tritonenergy.netlify.app') return;
-  var _s = {}; try { _s = JSON.parse(localStorage.getItem('ce_admin') || '{}'); } catch(_) {}
+  var _s = {}; try { _s = _safeAdminSettings(); } catch(_) {}
   var _toEmail   = _s.dispoEmailTo   || 'Olashawan@tritonenergyllc.net';
   var _fromEmail = _s.dispoEmailFrom || '';
   var repName = localStorage.getItem('ce_user_name') || 'Rep';
@@ -23984,7 +23988,7 @@ function _sendApptDispoEmail(appt, result) {
 function _sendDispoEmail(entry) {
   if (typeof fbDb === 'undefined') return;
   if (window.location.hostname !== 'tritonenergy.netlify.app') return;
-  var _s = {}; try { _s = JSON.parse(localStorage.getItem('ce_admin') || '{}'); } catch(_) {}
+  var _s = {}; try { _s = _safeAdminSettings(); } catch(_) {}
   var _toEmail   = _s.dispoEmailTo   || 'Olashawan@tritonenergyllc.net';
   var _fromEmail = _s.dispoEmailFrom || '';
   var statusLabels = {
