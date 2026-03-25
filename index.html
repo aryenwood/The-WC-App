@@ -775,6 +775,7 @@
     /* ── Scroll area ─────────────────────────────────────────────────────── */
     #main {
       flex: 1;
+      min-height: 0; /* flexbox needs this to constrain below content size and enable scroll */
       overflow-y: auto; overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
       position: relative; z-index: 1;
