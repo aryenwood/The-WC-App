@@ -13888,8 +13888,11 @@ navItems.forEach(btn => {
     closeDropdown();
     activateTab('resources');
   });
-  if (pddSignout) pddSignout.addEventListener('click', () => {
+  if (pddSignout) pddSignout.addEventListener('click', async () => {
     closeDropdown();
+    if (navigator.onLine && typeof drainToFirestore === 'function') {
+      try { await drainToFirestore(); } catch(_) {}
+    }
     if (typeof fbAuth !== 'undefined') fbAuth.signOut();
   });
   if (pddSuperAdmin) pddSuperAdmin.addEventListener('click', () => {
@@ -16432,7 +16435,10 @@ function runDeferredGeocode() {
   }, Promise.resolve());
 }
 
-window.addEventListener('online',  runDeferredGeocode);
+window.addEventListener('online', runDeferredGeocode);
+window.addEventListener('online', function() {
+  if (typeof drainToFirestore === 'function') setTimeout(drainToFirestore, 1000);
+});
 
 // ── v78: Offline detection banner ─────────────────────────────────────────
 (function() {
@@ -19800,8 +19806,11 @@ document.getElementById('ma-export-csv-btn').addEventListener('click', () => {
 });
 
 // Clear all data
-document.getElementById('ma-clear-btn').addEventListener('click', () => {
-  if (!confirm('⚠️ This will erase ALL app data — logs, appointments, settings. This cannot be undone. Continue?')) return;
+document.getElementById('ma-clear-btn').addEventListener('click', async () => {
+  if (!confirm('⚠️ This will delete ALL local data. Any unsynced activity will be permanently lost. Are you sure?')) return;
+  if (navigator.onLine && typeof drainToFirestore === 'function') {
+    try { await drainToFirestore(); } catch(_) {}
+  }
   Object.keys(localStorage).filter(k => k.startsWith('ce_')).forEach(k => localStorage.removeItem(k));
   location.reload();
 });
