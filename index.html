@@ -784,10 +784,9 @@
       /* No padding-top needed — #header is sticky in flex flow, not position:fixed */
       padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 20px);
     }
-    /* iOS PWA: touch-action:none is the only thing WKWebView honors to stop native scroll */
+    /* iOS PWA: scroll-lock via inline JS position:fixed — class kept for fallback only */
     #main.scroll-locked {
       overflow: hidden;
-      touch-action: none;
     }
 
     /* ── Tab panels ──────────────────────────────────────────────────────── */
@@ -3713,6 +3712,7 @@
     .sheet-overlay.open {
       background: rgba(0,0,0,0.58);
       pointer-events: auto;
+      touch-action: none;
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
     }
@@ -18340,10 +18340,20 @@ function openBookingSheet() {
   bookingOverlay.classList.add('open');
   bookingSheet.classList.add('open');
   bookingOverlay.setAttribute('aria-hidden', 'false');
-  // iOS PWA: lock body + #main so WKWebView's outer UIScrollView can't scroll the dashboard
+  // iOS PWA: position:fixed removes #main from WKWebView's native UIScrollView tree entirely.
+  // CSS class changes (overflow:hidden) don't reliably update the native scroll layer.
   document.body.classList.add('booking-sheet-open');
   const _mainEl = document.getElementById('main');
-  if (_mainEl) { _mainEl._bsSavedScroll = _mainEl.scrollTop; _mainEl.classList.add('scroll-locked'); }
+  if (_mainEl) {
+    const st = _mainEl.scrollTop;
+    _mainEl._bsSavedScroll = st;
+    // Freeze visual position then fix — WKWebView destroys the UIScrollView on position:fixed
+    _mainEl.style.top      = `-${st}px`;
+    _mainEl.style.position = 'fixed';
+    _mainEl.style.left     = '0';
+    _mainEl.style.right    = '0';
+    _mainEl.style.overflow = 'hidden';
+  }
   document.addEventListener('touchmove', _bookingTouchMove, { passive: false });
   // Default datetime to next hour
   const now = new Date();
@@ -18360,7 +18370,15 @@ function closeBookingSheet() {
   bookingOverlay.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('booking-sheet-open');
   const _mainElC = document.getElementById('main');
-  if (_mainElC) { _mainElC.classList.remove('scroll-locked'); _mainElC.scrollTop = _mainElC._bsSavedScroll || 0; }
+  if (_mainElC) {
+    // Restore #main — clear inline styles first, then set scrollTop
+    _mainElC.style.position = '';
+    _mainElC.style.top      = '';
+    _mainElC.style.left     = '';
+    _mainElC.style.right    = '';
+    _mainElC.style.overflow = '';
+    _mainElC.scrollTop = _mainElC._bsSavedScroll || 0;
+  }
   document.removeEventListener('touchmove', _bookingTouchMove);
   setTimeout(() => {
     bookingForm.reset();
