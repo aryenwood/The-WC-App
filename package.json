@@ -7,6 +7,7 @@
     "@remotion/cli": "^4.0.438",
     "@remotion/google-fonts": "4.0.438",
     "@remotion/player": "^4.0.438",
+    "pptxgenjs": "^4.0.1",
     "remotion": "^4.0.438"
   },
   "devDependencies": {
