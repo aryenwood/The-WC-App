@@ -51,7 +51,7 @@ const PARTICLES = buildParticles();
 
 const CX = WIDTH / 2;
 const CY = HEIGHT / 2 - 120;
-const LOGO_SIZE = 140;
+const LOGO_SIZE = 300;
 
 export const LogoAssembly: React.FC = () => {
   const frame = useCurrentFrame();
@@ -168,8 +168,9 @@ export const LogoAssembly: React.FC = () => {
                 inset: 0,
                 width: '100%',
                 height: '100%',
-                objectFit: 'cover',
+                objectFit: 'contain',
                 borderRadius: '50%',
+                imageRendering: 'auto',
               }}
             />
           </div>
