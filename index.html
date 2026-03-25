@@ -13901,6 +13901,7 @@ navItems.forEach(btn => {
 // ── Super Admin Functions ────────────────────────────────────────────────
 function openSuperAdmin() {
   if (!isSuperAdmin()) return;
+  lockBodyScroll();
   const panel = document.getElementById('super-admin-panel');
   if (panel) panel.classList.add('open');
   _saMigrateCustomDomains(); // one-shot backfill for orgs created before customDomain field existed
@@ -13934,6 +13935,7 @@ async function _saMigrateCustomDomains() {
   }
 }
 function closeSuperAdmin() {
+  unlockBodyScroll();
   const panel = document.getElementById('super-admin-panel');
   if (panel) panel.classList.remove('open');
 }
@@ -17165,6 +17167,7 @@ let _custDetailTab = 'activity'; // active sub-tab: 'overview' | 'activity' | 'p
 let _custDetailCurrent = null;   // v93: track current customer for book prefill
 
 function openCustomerDetail(idx) {
+  lockBodyScroll();
   const customers = window._custListCache || [];
   const c = customers[idx];
   if (!c) return;
@@ -17714,6 +17717,7 @@ function _setupRecordTimer(custId, recorder) {
 }
 
 function closeCustomerDetail() {
+  unlockBodyScroll();
   const overlay = document.getElementById('cust-detail-overlay');
   const sheet   = document.getElementById('cust-detail-sheet');
   if (!overlay || !sheet) return;
