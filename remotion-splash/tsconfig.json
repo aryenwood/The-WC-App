@@ -4,12 +4,13 @@
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
-    "module": "commonjs",
+    "module": "ESNext",
     "jsx": "react",
     "target": "es2017",
     "moduleResolution": "bundler",
     "esModuleInterop": true,
-    "ignoreDeprecations": "5.0"
+    "ignoreDeprecations": "5.0",
+    "skipLibCheck": true
   },
   "include": ["src"]
 }

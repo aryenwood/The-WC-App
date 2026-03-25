@@ -6,3 +6,6 @@ serve.py
 test.html
 apply_v71.py
 stitch-designs/
+node_modules
+
+node_modules/
