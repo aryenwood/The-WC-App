@@ -11921,6 +11921,80 @@ if (_urlOrgId) {
     .catch(function(e)  { console.warn('[OrgBrand] fetch failed:', e); });
 }
 
+// ── Domain Org Branding ───────────────────────────────────────────────────
+// Fires before auth so the correct org logo/color appears on splash + login.
+// Sets ce_org_id so the post-auth flow picks it up without extra work.
+
+function applyOrgBranding(orgId, org) {
+  if (!orgId || !org) return;
+  localStorage.setItem('ce_org_id',    orgId);
+  localStorage.setItem('ce_org_logo',  org.logoUrl      || '');
+  localStorage.setItem('ce_org_name',  org.name || org.companyName || '');
+  localStorage.setItem('ce_org_color', org.primaryColor || '');
+
+  if (org.primaryColor) {
+    document.documentElement.style.setProperty('--primary', org.primaryColor);
+    document.documentElement.style.setProperty('--amber',   org.primaryColor);
+  }
+
+  if (org.logoUrl) {
+    var _swapLogos = function() {
+      ['#app-logo','#login-logo','#header-logo','.org-logo','.splash-logo','[data-logo]']
+        .forEach(function(sel) {
+          document.querySelectorAll(sel).forEach(function(el) {
+            if (el.tagName === 'IMG') el.src = org.logoUrl;
+          });
+        });
+    };
+    _swapLogos();
+    document.addEventListener('DOMContentLoaded', _swapLogos);
+  }
+
+  var _orgName = org.name || org.companyName || '';
+  if (_orgName) {
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('[data-org-name]').forEach(function(el) {
+        el.textContent = _orgName;
+      });
+    });
+  }
+
+  // Reuse existing login-screen branding (logos, subtitles, button colors)
+  if (typeof _applyOrgBranding === 'function') _applyOrgBranding(org);
+
+  console.log('[Branding] Domain-based org applied:', _orgName || orgId, '| domain:', window.location.hostname);
+}
+
+(function() {
+  var hostname = window.location.hostname;
+  var masterDomains = [
+    'thewcapp.netlify.app',
+    'localhost',
+    '127.0.0.1',
+    'wc-app-alpha.firebaseapp.com',
+    'wc-app-alpha.web.app'
+  ];
+  if (masterDomains.indexOf(hostname) > -1) return; // master domain — default WC App branding
+
+  firebase.firestore()
+    .collection('organizations')
+    .where('customDomain', '==', hostname)
+    .limit(1)
+    .get()
+    .then(function(snapshot) {
+      if (!snapshot.empty) {
+        var doc = snapshot.docs[0];
+        applyOrgBranding(doc.id, doc.data());
+        return;
+      }
+      // No org found for this domain — ?org= param fallback already handled by _urlOrgId above
+      console.warn('[Branding] No org configured for domain:', hostname);
+    })
+    .catch(function(err) {
+      console.warn('[Branding] Domain lookup failed:', err);
+    });
+})();
+
 // ── Login screen logic ────────────────────────────────────────────────────
 (function() {
   var loginScreen = document.getElementById('login-screen');
@@ -13833,6 +13907,35 @@ function openSuperAdmin() {
   if (!isSuperAdmin()) return;
   const panel = document.getElementById('super-admin-panel');
   if (panel) panel.classList.add('open');
+  _saMigrateCustomDomains(); // one-shot backfill for orgs created before customDomain field existed
+}
+
+// Backfills customDomain on all org docs that don't have it yet.
+// Runs once per browser (guarded by localStorage). Safe to re-run manually.
+async function _saMigrateCustomDomains() {
+  if (!isSuperAdmin()) return;
+  if (localStorage.getItem('_sa_customDomain_migrated_v1')) return;
+  try {
+    const snap = await fbDb.collection('organizations').get();
+    const batch = fbDb.batch();
+    let count = 0;
+    snap.forEach(function(doc) {
+      const d = doc.data();
+      if (d.customDomain) return; // already set
+      const orgName = d.name || d.companyName || '';
+      if (!orgName) return;
+      const slug = orgName.toLowerCase().replace(/[^a-z0-9]/g, '');
+      batch.update(doc.ref, { customDomain: slug + '.netlify.app' });
+      count++;
+    });
+    if (count > 0) {
+      await batch.commit();
+      console.log('[SA] customDomain backfill complete —', count, 'orgs updated');
+    }
+    localStorage.setItem('_sa_customDomain_migrated_v1', '1');
+  } catch(e) {
+    console.warn('[SA] customDomain migration failed:', e);
+  }
 }
 function closeSuperAdmin() {
   const panel = document.getElementById('super-admin-panel');
@@ -13853,6 +13956,7 @@ async function _saCreateOrg() {
   btn.disabled = true; btn.textContent = 'CREATING…';
 
   const orgId = Date.now().toString(36);
+  const customDomain = name.toLowerCase().replace(/[^a-z0-9]/g, '') + '.netlify.app';
   let logoUrl = '';
   let iconUrl = '';
 
@@ -13875,6 +13979,7 @@ async function _saCreateOrg() {
   try {
     await fbDb.collection('organizations').doc(orgId).set({
       name, niche, primaryColor: color, logoUrl, iconUrl,
+      customDomain,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       createdBy: SUPER_ADMIN_UID
     });
