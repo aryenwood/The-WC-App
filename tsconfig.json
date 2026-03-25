@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "module": "commonjs",
+    "jsx": "react",
+    "target": "es2017",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "ignoreDeprecations": "5.0"
+  },
+  "include": ["remotion-splash/src"]
+}
