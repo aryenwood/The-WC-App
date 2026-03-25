@@ -634,9 +634,7 @@
       touch-action: manipulation;
     }
     body {
-      height: -webkit-fill-available;
-      height: 100dvh;
-      overflow: hidden; /* iOS PWA: stops WKWebView's outer UIScrollView from scrolling */
+      min-height: 100dvh;
       background: var(--bg);
       color: var(--text);
       font-family: var(--font-body);
@@ -645,6 +643,10 @@
       -webkit-font-smoothing: antialiased;
       overscroll-behavior: none;
       touch-action: manipulation;
+    }
+    /* iOS PWA: lock body scroll when booking sheet is open (toggled via JS class) */
+    body.booking-sheet-open {
+      overflow: hidden;
     }
 
     /* Gradient mesh — soft ambient glow */
@@ -18304,11 +18306,23 @@ const bookingForm    = document.getElementById('booking-form');
 const btnBookNow     = document.getElementById('btn-book-now');
 const bookingClose   = document.getElementById('booking-sheet-close');
 
-// iOS PWA scroll-passthrough fix: block touchmove on document while booking sheet is open,
-// except within the scrollable form itself.
+// iOS PWA scroll-passthrough fix: block touchmove on document while booking sheet is open.
+// Allow form scroll, but prevent at scroll boundaries so WKWebView's outer UIScrollView
+// doesn't take over when the user overscrolls the form.
 function _bookingTouchMove(e) {
   if (!bookingSheet.classList.contains('open')) return; // defensive: sheet closed, never block
-  if (!bookingForm.contains(e.target)) e.preventDefault();
+  if (bookingForm.contains(e.target)) {
+    const atTop    = bookingForm.scrollTop <= 0;
+    const atBottom = bookingForm.scrollTop + bookingForm.clientHeight >= bookingForm.scrollHeight - 1;
+    if (!atTop && !atBottom) return; // form has room to scroll — allow it
+    // At a boundary: only prevent if scrolling INTO the boundary
+    const deltaY = e.touches[0].clientY - bTouchY;
+    if (atTop    && deltaY > 0) { e.preventDefault(); return; }
+    if (atBottom && deltaY < 0) { e.preventDefault(); return; }
+    return; // scrolling away from boundary — allow
+  }
+  // Touch outside the form (handle, header, overlay) — always prevent
+  e.preventDefault();
 }
 
 function openBookingSheet() {
@@ -18326,7 +18340,8 @@ function openBookingSheet() {
   bookingOverlay.classList.add('open');
   bookingSheet.classList.add('open');
   bookingOverlay.setAttribute('aria-hidden', 'false');
-  // iOS PWA: touch-action:none via class is the only reliable way to stop WKWebView native scroll
+  // iOS PWA: lock body + #main so WKWebView's outer UIScrollView can't scroll the dashboard
+  document.body.classList.add('booking-sheet-open');
   const _mainEl = document.getElementById('main');
   if (_mainEl) { _mainEl._bsSavedScroll = _mainEl.scrollTop; _mainEl.classList.add('scroll-locked'); }
   document.addEventListener('touchmove', _bookingTouchMove, { passive: false });
@@ -18343,6 +18358,7 @@ function closeBookingSheet() {
   bookingOverlay.classList.remove('open');
   bookingSheet.classList.remove('open');
   bookingOverlay.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('booking-sheet-open');
   const _mainElC = document.getElementById('main');
   if (_mainElC) { _mainElC.classList.remove('scroll-locked'); _mainElC.scrollTop = _mainElC._bsSavedScroll || 0; }
   document.removeEventListener('touchmove', _bookingTouchMove);
