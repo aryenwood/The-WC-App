@@ -16127,6 +16127,18 @@ function captureLocation() {
   );
 }
 
+function lockBodyScroll() {
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
+}
+function unlockBodyScroll() {
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
+  document.body.style.top = '';
+}
+
 function openSheet(entry = null) {
   editingId = entry ? entry.id : null;
 
@@ -16174,9 +16186,7 @@ function openSheet(entry = null) {
   logOverlay.classList.add('open');
   logSheet.classList.add('open');
   logOverlay.setAttribute('aria-hidden', 'false');
-  document.body.style.overflow = 'hidden';
-  document.body.style.position = 'fixed';
-  document.body.style.width = '100%';
+  lockBodyScroll();
   setTimeout(() => document.getElementById('f-address').focus(), 380);
 }
 
@@ -16184,9 +16194,7 @@ function closeSheet() {
   logOverlay.classList.remove('open');
   logSheet.classList.remove('open');
   logOverlay.setAttribute('aria-hidden', 'true');
-  document.body.style.overflow = '';
-  document.body.style.position = '';
-  document.body.style.width = '';
+  unlockBodyScroll();
   closePinDrop();
   setAddrStatus('idle', '');
   setTimeout(() => {
@@ -18449,9 +18457,7 @@ function openBookingSheet() {
   bookingOverlay.classList.add('open');
   bookingSheet.classList.add('open');
   bookingOverlay.setAttribute('aria-hidden', 'false');
-  document.body.style.overflow = 'hidden';
-  document.body.style.position = 'fixed';
-  document.body.style.width = '100%';
+  lockBodyScroll();
   const _mainEl = document.getElementById('main');
   if (_mainEl) { _mainEl._bsSavedScroll = _mainEl.scrollTop; _mainEl.classList.add('scroll-locked'); }
   document.addEventListener('touchmove', _bookingTouchMove, { passive: false });
@@ -18468,9 +18474,7 @@ function closeBookingSheet() {
   bookingOverlay.classList.remove('open');
   bookingSheet.classList.remove('open');
   bookingOverlay.setAttribute('aria-hidden', 'true');
-  document.body.style.overflow = '';
-  document.body.style.position = '';
-  document.body.style.width = '';
+  unlockBodyScroll();
   const _mainElC = document.getElementById('main');
   if (_mainElC) { _mainElC.classList.remove('scroll-locked'); _mainElC.scrollTop = _mainElC._bsSavedScroll || 0; }
   document.removeEventListener('touchmove', _bookingTouchMove);
@@ -21439,7 +21443,7 @@ function openBcard() {
   }
 
   document.getElementById('bcard-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  lockBodyScroll();
 }
 
 function closeBcard() {
@@ -21447,7 +21451,7 @@ function closeBcard() {
   const card = document.getElementById('bcard-card');
   if (card.classList.contains('edit-mode')) _bcardSaveEdits();
   document.getElementById('bcard-overlay').classList.remove('open');
-  document.body.style.overflow = '';
+  unlockBodyScroll();
 }
 
 function toggleBcardEdit() {
@@ -21643,14 +21647,15 @@ function openReviewMenu() {
     return;
   }
   document.getElementById('review-menu-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  lockBodyScroll();
 }
 function closeReviewMenu() {
   document.getElementById('review-menu-overlay').classList.remove('open');
-  document.body.style.overflow = '';
+  unlockBodyScroll();
 }
 function closeReviewQR() {
   document.getElementById('review-qr-overlay').classList.remove('open');
+  unlockBodyScroll();
 }
 
 document.getElementById('review-btn').addEventListener('click', openReviewMenu);
@@ -21661,7 +21666,7 @@ document.getElementById('review-opt-qr').addEventListener('click', () => {
   const s = JSON.parse(localStorage.getItem('ce_admin') || '{}');
   _drawQR(document.getElementById('review-qr-canvas'), s.reviewUrl, 200);
   document.getElementById('review-qr-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  lockBodyScroll();
 });
 
 // Text (SMS) option
@@ -21749,14 +21754,14 @@ function openBrowser(url, title) {
   document.getElementById('browser-open-tab').href = url;
   modal.style.opacity = '1';
   modal.style.pointerEvents = 'auto';
-  document.body.style.overflow = 'hidden';
+  lockBodyScroll();
 }
 function closeBrowser() {
   const modal = document.getElementById('browser-modal');
   modal.style.opacity = '0';
   modal.style.pointerEvents = 'none';
   setTimeout(function() { document.getElementById('browser-frame').src = 'about:blank'; }, 260);
-  document.body.style.overflow = '';
+  unlockBodyScroll();
 }
 document.getElementById('browser-close').addEventListener('click', closeBrowser);
 document.getElementById('gosolo-btn').addEventListener('click', () => {
@@ -22707,7 +22712,7 @@ function openPdfViewer(src, title) {
   document.getElementById('pdf-canvas-wrap').scrollTop = 0;
   modal.style.opacity = '1';
   modal.style.pointerEvents = 'auto';
-  document.body.style.overflow = 'hidden';
+  lockBodyScroll();
 
   pdfjsLib.getDocument(src).promise.then(pdf => {
     _pdfDoc  = pdf;
@@ -22724,7 +22729,7 @@ function closePdfViewer() {
   const modal = document.getElementById('pdf-viewer-modal');
   modal.style.opacity = '0';
   modal.style.pointerEvents = 'none';
-  document.body.style.overflow = '';
+  unlockBodyScroll();
   _pdfDoc = null; _pdfSrc = ''; _pdfPage = 1;
 }
 
@@ -23608,7 +23613,7 @@ function openOTD() {
   _resetOTDUI();
   _otdUpdateCounters();
   ov.classList.add('otd-open');
-  document.body.style.overflow = 'hidden';
+  lockBodyScroll();
   // v82: sync drop call button visibility based on manager-configured numbers
   _otdSyncDropCallBtn();
   // Mark toggle card active
@@ -23632,7 +23637,7 @@ function openOTD() {
 function closeOTD() {
   var ov = document.getElementById('otd-overlay');
   if (ov) ov.classList.remove('otd-open');
-  document.body.style.overflow = '';
+  unlockBodyScroll();
   if (_otdVoiceRec && _otdVoiceRec.state !== 'inactive') {
     try { _otdVoiceRec.stop(); } catch(_) {}
   }
@@ -25008,7 +25013,7 @@ function openRepProfile(repName) {
   inner.innerHTML = _buildRepProfileHTML(repName);
   overlay.classList.add('open');
   sheet.classList.add('open');
-  document.body.style.overflow = 'hidden';
+  lockBodyScroll();
 }
 
 function closeRepProfile() {
@@ -25016,7 +25021,7 @@ function closeRepProfile() {
   const sheet   = document.getElementById('rep-profile-sheet');
   if (overlay) overlay.classList.remove('open');
   if (sheet)   sheet.classList.remove('open');
-  document.body.style.overflow = '';
+  unlockBodyScroll();
 }
 
 function _shareRepProfile(repName) {
@@ -25149,6 +25154,18 @@ setInterval(checkSwReminders, 60000);
     });
   });
 })();
+
+// Failsafe: if body is locked but no modal is actually open, force unlock
+document.addEventListener('touchstart', function() {
+  if (document.body.style.position === 'fixed') {
+    const openModal = document.querySelector(
+      '.sheet.open, .sheet-overlay.open, [class*="overlay"].open, ' +
+      '#otd-overlay.otd-open, #browser-modal, #pdf-viewer-modal, #bcard-overlay.open, ' +
+      '#review-menu-overlay.open, #review-qr-overlay.open'
+    );
+    if (!openModal) unlockBodyScroll();
+  }
+}, { passive: true });
 </script>
 </body>
 </html>
