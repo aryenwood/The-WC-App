@@ -12138,12 +12138,24 @@ if (_urlOrgId) {
       _clearFirebaseIdentity();
       // Show invite gate only for brand-new users (no role and no onboarding done)
       var _isNewUser = !localStorage.getItem('ce_onboarding_done') && !localStorage.getItem('ce_user_role');
-      if (_isNewUser) {
-        var gateScr = document.getElementById('invite-gate-screen');
-        if (gateScr) { gateScr.classList.remove('hidden'); }
-        else { loginScreen.classList.remove('hidden'); }
+      function _showLoginOrGate() {
+        if (_isNewUser) {
+          var gateScr = document.getElementById('invite-gate-screen');
+          if (gateScr) { gateScr.classList.remove('hidden'); }
+          else { loginScreen.classList.remove('hidden'); }
+        } else {
+          loginScreen.classList.remove('hidden');
+        }
+      }
+      // Wait for splash to finish before showing login — ensures video plays fully.
+      // The 4500ms fallback timer set in _initApp() will call _dismissSplash(), which
+      // will then fire _onSplashDismiss to reveal the login screen.
+      if (_splashDismissed) {
+        _showLoginOrGate();
       } else {
-        loginScreen.classList.remove('hidden');
+        _onSplashDismiss = _showLoginOrGate;
+        // Fallback: if splash never started (no video), dismiss immediately
+        if (!document.getElementById('splash')) _showLoginOrGate();
       }
     }
   });
@@ -14055,14 +14067,21 @@ let gpsWatchId = null;
 var _appInitDone = false;
 var _splashDismissed = false;
 var _splashFallbackTimer = null;
+var _onSplashDismiss = null;
 function _dismissSplash() {
   if (_splashDismissed) return;
   _splashDismissed = true;
   if (_splashFallbackTimer) { clearTimeout(_splashFallbackTimer); _splashFallbackTimer = null; }
   var _sp = document.getElementById('splash');
-  if (!_sp) return;
+  if (!_sp) {
+    if (typeof _onSplashDismiss === 'function') { var _cb = _onSplashDismiss; _onSplashDismiss = null; _cb(); }
+    return;
+  }
   _sp.classList.add('splash--hidden');
-  setTimeout(function() { _sp.style.display = 'none'; }, 460);
+  setTimeout(function() {
+    _sp.style.display = 'none';
+    if (typeof _onSplashDismiss === 'function') { var _cb = _onSplashDismiss; _onSplashDismiss = null; _cb(); }
+  }, 460);
 }
 
 // ── wcSplash API — controls the cinematic video splash ──────────────────────
@@ -14338,15 +14357,11 @@ function _initApp() {
   if (qAction === 'log') { activateTab('dashboard'); setTimeout(() => openSheet(), 400); }
   else if (qAction === 'book') { activateTab('dashboard'); setTimeout(() => openBookingSheet(), 400); }
 
-  // Dismiss splash — first run: immediate. Returning users: wait for branding to load from Firestore.
-  // onAuthStateChanged calls _dismissSplash() after branding resolves; 3500ms safety fallback.
+  // Dismiss splash — always wait for branding/auth to resolve.
+  // onAuthStateChanged calls _dismissSplash() after branding resolves; 4500ms safety fallback.
   const splash = document.getElementById('splash');
   if (splash) {
-    if (_isFirstRun) {
-      _dismissSplash();
-    } else {
-      _splashFallbackTimer = setTimeout(_dismissSplash, 3500);
-    }
+    _splashFallbackTimer = setTimeout(_dismissSplash, 4500);
   }
 
   // Init CRM event listeners (must run after DOM is ready)
