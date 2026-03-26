@@ -1912,6 +1912,13 @@
     }
     .dash-upcoming-card:active { transform: scale(0.98); }
     .dash-upcoming-card:hover  { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+    .dash-upcoming-card--needs-closer {
+      border-left: 3px solid #f59e0b;
+      animation: pulse-amber 2s infinite;
+    }
+    .dash-upcoming-card--needs-closer .dash-upcoming-badge {
+      animation: sos-pulse 1.5s ease-in-out infinite;
+    }
     .dash-upcoming-time {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       min-width: 44px;
@@ -6554,6 +6561,17 @@
       transition: transform 0.12s, box-shadow 0.12s;
     }
     .cal-appt-card:active { transform: scale(0.97); }
+    .cal-appt-card.dash-upcoming-card--needs-closer {
+      border-left: 3px solid #f59e0b;
+      animation: pulse-amber 2s infinite;
+    }
+    .cal-appt-card.dash-upcoming-card--needs-closer::after {
+      content: 'NEEDS CLOSER';
+      position: absolute; top: 8px; right: 12px;
+      font-size: 9px; font-weight: 700; letter-spacing: 0.12em;
+      color: #f59e0b; text-transform: uppercase;
+      animation: sos-pulse 1.5s ease-in-out infinite;
+    }
     /* Left accent bar */
     .cal-appt-card::before {
       content: '';
@@ -15343,16 +15361,21 @@ function renderDashUpcoming() {
     const meta = [dateStr, roleMeta, a.street || ''].filter(Boolean).join(' · ');
     const calDs  = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
 
-    return `<div class="dash-upcoming-card" data-cal-date="${calDs}" role="button">
+    var needsCloser = result === 'pending_assignment' || a.closer === 'best_available';
+    var ncCls = needsCloser ? ' dash-upcoming-card--needs-closer' : '';
+    var badgeLabel = needsCloser ? 'NEEDS CLOSER' : result;
+    var metaLine = needsCloser ? dateStr + ' · Unassigned \u2014 ' + (a.timePreference || 'Any') : meta;
+
+    return `<div class="dash-upcoming-card${ncCls}" data-cal-date="${calDs}" data-appt-id="${a.id || ''}" role="button">
       <div class="dash-upcoming-time">
         <div class="dash-upcoming-time-hr">${hr12}:${minStr}</div>
         <div class="dash-upcoming-time-min">${ampm}</div>
       </div>
       <div class="dash-upcoming-info">
         <div class="dash-upcoming-name">${name}</div>
-        <div class="dash-upcoming-meta">${meta}</div>
+        <div class="dash-upcoming-meta">${escHtml(metaLine)}</div>
       </div>
-      <span class="dash-upcoming-badge" style="background:${color}22;color:${color};border:1px solid ${color}44">${result}</span>
+      <span class="dash-upcoming-badge" style="background:${color}22;color:${color};border:1px solid ${color}44">${badgeLabel}</span>
     </div>`;
   }).join('');
 }
@@ -15451,10 +15474,18 @@ function _initDashAssignListeners() {
     }, 1400);
   });
 
-  // Upcoming card tap → calendar
+  // Upcoming card tap → calendar (or assign closer for managers)
   document.getElementById('dash-upcoming-list')?.addEventListener('click', e => {
     const card = e.target.closest('.dash-upcoming-card');
     if (!card) return;
+    // If needs closer and user is manager, open assign modal
+    if (card.classList.contains('dash-upcoming-card--needs-closer') && card.dataset.apptId) {
+      var role = getActiveRole();
+      if (role === 'manager' || role === 'master_admin') {
+        openAssignCloser(card.dataset.apptId);
+        return;
+      }
+    }
     const dateStr = card.dataset.calDate;
     if (dateStr) {
       const [y, m, d] = dateStr.split('-').map(Number);
@@ -19899,9 +19930,14 @@ function renderCalAppts() {
     const hr12 = hr % 12 || 12;
     const ampm = hr < 12 ? 'AM' : 'PM';
     const name = [a.firstName, a.lastName].filter(Boolean).join(' ') || 'Unknown';
-    const meta = [a.closer ? `Closer: ${a.closer}` : '', a.city || ''].filter(Boolean).join(' · ');
+    const result = a.result || 'Pending';
+    const needsCloser = result === 'pending_assignment' || a.closer === 'best_available';
+    const meta = needsCloser
+      ? `Closer: best_available · ${a.city || a.timePreference || ''}`
+      : [a.closer ? `Closer: ${a.closer}` : '', a.city || ''].filter(Boolean).join(' · ');
+    const ncCls = needsCloser ? ' dash-upcoming-card--needs-closer' : '';
     return `
-      <div class="cal-appt-card">
+      <div class="cal-appt-card${ncCls}" data-appt-id="${a.id || ''}"
         <div class="cal-appt-time-block">
           <div class="cal-appt-time">${hr12}:${min}</div>
           <div class="cal-appt-ampm">${ampm}</div>
@@ -24842,7 +24878,7 @@ function otdRequestClose() {
 
 function _sendOtdSessionEmail() {
   if (typeof fbDb === 'undefined') return;
-  if (['localhost','127.0.0.1','wc-app-alpha.firebaseapp.com','wc-app-alpha.web.app','thewcapp.netlify.app'].indexOf(window.location.hostname) !== -1) return;
+  if (['localhost','127.0.0.1','wc-app-alpha.firebaseapp.com','wc-app-alpha.web.app'].indexOf(window.location.hostname) !== -1) return;
   var _s = _safeAdminSettings();
   var toEmail = _s.dispoEmailTo;
   if (!toEmail) return;
@@ -25126,7 +25162,7 @@ function _otdAttachVoice(entry) {
 /* ─── Email dispo results to manager ─── */
 function _sendApptDispoEmail(appt, result) {
   if (typeof fbDb === 'undefined') return;
-  if (['localhost','127.0.0.1','wc-app-alpha.firebaseapp.com','wc-app-alpha.web.app','thewcapp.netlify.app'].indexOf(window.location.hostname) !== -1) return;
+  if (['localhost','127.0.0.1','wc-app-alpha.firebaseapp.com','wc-app-alpha.web.app'].indexOf(window.location.hostname) !== -1) return;
   var _s = {}; try { _s = _safeAdminSettings(); } catch(_) {}
   var _toEmail   = _s.dispoEmailTo   || 'Olashawan@tritonenergyllc.net';
   var _fromEmail = _s.dispoEmailFrom || '';
@@ -25169,7 +25205,7 @@ function _sendApptDispoEmail(appt, result) {
 
 function _sendSoldEmail(appt, repName, custName) {
   if (typeof fbDb === 'undefined') return;
-  if (['localhost','127.0.0.1','wc-app-alpha.firebaseapp.com','wc-app-alpha.web.app','thewcapp.netlify.app'].indexOf(window.location.hostname) !== -1) return;
+  if (['localhost','127.0.0.1','wc-app-alpha.firebaseapp.com','wc-app-alpha.web.app'].indexOf(window.location.hostname) !== -1) return;
   var toEmail = _safeAdminSettings().dispoEmailTo;
   if (!toEmail) return;
   var addr = appt ? (appt.street || appt.address || '') : '';
@@ -25191,7 +25227,7 @@ function _sendSoldEmail(appt, repName, custName) {
 
 function _sendDispoEmail(entry) {
   if (typeof fbDb === 'undefined') return;
-  if (['localhost','127.0.0.1','wc-app-alpha.firebaseapp.com','wc-app-alpha.web.app','thewcapp.netlify.app'].indexOf(window.location.hostname) !== -1) return;
+  if (['localhost','127.0.0.1','wc-app-alpha.firebaseapp.com','wc-app-alpha.web.app'].indexOf(window.location.hostname) !== -1) return;
   var _s = {}; try { _s = _safeAdminSettings(); } catch(_) {}
   var _toEmail   = _s.dispoEmailTo   || 'Olashawan@tritonenergyllc.net';
   var _fromEmail = _s.dispoEmailFrom || '';
