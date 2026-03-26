@@ -16201,6 +16201,7 @@ function lockBodyScroll() {
   document.body.style.overflow = 'hidden';
   document.body.style.position = 'fixed';
   document.body.style.width = '100%';
+  document.getElementById('main') && document.getElementById('main').classList.add('scroll-locked');
 }
 function unlockBodyScroll() {
   document.body.style.overflow = '';
@@ -16208,6 +16209,7 @@ function unlockBodyScroll() {
   document.body.style.width = '';
   document.body.style.top = '';
   document.documentElement.style.overflow = '';
+  document.getElementById('main') && document.getElementById('main').classList.remove('scroll-locked');
 }
 
 function openSheet(entry = null) {
