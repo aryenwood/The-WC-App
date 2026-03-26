@@ -40,7 +40,7 @@ body{
   min-height:100vh;
   overflow-x:hidden;
   font-size:16px;
-  font-weight:400;
+  font-weight:500;
   line-height:1.6;
 }
 /* ── SIDEBAR ─────────────────────────────── */
@@ -158,7 +158,7 @@ nav{flex:1;padding:8px 0 16px}
 /* ── HERO — full bleed photo ─────────────── */
 .hero{
   position:relative;
-  height:92vh;min-height:580px;
+  min-height:92vh;
   overflow:hidden;
   background-color:var(--navy-dk);
   background-image:url('https://mlr4zezkusej.i.optimole.com/w:1800/h:auto/q:mauto/f:best/https://completecustomfence.com/wp-content/uploads/2023/03/Photo-Oct-29-10-38-45-AM-scaled.jpg');
@@ -181,7 +181,7 @@ nav{flex:1;padding:8px 0 16px}
 }
 .hero-content{
   position:relative;z-index:2;
-  height:100%;
+  min-height:92vh;
   display:flex;flex-direction:column;
   justify-content:flex-end;
   padding:64px 72px;
@@ -208,7 +208,7 @@ nav{flex:1;padding:8px 0 16px}
 }
 .hero-sub{
   font-size:17px;color:rgba(255,255,255,0.72);
-  font-weight:400;line-height:1.7;
+  font-weight:500;line-height:1.7;
   max-width:480px;margin-bottom:44px;
   animation:fadeUp 1s ease-out 0.5s both;
 }
@@ -254,7 +254,7 @@ nav{flex:1;padding:8px 0 16px}
 }
 .l-text p{
   font-family:'Cormorant Garamond',serif;
-  font-size:21px;font-weight:400;
+  font-size:21px;font-weight:500;
   color:rgba(255,255,255,0.78);
   line-height:1.82;margin-bottom:22px;
 }
@@ -376,7 +376,7 @@ nav{flex:1;padding:8px 0 16px}
 }
 .gc-loc{
   font-size:13px;color:rgba(255,255,255,0.58);
-  margin-top:3px;font-weight:400;
+  margin-top:3px;font-weight:500;
 }
 .gc-badge{
   position:absolute;top:14px;right:14px;z-index:3;
@@ -463,7 +463,7 @@ nav{flex:1;padding:8px 0 16px}
 }
 .p-sub{
   font-size:16px;color:var(--muted);
-  font-style:italic;font-weight:400;margin-top:6px;
+  font-style:italic;font-weight:500;margin-top:6px;
 }
 .pg-grid{
   display:grid;grid-template-columns:repeat(3,1fr);
@@ -489,7 +489,7 @@ nav{flex:1;padding:8px 0 16px}
 }
 .pg p{
   font-size:16px;color:var(--muted);
-  line-height:1.7;font-weight:400;
+  line-height:1.7;font-weight:500;
 }
 /* ── MEET THE TEAM ───────────────────────── */
 .team-sec{
@@ -531,7 +531,7 @@ nav{flex:1;padding:8px 0 16px}
 }
 .team-card p{
   font-size:16px;color:var(--muted);line-height:1.7;
-  font-weight:400;margin-bottom:16px;
+  font-weight:500;margin-bottom:16px;
 }
 .team-card .team-contact{
   font-size:16px;color:var(--navy);font-weight:500;
@@ -576,12 +576,12 @@ nav{flex:1;padding:8px 0 16px}
 }
 .fw-desc{
   padding:14px 20px;
-  font-size:16px;color:var(--ink);line-height:1.6;font-weight:400;
+  font-size:16px;color:var(--ink);line-height:1.6;font-weight:500;
 }
 .fw-desc strong{color:var(--navy)}
 .fw-block{
   padding:20px 24px;
-  font-size:16px;color:var(--ink);line-height:1.7;font-weight:400;
+  font-size:16px;color:var(--ink);line-height:1.7;font-weight:500;
 }
 /* ── WHAT GOOD LOOKS LIKE ────────────────── */
 .qstd-grid{
@@ -604,13 +604,13 @@ nav{flex:1;padding:8px 0 16px}
   margin-bottom:10px;
 }
 .qstd p{
-  font-size:16px;color:var(--muted);line-height:1.7;font-weight:400;
+  font-size:16px;color:var(--muted);line-height:1.7;font-weight:500;
 }
 .qstd ul{
   list-style:none;margin-top:12px;
 }
 .qstd ul li{
-  font-size:16px;color:var(--muted);line-height:1.7;font-weight:400;
+  font-size:16px;color:var(--muted);line-height:1.7;font-weight:500;
   padding:4px 0 4px 16px;position:relative;
 }
 .qstd ul li::before{
@@ -639,7 +639,7 @@ nav{flex:1;padding:8px 0 16px}
 .faq-q::after{
   content:'+';font-size:22px;color:var(--muted);
   flex-shrink:0;width:28px;text-align:center;
-  transition:transform 0.3s;font-weight:300;
+  transition:transform 0.3s;font-weight:500;
 }
 .faq-item.open .faq-q::after{content:'\2212'}
 .faq-a{
@@ -653,7 +653,7 @@ nav{flex:1;padding:8px 0 16px}
   padding:0 24px 22px;
 }
 .faq-a p{
-  font-size:16px;color:var(--muted);line-height:1.75;font-weight:400;
+  font-size:16px;color:var(--muted);line-height:1.75;font-weight:500;
   padding-top:16px;
   border-top:1px solid var(--border);
 }
@@ -686,7 +686,7 @@ nav{flex:1;padding:8px 0 16px}
 }
 .ss{
   font-size:16px;color:var(--muted);
-  font-style:italic;font-weight:400;margin-top:7px;line-height:1.5;
+  font-style:italic;font-weight:500;margin-top:7px;line-height:1.5;
 }
 /* ── CARD GRID ───────────────────────────── */
 .cgrid{
@@ -711,13 +711,13 @@ nav{flex:1;padding:8px 0 16px}
   font-size:21px;font-weight:600;
   color:var(--ink);margin-bottom:8px;
 }
-.c p{font-size:16px;color:var(--muted);line-height:1.7;font-weight:400}
+.c p{font-size:16px;color:var(--muted);line-height:1.7;font-weight:500}
 /* ── CHECKLIST ───────────────────────────── */
 .ck{list-style:none;display:flex;flex-direction:column;gap:3px}
 .ck li{
   display:flex;align-items:flex-start;gap:13px;
   padding:14px 18px;border-radius:7px;cursor:pointer;
-  font-size:16px;font-weight:400;color:var(--ink);
+  font-size:16px;font-weight:500;color:var(--ink);
   background:var(--surface);border:1px solid transparent;
   transition:all 0.15s;line-height:1.5;
 }
@@ -745,12 +745,12 @@ nav{flex:1;padding:8px 0 16px}
   background:var(--navy);color:rgba(255,255,255,0.72);
   font-family:'DM Mono',monospace;font-size:12px;
   letter-spacing:0.14em;text-transform:uppercase;
-  padding:13px 22px;text-align:left;font-weight:400;
+  padding:13px 22px;text-align:left;font-weight:500;
 }
 .tbl td{
   padding:15px 22px;border-bottom:1px solid var(--border);
   color:var(--ink);vertical-align:top;line-height:1.65;
-  font-size:15px;font-weight:400;
+  font-size:15px;font-weight:500;
 }
 .tbl td:first-child{
   font-weight:600;white-space:nowrap;width:200px;
@@ -771,7 +771,7 @@ nav{flex:1;padding:8px 0 16px}
 }
 .call.grn{background:var(--sage-pale);border-color:var(--sage-rim)}
 .call-i{font-size:20px;flex-shrink:0;margin-top:2px}
-.call-b{font-size:16px;line-height:1.7;color:var(--ink);font-weight:400}
+.call-b{font-size:16px;line-height:1.7;color:var(--ink);font-weight:500}
 .call-b strong{
   display:block;font-size:12px;
   font-family:'DM Mono',monospace;
@@ -798,7 +798,7 @@ nav{flex:1;padding:8px 0 16px}
   font-family:'Cormorant Garamond',serif;
   font-size:21px;font-weight:600;color:var(--ink);margin-bottom:7px;
 }
-.tl-c p{font-size:16px;color:var(--muted);line-height:1.7;font-weight:400}
+.tl-c p{font-size:16px;color:var(--muted);line-height:1.7;font-weight:500}
 /* ── 90-DAY PLAN ─────────────────────────── */
 .plan{
   display:grid;grid-template-columns:repeat(3,1fr);
@@ -822,7 +822,7 @@ nav{flex:1;padding:8px 0 16px}
 }
 .pl-b{padding:18px 24px}
 .pl-b li{
-  font-size:14px;font-weight:400;color:var(--muted);
+  font-size:14px;font-weight:500;color:var(--muted);
   padding:7px 0 7px 14px;
   border-bottom:1px solid var(--border);
   line-height:1.55;position:relative;
@@ -859,7 +859,7 @@ nav{flex:1;padding:8px 0 16px}
   font-family:'Cormorant Garamond',serif;
   font-size:18px;font-weight:600;color:var(--ink);margin-bottom:5px;
 }
-.at p{font-size:14px;color:var(--muted);line-height:1.6;font-weight:400}
+.at p{font-size:14px;color:var(--muted);line-height:1.6;font-weight:500}
 .at-tag{
   display:inline-block;margin-top:10px;
   padding:3px 9px;border-radius:3px;
@@ -967,6 +967,75 @@ nav{flex:1;padding:8px 0 16px}
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:var(--navy-dk)}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:2px}
+/* ══ REMOTION-GRADE ANIMATIONS ══════════════════════════════════ */
+
+/* Scroll progress bar */
+.scroll-prog{position:fixed;top:0;left:272px;right:0;height:2px;background:var(--red);z-index:9999;transition:width .08s linear;box-shadow:0 0 10px rgba(191,17,32,.7);transform-origin:left;width:0%}
+@media(max-width:920px){.scroll-prog{left:0}}
+
+/* Floating particle field */
+@keyframes floatUp{0%{opacity:0;transform:translateY(0) scale(0)}12%{opacity:1}88%{opacity:.22}100%{opacity:0;transform:translateY(-110px) scale(1.1)}}
+.hero-particles{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1}
+.hp{position:absolute;border-radius:50%;animation:floatUp linear infinite}
+
+/* Sonar pulse on active nav item */
+@keyframes sonarPulse{0%{box-shadow:0 0 0 0 rgba(191,17,32,.7)}70%{box-shadow:0 0 0 8px rgba(191,17,32,0)}100%{box-shadow:0 0 0 0 rgba(191,17,32,0)}}
+.ni{position:relative}
+.ni.on .nn{color:var(--red)!important;animation:sonarPulse 2s ease-out infinite;border-radius:50%}
+
+/* Counter bloom-in on scroll */
+@keyframes countBloom{from{opacity:0;filter:blur(8px);transform:translateY(8px)}to{opacity:1;filter:blur(0);transform:none}}
+.sv.anim{animation:countBloom .6s cubic-bezier(.22,1,.36,1) both}
+
+/* Star sequential pop */
+@keyframes starPop{0%{transform:scale(0) rotate(-20deg);opacity:0}65%{transform:scale(1.3) rotate(4deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+.rv-stars .s,.rv-stars-big .s{display:inline-block;opacity:0}
+.rv-stars.popped .s,.rv-stars-big.popped .s{animation:starPop .38s cubic-bezier(.34,1.56,.64,1) both}
+.rv-stars.popped .s:nth-child(1),.rv-stars-big.popped .s:nth-child(1){animation-delay:.00s}
+.rv-stars.popped .s:nth-child(2),.rv-stars-big.popped .s:nth-child(2){animation-delay:.07s}
+.rv-stars.popped .s:nth-child(3),.rv-stars-big.popped .s:nth-child(3){animation-delay:.14s}
+.rv-stars.popped .s:nth-child(4),.rv-stars-big.popped .s:nth-child(4){animation-delay:.21s}
+.rv-stars.popped .s:nth-child(5),.rv-stars-big.popped .s:nth-child(5){animation-delay:.28s}
+
+/* Section content stagger on reveal */
+@keyframes riseIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.sec.vis .cgrid,.sec.vis .plan,.sec.vis .apps,.sec.vis .tbl,.sec.vis .fw-grid,
+.sec.vis .faq-list,.sec.vis .ck,.sec.vis .sig-wrap,.sec.vis .tl,.sec.vis .wf,.sec.vis .call,
+.sec.vis .qstd-grid,.sec.vis .div{opacity:0;animation:riseIn .65s cubic-bezier(.34,1.56,.64,1) .12s both}
+.sec.vis .sec-hd{opacity:0;animation:riseIn .5s cubic-bezier(.22,1,.36,1) .02s both}
+
+/* Section number badge flare */
+@keyframes snFlare{from{box-shadow:0 0 0 5px rgba(191,17,32,.35)}to{box-shadow:none}}
+.sec.vis .sn{animation:snFlare .6s ease-out .2s both}
+
+/* Gallery Ken Burns */
+.gc{background-size:104%!important;transition:background-size .7s ease}
+.gc:hover{background-size:113%!important}
+
+/* Stat card shimmer */
+@keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+.l-stat{position:relative;overflow:hidden}
+.l-stat::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.035) 50%,transparent 100%);background-size:300% auto;animation:shimmer 4s linear infinite;pointer-events:none}
+
+/* Promise / card micro-elevation */
+.pg{transition:background .15s,box-shadow .22s,transform .2s}
+.pg:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+
+/* Review card upgrades */
+.rv-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.rv-avatar{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;border:1.5px solid rgba(255,255,255,.18)}
+.rv-info{flex:1;min-width:0}
+.rv-name{font-size:14px;font-weight:500;color:rgba(255,255,255,.9);margin-bottom:3px}
+.rv-platform{display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,.42);font-family:'DM Mono',monospace;letter-spacing:.06em;text-transform:uppercase}
+.rv-gico{width:13px;height:13px;flex-shrink:0}
+.rv-stars{display:flex;gap:2px;color:var(--gold);font-size:15px;margin-left:auto}
+.rv-by{display:none}
+.rv{transition:background .18s,transform .18s}
+.rv:hover{background:rgba(255,255,255,.055);transform:translateY(-1px)}
+
+/* Live widget container */
+.rv-widget-wrap{border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.1);box-shadow:0 4px 32px rgba(0,0,0,.25)}
+
 /* ── PRINT ───────────────────────────────── */
 @media print{
   #sb{display:none}
@@ -1013,6 +1082,7 @@ nav{flex:1;padding:8px 0 16px}
 <!-- ═══════════════════════════
      SIDEBAR
 ════════════════════════════ -->
+<div class="scroll-prog" id="scroll-prog"></div>
 <aside id="sb">
   <div class="sb-top">
     <img class="sb-logo"
@@ -1069,6 +1139,7 @@ nav{flex:1;padding:8px 0 16px}
 <!-- HERO -->
 <div class="hero" id="hero">
   <div class="hero-dim"></div>
+  <div class="hero-particles" id="hero-particles"></div>
   <div class="hero-content">
     <img src="https://mlr4zezkusej.i.optimole.com/w:auto/h:auto/q:mauto/f:best/https://completecustomfence.com/wp-content/uploads/2023/04/NEW-CCF-logo-2.png"
       alt="Complete Custom Fence" style="width:200px;background:rgba(255,255,255,0.92);border-radius:10px;padding:10px 16px;margin-bottom:24px;animation:fadeUp 0.6s ease-out 0s both;" />
@@ -1182,34 +1253,70 @@ nav{flex:1;padding:8px 0 16px}
   <div class="rv-head">
     <div class="rv-ey">What Homeowners Say</div>
     <div class="rv-title">Real Customers. Real Results.</div>
-    <div class="rv-stars-big">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+    <div class="rv-stars-big"><span class="s">&#9733;</span><span class="s">&#9733;</span><span class="s">&#9733;</span><span class="s">&#9733;</span><span class="s">&#9733;</span></div>
   </div>
   <div class="rv-grid">
     <div class="rv">
-      <div class="rv-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      <div class="rv-top">
+        <div class="rv-avatar" style="background:linear-gradient(135deg,#1A4C87,#0d2f57)">JV</div>
+        <div class="rv-info">
+          <div class="rv-name">Jose Vega</div>
+          <div class="rv-platform">
+            <svg class="rv-gico" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            Google
+          </div>
+        </div>
+        <div class="rv-stars"><span class="s">&#9733;</span><span class="s">&#9733;</span><span class="s">&#9733;</span><span class="s">&#9733;</span><span class="s">&#9733;</span></div>
+      </div>
       <div class="rv-quote">"They are prompt on getting the permit, the Groveland office was great in keeping me informed of everything and the guys that did the job couldn't have been nicer. They did a fantastic job."</div>
-      <div class="rv-by"><strong>Jose Vega</strong>Verified Google Review</div>
     </div>
     <div class="rv">
-      <div class="rv-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      <div class="rv-top">
+        <div class="rv-avatar" style="background:linear-gradient(135deg,#5B3A8C,#3a2060)">MH</div>
+        <div class="rv-info">
+          <div class="rv-name">Max Hitzemann</div>
+          <div class="rv-platform">
+            <svg class="rv-gico" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            Google
+          </div>
+        </div>
+        <div class="rv-stars"><span class="s">&#9733;</span><span class="s">&#9733;</span><span class="s">&#9733;</span><span class="s">&#9733;</span><span class="s">&#9733;</span></div>
+      </div>
       <div class="rv-quote">"Complete Custom Fence was professional until the end. They were extremely flexible with what I wanted. Fantastic customer service and extremely quick fence install!"</div>
-      <div class="rv-by"><strong>Max Hitzemann</strong>Verified Google Review</div>
     </div>
     <div class="rv">
-      <div class="rv-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      <div class="rv-top">
+        <div class="rv-avatar" style="background:linear-gradient(135deg,#1B6240,#0d3d26)">RW</div>
+        <div class="rv-info">
+          <div class="rv-name">Robert Williams</div>
+          <div class="rv-platform">
+            <svg class="rv-gico" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            Google
+          </div>
+        </div>
+        <div class="rv-stars"><span class="s">&#9733;</span><span class="s">&#9733;</span><span class="s">&#9733;</span><span class="s">&#9733;</span><span class="s">&#9733;</span></div>
+      </div>
       <div class="rv-quote">"Submitted a request and within 5 minutes I received a call from a very polite lady. This is a company I'd want to do business with — from the very first phone call there was a connection."</div>
-      <div class="rv-by"><strong>Robert Williams</strong>Verified Google Review</div>
     </div>
     <div class="rv">
-      <div class="rv-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      <div class="rv-top">
+        <div class="rv-avatar" style="background:linear-gradient(135deg,#7B3800,#4d2300)">JP</div>
+        <div class="rv-info">
+          <div class="rv-name">Jonatan Portillo</div>
+          <div class="rv-platform">
+            <svg class="rv-gico" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            Google
+          </div>
+        </div>
+        <div class="rv-stars"><span class="s">&#9733;</span><span class="s">&#9733;</span><span class="s">&#9733;</span><span class="s">&#9733;</span><span class="s">&#9733;</span></div>
+      </div>
       <div class="rv-quote">"George was very responsive, never felt pressured. The customer service was great. Thanks for the reasonable quote and great quality product!"</div>
-      <div class="rv-by"><strong>Jonatan Portillo</strong>Verified Google Review</div>
     </div>
   </div>
   <!-- Live review widget from CCF website — real-time customer reviews -->
   <div style="margin-top:32px;padding-top:28px;border-top:1px solid rgba(255,255,255,0.08)">
     <div class="rv-ey" style="margin-bottom:16px">Live Customer Reviews &middot; Updated in Real Time</div>
-    <div style="border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.08)">
+    <div class="rv-widget-wrap">
       <iframe class="lc_reviews_widget" src="https://reputationhub.site/reputation/widgets/review_widget/lcdhKQ9YsnvSbiCx1hCi?widgetId=69305481f4530a0640f818f3" frameborder="0" scrolling="no" style="min-width:100%;width:100%;min-height:700px;border:none;background:rgba(255,255,255,0.02)" loading="lazy"></iframe>
     </div>
     <div style="margin-top:16px;font-family:'DM Mono',monospace;font-size:12px;letter-spacing:0.1em;color:rgba(255,255,255,0.45)">&#9733; These are real, verified reviews from Google and Facebook. Pull them up at the kitchen table — this is your closing tool.</div>
@@ -1451,7 +1558,7 @@ nav{flex:1;padding:8px 0 16px}
     <div class="st">Compensation & Earning Potential</div>
     <div class="ss">This isn't a mystery. Here's how you get paid, how you grow your income, and why top performers stay.</div>
   </div></div>
-  <div class="cgrid">
+  <div class="cgrid" style="grid-template-columns:repeat(2,1fr)">
     <div class="c"><div class="c-ic">&#128181;</div><h3>Base + Performance</h3><p>Your base pay structure (hourly or salary) is confirmed at onboarding and paid weekly or biweekly via direct deposit. But the real story is what you earn on top of that — performance incentives, crew bonuses, and efficiency pay are active and designed to reward the people who show up and produce.</p></div>
     <div class="c"><div class="c-ic">&#128200;</div><h3>Commission & Bonuses</h3><p>Sales reps earn on closed deals. D2D reps earn on qualified leads that convert. Crew bonuses are tied to efficiency and quality scores. The specifics are reviewed at your 30-day check-in — this is real money, not a corporate carrot on a stick.</p></div>
     <div class="c"><div class="c-ic">&#128640;</div><h3>Growth = More Money</h3><p>Crew leads earn more. Closers earn more. People who learn the full stack — from D2D to estimate to close — earn the most. CCF promotes from within. Your income ceiling isn't set by your title, it's set by your effort and skill development.</p></div>
@@ -1833,6 +1940,61 @@ nav{flex:1;padding:8px 0 16px}
 </div>
 </main>
 <script>
+// ── Scroll progress ───────────────────────────────────────────────────
+const scrollProg = document.getElementById('scroll-prog');
+function updateScrollProg() {
+  const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+  if (scrollable > 0) scrollProg.style.width = (window.scrollY / scrollable * 100) + '%';
+}
+window.addEventListener('scroll', updateScrollProg, { passive: true });
+
+// ── Particle field ────────────────────────────────────────────────────
+(function spawnParticles() {
+  const container = document.getElementById('hero-particles');
+  if (!container) return;
+  const COLORS = ['rgba(255,255,255,.28)', 'rgba(191,17,32,.35)', 'rgba(201,165,53,.25)', 'rgba(255,255,255,.14)'];
+  for (let i = 0; i < 65; i++) {
+    const p = document.createElement('div');
+    p.className = 'hp';
+    const size = Math.random() * 3 + 1;
+    p.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;bottom:${Math.random()*40}%;animation-duration:${Math.random()*9+7}s;animation-delay:-${Math.random()*12}s;background:${COLORS[Math.floor(Math.random()*COLORS.length)]}`;
+    container.appendChild(p);
+  }
+})();
+
+// ── IntersectionObserver: counters + stars ────────────────────────────
+const animObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    // Animate stat counters
+    if (e.target.classList.contains('sv')) {
+      const raw = e.target.textContent.trim();
+      const numMatch = raw.match(/[\d.]+/);
+      if (numMatch) {
+        const target = parseFloat(numMatch[0]);
+        const suffix = raw.replace(/[\d.]+/, '');
+        const isInt = target % 1 === 0;
+        const start = Date.now();
+        const dur = 1100;
+        e.target.classList.add('anim');
+        (function tick() {
+          const t = Math.min((Date.now() - start) / dur, 1);
+          const eased = 1 - Math.pow(1 - t, 4);
+          e.target.textContent = (isInt ? Math.round(target * eased) : (target * eased).toFixed(1)) + suffix;
+          if (t < 1) requestAnimationFrame(tick);
+        })();
+      }
+    }
+    // Animate star sets
+    if (e.target.classList.contains('rv-stars') || e.target.classList.contains('rv-stars-big')) {
+      e.target.classList.add('popped');
+    }
+    animObs.unobserve(e.target);
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('.sv, .rv-stars, .rv-stars-big').forEach(el => animObs.observe(el));
+
+// ── Original sidebar / checklist / scroll-spy logic ───────────────────
 function sa(el){
   document.querySelectorAll('.ni').forEach(i=>i.classList.remove('on'));
   el.classList.add('on');
@@ -1896,6 +2058,18 @@ const rv=new IntersectionObserver(e=>{
   e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('vis');});
 },{threshold:0.07});
 document.querySelectorAll('.sec').forEach(s=>rv.observe(s));
+
+// Mobile sidebar toggle
+const sbEl = document.getElementById('sb');
+const menuBtn = document.createElement('button');
+menuBtn.innerHTML = '&#9776;';
+menuBtn.style.cssText='position:fixed;bottom:24px;right:20px;z-index:400;width:48px;height:48px;border-radius:50%;background:var(--red);border:none;color:white;font-size:20px;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.3)';
+document.body.appendChild(menuBtn);
+function checkMobile(){menuBtn.style.display=window.innerWidth<=920?'flex':'none'}
+checkMobile();
+window.addEventListener('resize',checkMobile);
+menuBtn.addEventListener('click',()=>sbEl.classList.toggle('open'));
+document.addEventListener('click',e=>{if(window.innerWidth<=920&&!sbEl.contains(e.target)&&e.target!==menuBtn)sbEl.classList.remove('open')});
 </script>
 </body>
 </html>
