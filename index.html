@@ -3670,6 +3670,45 @@
       margin-top: 2px;
     }
     .appt-past { opacity: 0.65; }
+    .appt-needs-closer { border-left: 3px solid #f59e0b; }
+    .appt-needs-closer .appt-result-badge { animation: skeletonPulse 2s ease-in-out infinite; }
+
+    /* ── Assign Closer Modal ──────────────────────────────── */
+    #assign-closer-overlay {
+      position: fixed; inset: 0; z-index: 9500;
+      background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
+      display: none; align-items: flex-end; justify-content: center;
+    }
+    #assign-closer-overlay.open { display: flex; }
+    .assign-closer-sheet {
+      background: #0a0f14; border-radius: 24px 24px 0 0;
+      width: 100%; max-width: 540px; max-height: 80vh;
+      display: flex; flex-direction: column; overflow: hidden;
+      animation: panelIn 0.3s var(--ease-out) both;
+    }
+    .assign-closer-header {
+      padding: 16px 20px 12px; border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .assign-closer-title { font-size: 16px; font-weight: 700; color: rgba(255,255,255,0.95); }
+    .assign-closer-sub { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+    .assign-closer-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+    .assign-closer-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 20px; border: none; background: none;
+      width: 100%; text-align: left; cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .assign-closer-item:active { background: rgba(255,255,255,0.06); }
+    .assign-closer-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: rgba(26,157,184,0.15); color: var(--amber);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700;
+    }
+    .assign-closer-name { font-size: 14px; font-weight: 600; color: #fff; }
+    .assign-closer-role { font-size: 11px; color: rgba(255,255,255,0.4); }
     .appt-crm-empty {
       text-align: center;
       padding: 48px 24px;
@@ -8174,12 +8213,19 @@
     playsinline
     style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0"
   ></video>
-  <!-- Org reveal canvas overlay (injected by wcSplash.revealOrg) -->
+  <!-- Canvas for dissolve particle transition -->
   <canvas id="splash-org-canvas" style="position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;display:none"></canvas>
-  <!-- Fallback logo shown if video fails -->
+  <!-- WC logo + org logo layered for cross-dissolve -->
   <div id="splash-logo-wrap" style="display:none;position:relative;z-index:2;flex-direction:column;align-items:center;gap:22px">
-    <img id="splash-logo" src="W.png" alt="WC App" style="width:180px;height:auto" />
+    <div id="splash-logo-stack" style="position:relative;width:180px;height:180px">
+      <img id="splash-logo" src="W.png" alt="WC App" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity 0.8s ease-out,transform 0.8s ease-out,filter 0.8s ease-out" />
+      <img id="splash-org-logo" src="" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transform:scale(0.85);filter:blur(8px);transition:opacity 1s ease-out 0.2s,transform 1s cubic-bezier(0.34,1.56,0.64,1) 0.2s,filter 0.8s ease-out 0.3s" />
+    </div>
     <div id="splash-tagline" style="font-size:12px;color:rgba(30,200,213,0.8);letter-spacing:0.12em;text-transform:uppercase">The D2D Sales Platform</div>
+    <div id="splash-org-name" style="opacity:0;font-family:'Outfit',sans-serif;font-size:22px;font-weight:800;color:#fff;letter-spacing:0.02em;text-align:center;transition:opacity 0.6s ease-out,transform 0.6s ease-out;transform:translateY(8px)"></div>
+  </div>
+  <div id="splash-bar-wrap">
+    <div id="splash-bar"></div>
   </div>
 </div>
 
@@ -11589,6 +11635,31 @@
       </select>
     </div>
 
+    <!-- Best Available Closer — conditional fields -->
+    <div id="b-best-available-wrap" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Time Preference <span style="color:var(--c-red)">*</span></label>
+        <div style="display:flex;gap:8px">
+          <label class="radio-opt" style="flex:1;text-align:center;padding:10px 8px;border-radius:12px;border:1.5px solid var(--g-border);background:var(--g1);cursor:pointer;font-size:12px;font-weight:700;transition:all .15s">
+            <input type="radio" name="b-time-pref" value="morning" style="display:none" />
+            Morning<br><span style="font-weight:400;color:var(--text-3);font-size:11px">8am–12pm</span>
+          </label>
+          <label class="radio-opt" style="flex:1;text-align:center;padding:10px 8px;border-radius:12px;border:1.5px solid var(--g-border);background:var(--g1);cursor:pointer;font-size:12px;font-weight:700;transition:all .15s">
+            <input type="radio" name="b-time-pref" value="afternoon" style="display:none" />
+            Afternoon<br><span style="font-weight:400;color:var(--text-3);font-size:11px">12–5pm</span>
+          </label>
+          <label class="radio-opt" style="flex:1;text-align:center;padding:10px 8px;border-radius:12px;border:1.5px solid var(--g-border);background:var(--g1);cursor:pointer;font-size:12px;font-weight:700;transition:all .15s">
+            <input type="radio" name="b-time-pref" value="evening" style="display:none" />
+            Evening<br><span style="font-weight:400;color:var(--text-3);font-size:11px">5–8pm</span>
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="b-mgmt-notes">Notes for Management</label>
+        <textarea class="form-input" id="b-mgmt-notes" rows="2" placeholder="Anything management should know before scheduling?"></textarea>
+      </div>
+    </div>
+
     <div class="form-group">
       <label class="form-label">Customer Name <span style="color:var(--c-red)">*</span></label>
       <div class="form-row" style="margin-bottom:0">
@@ -14669,46 +14740,73 @@ function _dismissSplash() {
     });
   }
 
-  // Org reveal overlay — canvas-based glitch/dissolve effect
+  // Org reveal — WC logo dissolves into org logo with particle burst
   function _revealOrg(orgName, orgLogoUrl, orgColor) {
     var canvas = document.getElementById('splash-org-canvas');
     var vid = document.getElementById('splash-video');
-    if (!canvas) { window.wcSplash.dismiss(); return; }
+    var wcLogo = document.getElementById('splash-logo');
+    var orgLogo = document.getElementById('splash-org-logo');
+    var orgNameEl = document.getElementById('splash-org-name');
+    var tagline = document.getElementById('splash-tagline');
+    var logoWrap = document.getElementById('splash-logo-wrap');
 
-    // Pause video, show canvas
-    if (vid) vid.pause();
-    canvas.style.display = 'block';
+    if (!orgLogoUrl) { setTimeout(function() { window.wcSplash.dismiss(); }, 800); return; }
 
-    var ctx = canvas.getContext('2d');
-    var W = canvas.offsetWidth;
-    var H = canvas.offsetHeight;
-    canvas.width = W;
-    canvas.height = H;
-
-    var color = orgColor || '#14C8D7';
-    var frame = 0;
-    var TOTAL = 180; // ~3s at 60fps equivalent via rAF
-
-    // Load org logo if provided
-    var orgImg = null;
-    if (orgLogoUrl) {
-      orgImg = new Image();
-      orgImg.crossOrigin = 'anonymous';
-      orgImg.src = orgLogoUrl;
-    }
-
+    var color = orgColor || '#148f98';
     function hexToRgb(hex) {
-      var r = parseInt(hex.slice(1,3),16);
-      var g = parseInt(hex.slice(3,5),16);
-      var b = parseInt(hex.slice(5,7),16);
-      return {r:r,g:g,b:b};
+      hex = (hex || '#148f98').replace('#','');
+      if (hex.length !== 6) hex = '148f98';
+      return { r: parseInt(hex.slice(0,2),16), g: parseInt(hex.slice(2,4),16), b: parseInt(hex.slice(4,6),16) };
     }
-    var rgb = hexToRgb(color.replace('#','').length === 6 ? color : '#14C8D7');
+    var rgb = hexToRgb(color);
+    if (logoWrap) logoWrap.style.display = 'flex';
+    if (orgLogo) orgLogo.src = orgLogoUrl;
+    if (vid) { vid.style.transition = 'opacity 0.6s ease-out'; vid.style.opacity = '0.3'; setTimeout(function() { vid.pause(); }, 600); }
 
-    // Phase labels
-    var phases = [
-      {start:0, text:'DECRYPTING...'},
-      {start:36, text:'IDENTITY CONFIRMED'},
+    // Particle canvas setup
+    var particlesRunning = false, particles = [], ctx, W, H;
+    if (canvas) {
+      canvas.style.display = 'block';
+      ctx = canvas.getContext('2d'); W = canvas.offsetWidth; H = canvas.offsetHeight;
+      var dpr = window.devicePixelRatio || 1; canvas.width = W * dpr; canvas.height = H * dpr; ctx.scale(dpr, dpr);
+      var cx = W / 2, cy = H / 2 - 30;
+      for (var i = 0; i < 60; i++) {
+        var angle = Math.random() * Math.PI * 2, speed = 0.5 + Math.random() * 2.5, baseLife = 40 + Math.random() * 40;
+        particles.push({ x: cx + (Math.random()-0.5)*80, y: cy + (Math.random()-0.5)*80, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed, size: 1+Math.random()*3, life: baseLife, maxLife: baseLife, teal: Math.random()>0.5 });
+      }
+    }
+    function animateParticles() {
+      if (!particlesRunning || !ctx) return;
+      ctx.clearRect(0,0,W,H); var alive = false;
+      for (var j = 0; j < particles.length; j++) {
+        var p = particles[j]; if (p.life <= 0) continue; alive = true;
+        p.x += p.vx; p.y += p.vy; p.vy += 0.02; p.life--;
+        var alpha = (p.life/p.maxLife)*0.8, r2 = p.size*(p.life/p.maxLife);
+        ctx.shadowBlur = r2*3;
+        if (p.teal) { ctx.fillStyle='rgba('+rgb.r+','+rgb.g+','+rgb.b+','+alpha+')'; ctx.shadowColor='rgba('+rgb.r+','+rgb.g+','+rgb.b+',0.6)'; }
+        else { ctx.fillStyle='rgba(255,255,255,'+alpha+')'; ctx.shadowColor='rgba(255,255,255,0.4)'; }
+        ctx.beginPath(); ctx.arc(p.x,p.y,r2,0,Math.PI*2); ctx.fill();
+      }
+      ctx.shadowBlur = 0;
+      if (alive) requestAnimationFrame(animateParticles);
+    }
+    // Phase 1 (600ms): Dissolve WC logo, fire particles
+    setTimeout(function() {
+      if (wcLogo) { wcLogo.style.opacity='0'; wcLogo.style.transform='scale(1.15)'; wcLogo.style.filter='blur(12px)'; }
+      if (canvas) { particlesRunning = true; requestAnimationFrame(animateParticles); }
+      if (tagline) { tagline.style.transition='opacity 0.4s ease-out'; tagline.style.opacity='0'; }
+    }, 600);
+    // Phase 2 (1200ms): Org logo crystallizes in
+    setTimeout(function() {
+      if (orgLogo) { orgLogo.style.opacity='1'; orgLogo.style.transform='scale(1)'; orgLogo.style.filter='blur(0)'; }
+    }, 1200);
+    // Phase 3 (1800ms): Org name fades in
+    setTimeout(function() {
+      if (orgNameEl && orgName) { orgNameEl.textContent=orgName; orgNameEl.style.opacity='1'; orgNameEl.style.transform='translateY(0)'; }
+    }, 1800);
+    // Phase 4 (3200ms): Dismiss
+    setTimeout(function() { window.wcSplash.dismiss(); }, 3200);
+    // (dead code removed — old glitch animation replaced by dissolve above)
       {start:72, text:'WELCOME, ' + (orgName || '').toUpperCase()},
     ];
 
@@ -17631,16 +17729,22 @@ function renderApptCrmList() {
     const fullName = [a.firstName, a.lastName].filter(Boolean).join(' ') || 'Unknown';
     const calDateStr = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
 
-    return `<div class="appt-crm-card${isPast ? ' appt-past' : ''}" data-appt-id="${a.id}" data-cal-date="${calDateStr}">
-      <div class="appt-crm-avatar">${initials}</div>
-      <div class="appt-crm-info">
-        <div class="appt-crm-name">${fullName}</div>
-        <div class="appt-crm-address">${addr || 'No address'}</div>
-        <div class="appt-crm-datetime">${dateStr} · ${timeStr}</div>
-        ${a.closer ? `<div class="appt-crm-closer">Closer: ${a.closer}</div>` : ''}
-      </div>
-      <span class="appt-result-badge" style="background:${color}22;color:${color};border:1px solid ${color}44">${result}</span>
-    </div>`;
+    var isPendingAssign = result === 'pending_assignment';
+    var badgeLabel = isPendingAssign ? 'NEEDS CLOSER' : result;
+    var closerLine = isPendingAssign
+      ? '<div class="appt-crm-closer" style="color:#f59e0b;font-weight:700">Unassigned \u2014 ' + (a.timePreference || 'Any') + '</div>'
+      : (a.closer && a.closer !== 'best_available' ? '<div class="appt-crm-closer">Closer: ' + escHtml(a.closer) + '</div>' : '');
+
+    return '<div class="appt-crm-card' + (isPast ? ' appt-past' : '') + (isPendingAssign ? ' appt-needs-closer' : '') + '" data-appt-id="' + escHtml(a.id) + '" data-cal-date="' + calDateStr + '">' +
+      '<div class="appt-crm-avatar">' + initials + '</div>' +
+      '<div class="appt-crm-info">' +
+        '<div class="appt-crm-name">' + escHtml(fullName) + '</div>' +
+        '<div class="appt-crm-address">' + escHtml(addr || 'No address') + '</div>' +
+        '<div class="appt-crm-datetime">' + dateStr + ' \u00B7 ' + timeStr + '</div>' +
+        closerLine +
+      '</div>' +
+      '<span class="appt-result-badge" style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44">' + badgeLabel + '</span>' +
+    '</div>';
   }).join('');
 }
 
@@ -19202,53 +19306,74 @@ function closeBookingSheet() {
 }
 
 function populateCloserDropdown() {
-  const sel   = document.getElementById('b-closer');
-  const saved = sel.value;
-  // Keep first placeholder option, rebuild rest
+  var sel   = document.getElementById('b-closer');
+  var saved = sel.value;
   while (sel.options.length > 1) sel.remove(1);
 
-  const role  = getActiveRole();
-  const uname = (localStorage.getItem('ce_user_name') || '').trim();
+  var role  = getActiveRole();
+  var uname = (localStorage.getItem('ce_user_name') || '').trim();
 
   // If current user IS a closer → lock the dropdown to themselves
   if (role === 'closer' && uname) {
-    const opt = document.createElement('option');
+    var opt = document.createElement('option');
     opt.value = uname; opt.textContent = uname;
     sel.appendChild(opt);
     sel.value = uname;
-    sel.disabled = true; // closer always assigns to themselves
+    sel.disabled = true;
+    _toggleBestAvailableUI(false);
     return;
   }
   sel.disabled = false;
 
-  // Managers/canvassers: show only team members with role=closer
+  // Best Available Closer — first option for canvassers/managers
+  var baOpt = document.createElement('option');
+  baOpt.value = 'best_available'; baOpt.textContent = '\u2B50 Best Available Closer';
+  sel.appendChild(baOpt);
+
+  // Team closers
   try {
-    const team = JSON.parse(localStorage.getItem('ce_team') || '[]');
-    // v93: only include members with explicit role=closer (skip undefined/empty)
-    const closers = team.filter(m => m.role === 'closer');
-    closers.forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m.name; opt.textContent = m.name;
-      sel.appendChild(opt);
+    var team = JSON.parse(localStorage.getItem('ce_team') || '[]');
+    var closers = team.filter(function(m) { return m.role === 'closer'; });
+    closers.forEach(function(m) {
+      var o = document.createElement('option');
+      o.value = m.name; o.textContent = m.name;
+      sel.appendChild(o);
     });
   } catch(_) {}
 
-  // Fallback if no closers configured
-  if (sel.options.length === 1) {
-    const opt = document.createElement('option');
-    opt.value = '__manual__'; opt.textContent = 'No closers added yet…';
-    sel.appendChild(opt);
+  // Fallback if no closers (besides best_available)
+  if (sel.options.length === 2) {
+    var fb = document.createElement('option');
+    fb.value = '__manual__'; fb.textContent = 'No closers added yet\u2026';
+    sel.appendChild(fb);
   }
 
-  // Restore previous selection or auto-select manager's own name
   if (saved) {
     sel.value = saved;
   } else if (uname && (role === 'manager' || role === 'master_admin')) {
-    for (let i = 0; i < sel.options.length; i++) {
+    for (var i = 0; i < sel.options.length; i++) {
       if (sel.options[i].value === uname) { sel.value = uname; break; }
     }
   }
+
+  _toggleBestAvailableUI(sel.value === 'best_available');
 }
+
+// Toggle best-available conditional fields
+function _toggleBestAvailableUI(show) {
+  var wrap = document.getElementById('b-best-available-wrap');
+  if (wrap) wrap.style.display = show ? '' : 'none';
+  var dtGroup = document.getElementById('b-datetime');
+  if (dtGroup) {
+    var fg = dtGroup.closest('.form-group');
+    if (fg) fg.style.display = show ? 'none' : '';
+  }
+}
+
+// Wire change listener on closer select
+document.getElementById('b-closer').addEventListener('change', function() {
+  _toggleBestAvailableUI(this.value === 'best_available');
+});
 
 if (btnBookNow) btnBookNow.addEventListener('click', openBookingSheet);
 bookingClose.addEventListener('click', closeBookingSheet);
@@ -19320,52 +19445,76 @@ bookingForm.addEventListener('submit', e => {
   if (radioMissing) { haptic('error'); return; }
 
   // Block submit when no real closer is assigned
-  const closerVal = document.getElementById('b-closer').value;
+  var closerVal = document.getElementById('b-closer').value;
   if (!closerVal || closerVal === '__manual__') {
-    const cs = document.getElementById('b-closer');
-    if (cs) { cs.style.borderColor = 'rgba(239,68,68,0.6)'; setTimeout(() => cs.style.borderColor = '', 2000); cs.focus(); }
+    var cs = document.getElementById('b-closer');
+    if (cs) { cs.style.borderColor = 'rgba(239,68,68,0.6)'; setTimeout(function() { cs.style.borderColor = ''; }, 2000); cs.focus(); }
     return;
   }
 
-  const appt = {
+  var isBestAvailable = closerVal === 'best_available';
+
+  // Validate time preference when best_available
+  if (isBestAvailable) {
+    var timePref = document.querySelector('input[name="b-time-pref"]:checked');
+    if (!timePref) {
+      var tpWrap = document.querySelector('#b-best-available-wrap .form-group');
+      if (tpWrap) { tpWrap.style.outline = '2px solid var(--danger)'; tpWrap.style.borderRadius = '8px'; setTimeout(function() { tpWrap.style.outline = ''; }, 3000); }
+      haptic('error');
+      return;
+    }
+  }
+
+  var appt = {
     id:        Date.now().toString(36) + Math.random().toString(36).slice(2,6),
     createdAt: Date.now(),
-    datetime:  document.getElementById('b-datetime').value,
-    closer:    closerVal,
+    datetime:  isBestAvailable ? new Date().toISOString() : document.getElementById('b-datetime').value,
+    closer:    isBestAvailable ? 'best_available' : closerVal,
+    closerName: isBestAvailable ? 'Best Available Closer' : closerVal,
     firstName: document.getElementById('b-first').value.trim(),
     lastName:  document.getElementById('b-last').value.trim(),
     email:     document.getElementById('b-email').value.trim(),
-    phone:     `(${document.getElementById('b-area').value.trim()}) ${document.getElementById('b-phone').value.trim()}`,
+    phone:     '(' + document.getElementById('b-area').value.trim() + ') ' + document.getElementById('b-phone').value.trim(),
     street:    document.getElementById('b-street').value.trim(),
     city:      document.getElementById('b-city').value.trim(),
     state:     document.getElementById('b-state').value,
     zip:       document.getElementById('b-zip').value.trim(),
     utilityCompany: document.getElementById('b-utility-co').value.trim(),
     avgBill:   document.getElementById('b-avg-bill').value,
-    shade:     document.querySelector('input[name="b-shade"]:checked')?.value || '',
-    roof:      document.querySelector('input[name="b-roof"]:checked')?.value  || '',
-    pitched:   document.querySelector('input[name="b-pitched"]:checked')?.value || '',
-    credit:    document.querySelector('input[name="b-credit"]:checked')?.value  || '',
+    shade:     (document.querySelector('input[name="b-shade"]:checked') || {}).value || '',
+    roof:      (document.querySelector('input[name="b-roof"]:checked') || {}).value  || '',
+    pitched:   (document.querySelector('input[name="b-pitched"]:checked') || {}).value || '',
+    credit:    (document.querySelector('input[name="b-credit"]:checked') || {}).value  || '',
     notes:     document.getElementById('b-notes').value.trim(),
     lat:       pendingLat,
     lng:       pendingLng,
-    result:    'Pending',
-    // Utility bill photo — carried from contact record if converting, otherwise null
-    ubPhoto:   (() => { const p = document.getElementById('b-bill-preview'); return (p && p.src && p.style.display !== 'none') ? p.src : null; })(),
+    result:    isBestAvailable ? 'pending_assignment' : 'Pending',
+    ubPhoto:   (function() { var p = document.getElementById('b-bill-preview'); return (p && p.src && p.style.display !== 'none') ? p.src : null; })(),
     repName:   localStorage.getItem('ce_user_name') || '',
   };
 
-  const appts = loadAppointments();
+  // Best available extras
+  if (isBestAvailable) {
+    appt.timePreference = document.querySelector('input[name="b-time-pref"]:checked').value;
+    appt.managementNotes = (document.getElementById('b-mgmt-notes') || {}).value || '';
+  }
+
+  var appts = loadAppointments();
   appts.unshift(appt);
   saveAppointments(appts);
 
   closeBookingSheet();
-  sendApptNotification(appt);
-  scheduleApptReminders(appt);
 
-  // 🎮 Gamification — celebrate a booked appointment!
-  launchConfetti('🎯 Appointment Booked! Let\'s close it!');
-  setTimeout(function(){ showHandoffCard(appt); }, 900);
+  if (isBestAvailable) {
+    // Notify all managers in the org
+    _notifyManagersNewAssignment(appt);
+    showToast('✅ Appointment submitted — management will assign a closer');
+  } else {
+    sendApptNotification(appt);
+    scheduleApptReminders(appt);
+    launchConfetti('\uD83C\uDFAF Appointment Booked! Let\'s close it!');
+    setTimeout(function(){ showHandoffCard(appt); }, 900);
+  }
 });
 
 // renderApptRecent removed — upcoming appointments live in the calendar only
@@ -19576,9 +19725,11 @@ function renderCalendar() {
         const hr12   = dt.getHours() % 12 || 12;
         const ampm   = dt.getHours() < 12 ? 'a' : 'p';
         const name   = (a.firstName || a.lastName) ? (a.firstName || '') + ' ' + (a.lastName || '').trim() : 'Appt';
+        const isPendingAssign = result === 'pending_assignment';
+        const chipLabel = isPendingAssign ? 'Unassigned' : hr12 + ampm + ' ' + name.trim();
         const bgAlpha = isSelected ? 'rgba(255,255,255,0.25)' : color + '22';
         const txtClr  = isSelected ? '#fff' : color;
-        return `<span class="cal-chip" style="background:${bgAlpha};color:${txtClr}">${hr12}${ampm} ${name.trim()}</span>`;
+        return `<span class="cal-chip" style="background:${bgAlpha};color:${txtClr}">${chipLabel}</span>`;
       }).join('');
       if (extra > 0) {
         chipsHTML += `<span class="cal-chip-more">${extra} more</span>`;
@@ -22554,11 +22705,12 @@ const DISPO_LABELS = {
   'sold':           'Made Contact',
 };
 const APPT_RESULT_COLORS = {
-  'Pending':    '#64748b',   // slate
-  'Confirmed':  '#3b82f6',   // blue
-  'No Show':    '#ef4444',   // red
-  'Signed':     '#22c55e',   // green
-  'Reschedule': '#a855f7',   // purple  (distinct from DQ orange)
+  'Pending':            '#64748b',   // slate
+  'Confirmed':          '#3b82f6',   // blue
+  'No Show':            '#ef4444',   // red
+  'Signed':             '#22c55e',   // green
+  'Reschedule':         '#a855f7',   // purple
+  'pending_assignment': '#f59e0b',   // amber — needs closer
 };
 
 let mapInstance      = null;
@@ -23320,6 +23472,20 @@ function initInstallsMap() {
   </div>
 </div>
 
+<!-- ── Assign Closer Modal ─────────────────────────────────────────── -->
+<div id="assign-closer-overlay" onclick="if(event.target===this)closeAssignCloser()">
+  <div class="assign-closer-sheet">
+    <div class="assign-closer-header">
+      <div>
+        <div class="assign-closer-title">Assign a Closer</div>
+        <div class="assign-closer-sub" id="assign-closer-sub">Select who should run this appointment</div>
+      </div>
+      <button class="dispo-close" onclick="closeAssignCloser()">×</button>
+    </div>
+    <div class="assign-closer-list" id="assign-closer-list"></div>
+  </div>
+</div>
+
 <!-- ── PDF Viewer Modal ─────────────────────────────────────────────── -->
 <div id="pdf-viewer-modal">
   <div class="pdf-toolbar">
@@ -23619,6 +23785,92 @@ function closeDIspoSheet() {
 
 document.getElementById('dispo-appt-btn').addEventListener('click', openDispoSheet);
 
+// ── Assign Closer Modal (managers only) ──────────────────────────────────
+var _assignApptId = null;
+
+function openAssignCloser(apptId) {
+  _assignApptId = apptId;
+  var appt = loadAppointments().find(function(a) { return a.id === apptId; });
+  if (!appt) return;
+  var custName = [appt.firstName, appt.lastName].filter(Boolean).join(' ') || 'Unknown';
+  var sub = document.getElementById('assign-closer-sub');
+  if (sub) sub.textContent = custName + ' \u2014 ' + (appt.timePreference || 'Any time');
+  var list = document.getElementById('assign-closer-list');
+  var team = [];
+  try { team = JSON.parse(localStorage.getItem('ce_team') || '[]'); } catch(_) {}
+  var closers = team.filter(function(m) { return m.role === 'closer'; });
+  if (!closers.length) {
+    list.innerHTML = '<div style="text-align:center;padding:32px;color:rgba(255,255,255,0.35);font-size:13px">No closers on team yet. Add closers in Admin \u2192 Sales Team.</div>';
+  } else {
+    list.innerHTML = closers.map(function(m) {
+      var initials = (m.name || '?').split(' ').map(function(w) { return w[0]; }).join('').toUpperCase().slice(0,2);
+      return '<button class="assign-closer-item" data-closer-name="' + escHtml(m.name) + '">' +
+        '<div class="assign-closer-avatar">' + initials + '</div>' +
+        '<div><div class="assign-closer-name">' + escHtml(m.name) + '</div>' +
+        '<div class="assign-closer-role">Closer</div></div></button>';
+    }).join('');
+  }
+  document.getElementById('assign-closer-overlay').classList.add('open');
+}
+
+function closeAssignCloser() {
+  document.getElementById('assign-closer-overlay').classList.remove('open');
+  _assignApptId = null;
+}
+
+// Event delegation for assign closer clicks
+document.getElementById('assign-closer-list').addEventListener('click', function(e) {
+  var item = e.target.closest('.assign-closer-item');
+  if (!item || !_assignApptId) return;
+  var closerName = item.dataset.closerName;
+  var appts = loadAppointments();
+  var idx = appts.findIndex(function(a) { return a.id === _assignApptId; });
+  if (idx === -1) return;
+  appts[idx].closer = closerName;
+  appts[idx].closerName = closerName;
+  appts[idx].result = 'Pending';
+  appts[idx].assignedAt = Date.now();
+  saveAppointments(appts);
+  closeAssignCloser();
+  haptic('success');
+  showToast('\u2705 Assigned to ' + closerName);
+  renderApptCrmList();
+  renderCalendar();
+  renderDashboard();
+  // Notify the assigned closer
+  _notifyAssignedCloser(appts[idx], closerName);
+});
+
+async function _notifyAssignedCloser(appt, closerName) {
+  try {
+    if (!fbAuth.currentUser || !navigator.onLine) return;
+    var orgId = localStorage.getItem('ce_org_id');
+    if (!orgId) return;
+    var custName = [appt.firstName, appt.lastName].filter(Boolean).join(' ') || 'Customer';
+    var addr = appt.street || appt.city || '';
+    // Find closer's uid by name
+    var usersSnap = await fbDb.collection('users')
+      .where('orgId', '==', orgId)
+      .where('name', '==', closerName)
+      .limit(1)
+      .get();
+    if (usersSnap.empty) return;
+    var closerUid = usersSnap.docs[0].id;
+    sendNotification(closerUid, 'New Appointment Assigned', custName + ' \u2014 ' + addr + ' \u2014 ' + (appt.timePreference || new Date(appt.datetime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })), { type: 'appointment_assigned', appointmentId: appt.id });
+  } catch (err) {
+    console.warn('[FCM] Closer notify failed:', err);
+  }
+}
+
+// Wire CRM appt card clicks — managers can tap to assign
+document.getElementById('appt-crm-list')?.addEventListener('click', function(e) {
+  var card = e.target.closest('.appt-needs-closer');
+  if (!card) return;
+  var role = getActiveRole();
+  if (role !== 'manager' && role !== 'master_admin') return;
+  openAssignCloser(card.dataset.apptId);
+});
+
 // Update dispo badge on load
 (function() {
   const appts   = loadAppointments();
@@ -23880,6 +24132,36 @@ async function sendNotification(targetUid, title, body, data) {
     console.log('[FCM] Notification queued');
   } catch (err) {
     console.error('[FCM] Queue failed:', err);
+  }
+}
+
+// ── Notify all managers of pending_assignment appointment ────────────────
+async function _notifyManagersNewAssignment(appt) {
+  try {
+    if (!fbAuth.currentUser || !navigator.onLine) return;
+    var orgId = localStorage.getItem('ce_org_id');
+    if (!orgId) return;
+    var custName = [appt.firstName, appt.lastName].filter(Boolean).join(' ') || 'Unknown';
+    var addr = appt.street || appt.city || '';
+    var timePref = (appt.timePreference || '').charAt(0).toUpperCase() + (appt.timePreference || '').slice(1);
+    var title = 'New Appointment Needs Closer';
+    var body  = custName + ' \u2014 ' + addr + ' \u2014 ' + timePref;
+    var data  = { type: 'pending_assignment', appointmentId: appt.id };
+
+    // Find all manager/master_admin users in the org
+    var usersSnap = await fbDb.collection('users')
+      .where('orgId', '==', orgId)
+      .where('role', 'in', ['manager', 'master_admin'])
+      .get();
+    usersSnap.forEach(function(doc) {
+      var uid = doc.id;
+      if (uid === fbAuth.currentUser.uid) return; // don't notify self
+      sendNotification(uid, title, body, data);
+    });
+    console.log('[FCM] Manager notifications queued for pending_assignment');
+  } catch (err) {
+    console.warn('[FCM] Manager notify failed:', err);
+    if (typeof Sentry !== 'undefined') Sentry.captureException(err);
   }
 }
 
