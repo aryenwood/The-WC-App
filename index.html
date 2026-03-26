@@ -24281,26 +24281,32 @@ async function _notifyManagersNewAssignment(appt) {
       sendNotification(uid, title, body, data);
     });
     console.log('[FCM] Manager notifications queued for pending_assignment');
-    // Email to manager
-    var _mgrEmail = _safeAdminSettings().dispoEmailTo;
-    if (_mgrEmail) {
+    // Email to admin appointments inbox + all manager emails from Firestore
+    var _emailHtml = '<div style="font-family:sans-serif;max-width:520px;margin:0 auto">' +
+      '<div style="background:#f59e0b;padding:16px 20px;border-radius:10px 10px 0 0"><h2 style="color:#fff;margin:0;font-size:16px">Appointment Needs Closer</h2></div>' +
+      '<div style="background:#f9f9f9;border:1px solid #e5e5e5;border-top:none;border-radius:0 0 10px 10px;padding:20px;font-size:14px">' +
+      '<p><strong>Rep:</strong> ' + (appt.repName || 'Unknown') + '<br>' +
+      '<strong>Customer:</strong> ' + custName + '<br>' +
+      '<strong>Address:</strong> ' + addr + '<br>' +
+      '<strong>Time Preference:</strong> ' + timePref + '<br>' +
+      '<strong>Notes:</strong> ' + (appt.managementNotes || 'None') + '<br>' +
+      '<strong>Booked:</strong> ' + new Date().toLocaleString() + '</p></div>' +
+      '<p style="color:#bbb;font-size:11px;text-align:center;margin-top:12px">Sent automatically by WC App</p></div>';
+    var _emailSubject = '\uD83D\uDCC5 New Appointment Needs a Closer \u2014 ' + custName;
+    // Collect all unique manager emails
+    var _mgrEmails = new Set();
+    var _adminEmail = _safeAdminSettings().dispoEmailTo || 'appointments@tritonenergyllc.net';
+    _mgrEmails.add(_adminEmail);
+    usersSnap.forEach(function(doc) {
+      var email = doc.data().email;
+      if (email) _mgrEmails.add(email);
+    });
+    _mgrEmails.forEach(function(email) {
       fbDb.collection('mail').add({
-        to: _mgrEmail,
-        message: {
-          subject: '\uD83D\uDCC5 New Appointment Needs a Closer \u2014 ' + custName,
-          html: '<div style="font-family:sans-serif;max-width:520px;margin:0 auto">' +
-            '<div style="background:#f59e0b;padding:16px 20px;border-radius:10px 10px 0 0"><h2 style="color:#fff;margin:0;font-size:16px">Appointment Needs Closer</h2></div>' +
-            '<div style="background:#f9f9f9;border:1px solid #e5e5e5;border-top:none;border-radius:0 0 10px 10px;padding:20px;font-size:14px">' +
-            '<p><strong>Rep:</strong> ' + (appt.repName || 'Unknown') + '<br>' +
-            '<strong>Customer:</strong> ' + custName + '<br>' +
-            '<strong>Address:</strong> ' + addr + '<br>' +
-            '<strong>Time Preference:</strong> ' + timePref + '<br>' +
-            '<strong>Notes:</strong> ' + (appt.managementNotes || 'None') + '<br>' +
-            '<strong>Booked:</strong> ' + new Date().toLocaleString() + '</p></div>' +
-            '<p style="color:#bbb;font-size:11px;text-align:center;margin-top:12px">Sent automatically by WC App</p></div>'
-        }
-      }).catch(function(e) { console.warn('[Mail] Pending assign email failed:', e.message); });
-    }
+        to: email,
+        message: { subject: _emailSubject, html: _emailHtml }
+      }).catch(function(e) { console.warn('[Mail] Pending assign email to ' + email + ' failed:', e.message); });
+    });
   } catch (err) {
     console.warn('[FCM] Manager notify failed:', err);
     if (typeof Sentry !== 'undefined') Sentry.captureException(err);
@@ -25164,7 +25170,7 @@ function _sendApptDispoEmail(appt, result) {
   if (typeof fbDb === 'undefined') return;
   if (['localhost','127.0.0.1','wc-app-alpha.firebaseapp.com','wc-app-alpha.web.app'].indexOf(window.location.hostname) !== -1) return;
   var _s = {}; try { _s = _safeAdminSettings(); } catch(_) {}
-  var _toEmail   = _s.dispoEmailTo   || 'Olashawan@tritonenergyllc.net';
+  var _toEmail   = _s.dispoEmailTo   || 'appointments@tritonenergyllc.net';
   var _fromEmail = _s.dispoEmailFrom || '';
   var repName = localStorage.getItem('ce_user_name') || 'Rep';
   var custName = [appt.firstName, appt.lastName].filter(Boolean).join(' ') || '—';
@@ -25229,7 +25235,7 @@ function _sendDispoEmail(entry) {
   if (typeof fbDb === 'undefined') return;
   if (['localhost','127.0.0.1','wc-app-alpha.firebaseapp.com','wc-app-alpha.web.app'].indexOf(window.location.hostname) !== -1) return;
   var _s = {}; try { _s = _safeAdminSettings(); } catch(_) {}
-  var _toEmail   = _s.dispoEmailTo   || 'Olashawan@tritonenergyllc.net';
+  var _toEmail   = _s.dispoEmailTo   || 'appointments@tritonenergyllc.net';
   var _fromEmail = _s.dispoEmailFrom || '';
   var statusLabels = {
     'not-home':       'Not Home',
