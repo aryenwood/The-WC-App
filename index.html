@@ -3303,10 +3303,14 @@
     .swipe-wrap {
       position: relative;
       overflow: hidden;
+      background: var(--surface);
+      isolation: isolate;
+      border-radius: var(--r-md);
     }
     .swipe-actions {
       position: absolute; top: 0; bottom: 0;
       display: flex; align-items: stretch;
+      z-index: 1;
     }
     .swipe-actions--right { right: 0; }
     .swipe-actions--left  { left: 0; }
@@ -3314,19 +3318,21 @@
       width: 64px;
       display: flex; align-items: center; justify-content: center;
       flex-direction: column; gap: 2px;
-      font-size: 10px; font-weight: 700;
+      font-size: 11px; font-weight: 600;
       color: #fff; cursor: pointer;
+      white-space: nowrap;
       -webkit-tap-highlight-color: transparent;
+      position: relative; z-index: 1;
     }
-    .swipe-action svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; }
+    .swipe-action svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; pointer-events: none; }
     .swipe-action--call    { background: #22c55e; }
-    .swipe-action--archive { background: var(--amber); }
-    .swipe-action--delete  { background: #ef4444; }
+    .swipe-action--archive { background: var(--c-amber); }
+    .swipe-action--delete  { background: var(--danger); }
     .swipe-action--dispo   { background: #597dff; }
     .swipe-content {
       position: relative;
-      z-index: 1;
-      background: inherit;
+      z-index: 2;
+      background: var(--surface);
       transition: transform 0.2s var(--ease-out);
       will-change: transform;
     }
