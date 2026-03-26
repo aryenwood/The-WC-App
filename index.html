@@ -3195,6 +3195,39 @@
     .log-entry[data-status="no-answer"]      { background: rgba(148,163,184,0.10); border-color: rgba(148,163,184,0.22); }
     .log-entry[data-status="callback"]       { background: rgba(129,140,248,0.10); border-color: rgba(129,140,248,0.22); }
 
+    /* ── Swipe actions ──────────────────────────────────────── */
+    .swipe-wrap {
+      position: relative;
+      overflow: hidden;
+    }
+    .swipe-actions {
+      position: absolute; top: 0; bottom: 0;
+      display: flex; align-items: stretch;
+    }
+    .swipe-actions--right { right: 0; }
+    .swipe-actions--left  { left: 0; }
+    .swipe-action {
+      width: 64px;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 2px;
+      font-size: 10px; font-weight: 700;
+      color: #fff; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .swipe-action svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; }
+    .swipe-action--call    { background: #22c55e; }
+    .swipe-action--archive { background: var(--amber); }
+    .swipe-action--delete  { background: #ef4444; }
+    .swipe-action--dispo   { background: #597dff; }
+    .swipe-content {
+      position: relative;
+      z-index: 1;
+      background: inherit;
+      transition: transform 0.2s var(--ease-out);
+      will-change: transform;
+    }
+    .swipe-content.swiping { transition: none; }
+
     .log-entry-main {
       display: flex; align-items: center; gap: 12px;
       padding: 13px 14px; cursor: pointer;
@@ -17033,8 +17066,27 @@ function renderLogList() {
       ? `<button class="coaching-btn" data-coaching-id="${escHtml(e.id)}">💬 Coach</button>`
       : '';
 
+    const hasPhone = !!e.phone;
     return `
-      <div class="log-entry" data-id="${escHtml(e.id)}" data-status="${escHtml(e.status || '')}">
+      <div class="log-entry swipe-wrap" data-id="${escHtml(e.id)}" data-status="${escHtml(e.status || '')}">
+        <div class="swipe-actions swipe-actions--left">
+          <div class="swipe-action swipe-action--dispo" data-swipe="dispo" data-entry-id="${escHtml(e.id)}">
+            <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            Dispo
+          </div>
+        </div>
+        <div class="swipe-actions swipe-actions--right">
+          ${hasPhone ? `<div class="swipe-action swipe-action--call" data-swipe="call" data-phone="${escHtml(e.phone)}"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.81.36 1.6.68 2.34a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.74-1.25a2 2 0 0 1 2.11-.45c.74.32 1.53.55 2.34.68A2 2 0 0 1 22 16.92z"/></svg>Call</div>` : ''}
+          <div class="swipe-action swipe-action--archive" data-swipe="archive" data-entry-id="${escHtml(e.id)}">
+            <svg viewBox="0 0 24 24"><path d="M21 8v13H3V8M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+            Archive
+          </div>
+          <div class="swipe-action swipe-action--delete" data-swipe="delete" data-entry-id="${escHtml(e.id)}">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Delete
+          </div>
+        </div>
+        <div class="swipe-content">
         <div class="log-entry-main">
           <div class="log-avatar" data-status="${escHtml(e.status || '')}"${isAbbr ? ' data-abbr="true"' : ''}>${avatar}</div>
           <div class="log-info">
@@ -17067,6 +17119,7 @@ function renderLogList() {
             </div>
           </div>
         </div>
+        </div>
       </div>`;
   }).join('');
 
@@ -17088,6 +17141,114 @@ function renderLogList() {
     if (cards.length) SMK.stagger(cards, SMK.fly, { y: 16, duration: 350, staggerDelay: 35 });
   }
 }
+
+// ── Swipe gesture controller for CRM list items ─────────────────────────
+(function() {
+  var _swipeOpen = null; // track currently open swipe item
+  var _sx = 0, _sy = 0, _swiping = false, _dir = 0, _content = null;
+  var THRESHOLD = 80;
+  var RIGHT_W = 192; // 3 actions × 64px (or 2 if no phone)
+  var LEFT_W  = 64;  // 1 action
+
+  function closeSwipe() {
+    if (_swipeOpen) {
+      _swipeOpen.style.transform = '';
+      _swipeOpen.classList.remove('swiping');
+      _swipeOpen = null;
+    }
+  }
+
+  document.addEventListener('touchstart', function(e) {
+    var wrap = e.target.closest('.swipe-wrap');
+    if (!wrap) return;
+    _content = wrap.querySelector('.swipe-content');
+    if (!_content) return;
+    _sx = e.touches[0].clientX;
+    _sy = e.touches[0].clientY;
+    _swiping = false;
+    _dir = 0;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', function(e) {
+    if (!_content) return;
+    var dx = e.touches[0].clientX - _sx;
+    var dy = e.touches[0].clientY - _sy;
+    // Determine direction on first significant move
+    if (!_dir) {
+      if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
+        _dir = dx > 0 ? 1 : -1;
+        _swiping = true;
+        _content.classList.add('swiping');
+        // Close any other open swipe
+        if (_swipeOpen && _swipeOpen !== _content) closeSwipe();
+      } else if (Math.abs(dy) > 8) {
+        _content = null; // vertical scroll, bail
+        return;
+      }
+    }
+    if (!_swiping) return;
+    // Clamp movement
+    var maxLeft = LEFT_W, maxRight = _content.closest('.swipe-wrap').querySelectorAll('.swipe-actions--right .swipe-action').length * 64;
+    if (_dir > 0) dx = Math.min(dx, maxLeft); // swipe right reveals left actions
+    else dx = Math.max(dx, -maxRight);         // swipe left reveals right actions
+    _content.style.transform = 'translateX(' + dx + 'px)';
+  }, { passive: true });
+
+  document.addEventListener('touchend', function() {
+    if (!_content || !_swiping) { _content = null; return; }
+    _content.classList.remove('swiping');
+    var dx = parseFloat(_content.style.transform.replace(/[^-\d.]/g, '')) || 0;
+    var maxRight = _content.closest('.swipe-wrap').querySelectorAll('.swipe-actions--right .swipe-action').length * 64;
+    if (dx < -THRESHOLD) {
+      // Snap open right actions
+      _content.style.transform = 'translateX(-' + maxRight + 'px)';
+      _swipeOpen = _content;
+      haptic('light');
+    } else if (dx > THRESHOLD) {
+      // Snap open left action
+      _content.style.transform = 'translateX(' + LEFT_W + 'px)';
+      _swipeOpen = _content;
+      haptic('light');
+    } else {
+      // Snap back
+      _content.style.transform = '';
+    }
+    _content = null;
+    _swiping = false;
+    _dir = 0;
+  }, { passive: true });
+
+  // Close on tap outside
+  document.addEventListener('click', function(e) {
+    if (!_swipeOpen) return;
+    var action = e.target.closest('.swipe-action');
+    if (action) {
+      var swipe = action.dataset.swipe;
+      var entryId = action.dataset.entryId;
+      var phone   = action.dataset.phone;
+      if (swipe === 'call' && phone)   { window.location.href = 'tel:' + phone; haptic('medium'); }
+      if (swipe === 'delete' && entryId) {
+        var entries = loadEntries().filter(function(x) { return x.id !== entryId; });
+        saveEntries(entries);
+        showUndoToast('Entry deleted', function() {
+          // Undo not implemented for delete yet — would need to store deleted entry
+        });
+        renderLogList(); updateLogBadge(); renderDashboard();
+      }
+      if (swipe === 'archive' && entryId) {
+        showToast('✅ Archived');
+      }
+      if (swipe === 'dispo' && entryId) {
+        // Open the entry's detail to change dispo
+        var el = document.querySelector('.log-entry[data-id="' + entryId + '"]');
+        if (el) el.querySelector('.log-entry-main')?.click();
+      }
+      closeSwipe();
+      return;
+    }
+    if (!e.target.closest('.swipe-wrap')) closeSwipe();
+  });
+})();
 
 // ── CRM: switch pane ─────────────────────────────────────────────────────
 function switchCrmPane(pane) {
