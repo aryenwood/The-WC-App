@@ -23752,6 +23752,27 @@ async function _initFCM() {
         .catch(function() {});
     }, 60 * 60 * 1000);
 
+    // Listen for Firebase-initiated token rotation events
+    if (typeof fbMsg.onTokenRefresh === 'function') {
+      fbMsg.onTokenRefresh(function() {
+        fbMsg.getToken({ vapidKey: _fcmVapidKey, serviceWorkerRegistration: registration })
+          .then(function(refreshedToken) {
+            if (!refreshedToken) return;
+            var uid = fbAuth.currentUser && fbAuth.currentUser.uid;
+            if (!uid) return;
+            fbDb.collection('users').doc(uid).update({
+              fcmToken: refreshedToken,
+              fcmTokenUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(function(err) {
+              console.warn('[FCM] Token refresh update failed:', err);
+            });
+          })
+          .catch(function(err) {
+            console.warn('[FCM] onTokenRefresh getToken failed:', err);
+          });
+      });
+    }
+
   } catch (err) {
     console.error('[FCM] init failed:', err);
     if (typeof Sentry !== 'undefined') Sentry.captureException(err);
