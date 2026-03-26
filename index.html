@@ -3710,6 +3710,37 @@
       fill: none; stroke-width: 2; flex-shrink: 0;
     }
 
+    /* ── Calendar SOS Pulse — unassigned appointments ────── */
+    @keyframes sos-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.3; transform: scale(1.04); }
+    }
+    .cal-chip--unassigned {
+      position: relative;
+      font-weight: 700;
+    }
+    .cal-chip--unassigned::before {
+      content: '';
+      position: absolute; inset: -3px;
+      border-radius: inherit;
+      border: 2px solid #f59e0b;
+      animation: sos-pulse 1.5s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .cal-chip-needs-label {
+      font-size: 9px; font-weight: 700;
+      letter-spacing: 0.15em; color: #f59e0b;
+      text-transform: uppercase;
+      display: block; margin-top: 1px; line-height: 1;
+    }
+    .cal-day--has-pending .cal-day-num::after {
+      content: '';
+      position: absolute; bottom: -6px; left: 50%;
+      transform: translateX(-50%);
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #f59e0b;
+    }
+
     /* ── Assign Closer Modal ──────────────────────────────── */
     #assign-closer-overlay {
       position: fixed; inset: 0; z-index: 9500;
@@ -19774,23 +19805,37 @@ function renderCalendar() {
         const hr12   = dt.getHours() % 12 || 12;
         const ampm   = dt.getHours() < 12 ? 'a' : 'p';
         const name   = (a.firstName || a.lastName) ? (a.firstName || '') + ' ' + (a.lastName || '').trim() : 'Appt';
-        const isPendingAssign = result === 'pending_assignment';
-        const chipLabel = isPendingAssign ? 'Unassigned' : hr12 + ampm + ' ' + name.trim();
+        const isPendingAssign = result === 'pending_assignment' || a.closer === 'best_available';
+        const chipLabel = isPendingAssign ? name.trim() : hr12 + ampm + ' ' + name.trim();
         const bgAlpha = isSelected ? 'rgba(255,255,255,0.25)' : color + '22';
         const txtClr  = isSelected ? '#fff' : color;
-        return `<span class="cal-chip" style="background:${bgAlpha};color:${txtClr}">${chipLabel}</span>`;
+        const unassignedCls = isPendingAssign ? ' cal-chip--unassigned' : '';
+        const needsLabel = isPendingAssign ? '<span class="cal-chip-needs-label">NEEDS CLOSER</span>' : '';
+        return `<span class="cal-chip${unassignedCls}" style="background:${bgAlpha};color:${txtClr}" data-appt-id="${a.id || ''}">${chipLabel}${needsLabel}</span>`;
       }).join('');
       if (extra > 0) {
         chipsHTML += `<span class="cal-chip-more">${extra} more</span>`;
       }
     }
-    return `<button class="cal-day ${c.cls}" data-date="${c.dateStr}" aria-label="${c.dateStr}">
+    const hasPending = c.appts.some(a => a.result === 'pending_assignment' || a.closer === 'best_available');
+    const pendingCls = hasPending ? ' cal-day--has-pending' : '';
+    return `<button class="cal-day ${c.cls}${pendingCls}" data-date="${c.dateStr}" aria-label="${c.dateStr}">
       <span class="cal-day-num">${c.day}</span>${chipsHTML}
     </button>`;
   }).join('');
 
   grid.querySelectorAll('.cal-day:not(.cal-day--other-month)').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      // If tapping an unassigned chip directly, open assign modal
+      var unassignedChip = e.target.closest('.cal-chip--unassigned');
+      if (unassignedChip && unassignedChip.dataset.apptId) {
+        var role = getActiveRole();
+        if (role === 'manager' || role === 'master_admin') {
+          e.stopPropagation();
+          openAssignCloser(unassignedChip.dataset.apptId);
+          return;
+        }
+      }
       calSelectedDate = btn.dataset.date;
       renderCalendar();
       renderCalAppts();
@@ -23366,6 +23411,7 @@ function openResultSheet(apptId) {
           const sName  = localStorage.getItem('ce_user_name') || sAppt?.closer || 'Closer';
           const custN  = sAppt ? [sAppt.firstName, sAppt.lastName].filter(Boolean).join(' ') : 'a customer';
           postWinRaw(sName, `just SIGNED a deal with ${custN}! 🏆🎉`);
+          _sendSoldEmail(sAppt, sName, custN);
         } catch(_) {}
         setTimeout(() => {
           activateTab('resources');
@@ -23785,6 +23831,7 @@ function openDispoSheet() {
                 const dName  = localStorage.getItem('ce_user_name') || dAppt?.closer || 'Closer';
                 const dCust  = dAppt ? [dAppt.firstName, dAppt.lastName].filter(Boolean).join(' ') : 'a customer';
                 postWinRaw(dName, `just SIGNED a deal with ${dCust}! 🏆🎉`);
+                _sendSoldEmail(dAppt, dName, dCust);
               } catch(_) {}
               setTimeout(() => {
                 activateTab('resources');
@@ -23904,8 +23951,28 @@ async function _notifyAssignedCloser(appt, closerName) {
       .limit(1)
       .get();
     if (usersSnap.empty) return;
-    var closerUid = usersSnap.docs[0].id;
+    var closerDoc = usersSnap.docs[0];
+    var closerUid = closerDoc.id;
+    var closerEmail = closerDoc.data().email || '';
     sendNotification(closerUid, 'New Appointment Assigned', custName + ' \u2014 ' + addr + ' \u2014 ' + (appt.timePreference || new Date(appt.datetime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })), { type: 'appointment_assigned', appointmentId: appt.id });
+    // Email the assigned closer
+    if (closerEmail) {
+      fbDb.collection('mail').add({
+        to: closerEmail,
+        message: {
+          subject: '\uD83D\uDCC5 You have a new appointment \u2014 ' + custName,
+          html: '<div style="font-family:sans-serif;max-width:520px;margin:0 auto">' +
+            '<div style="background:#148f98;padding:16px 20px;border-radius:10px 10px 0 0"><h2 style="color:#fff;margin:0;font-size:16px">Appointment Assigned to You</h2></div>' +
+            '<div style="background:#f9f9f9;border:1px solid #e5e5e5;border-top:none;border-radius:0 0 10px 10px;padding:20px;font-size:14px">' +
+            '<p><strong>Customer:</strong> ' + custName + '<br>' +
+            '<strong>Address:</strong> ' + addr + '<br>' +
+            '<strong>Time Preference:</strong> ' + (appt.timePreference || 'Not specified') + '<br>' +
+            '<strong>Set by:</strong> ' + (appt.repName || 'Rep') + '<br>' +
+            '<strong>Notes:</strong> ' + (appt.managementNotes || 'None') + '</p></div>' +
+            '<p style="color:#bbb;font-size:11px;text-align:center;margin-top:12px">Sent automatically by WC App</p></div>'
+        }
+      }).catch(function(e) { console.warn('[Mail] Closer assign email failed:', e.message); });
+    }
   } catch (err) {
     console.warn('[FCM] Closer notify failed:', err);
   }
@@ -24297,6 +24364,26 @@ async function _notifyManagersNewAssignment(appt) {
       sendNotification(uid, title, body, data);
     });
     console.log('[FCM] Manager notifications queued for pending_assignment');
+    // Email to manager
+    var _mgrEmail = _safeAdminSettings().dispoEmailTo;
+    if (_mgrEmail) {
+      fbDb.collection('mail').add({
+        to: _mgrEmail,
+        message: {
+          subject: '\uD83D\uDCC5 New Appointment Needs a Closer \u2014 ' + custName,
+          html: '<div style="font-family:sans-serif;max-width:520px;margin:0 auto">' +
+            '<div style="background:#f59e0b;padding:16px 20px;border-radius:10px 10px 0 0"><h2 style="color:#fff;margin:0;font-size:16px">Appointment Needs Closer</h2></div>' +
+            '<div style="background:#f9f9f9;border:1px solid #e5e5e5;border-top:none;border-radius:0 0 10px 10px;padding:20px;font-size:14px">' +
+            '<p><strong>Rep:</strong> ' + (appt.repName || 'Unknown') + '<br>' +
+            '<strong>Customer:</strong> ' + custName + '<br>' +
+            '<strong>Address:</strong> ' + addr + '<br>' +
+            '<strong>Time Preference:</strong> ' + timePref + '<br>' +
+            '<strong>Notes:</strong> ' + (appt.managementNotes || 'None') + '<br>' +
+            '<strong>Booked:</strong> ' + new Date().toLocaleString() + '</p></div>' +
+            '<p style="color:#bbb;font-size:11px;text-align:center;margin-top:12px">Sent automatically by WC App</p></div>'
+        }
+      }).catch(function(e) { console.warn('[Mail] Pending assign email failed:', e.message); });
+    }
   } catch (err) {
     console.warn('[FCM] Manager notify failed:', err);
     if (typeof Sentry !== 'undefined') Sentry.captureException(err);
@@ -24863,11 +24950,42 @@ function closeOTD() {
 
 function otdRequestClose() {
   if (!confirm('End your OTD session? The session will be closed.')) return;
+  // Send OTD session summary email
+  _sendOtdSessionEmail();
   if (_otdSessActive && localStorage.getItem('ce_recording_consent') === 'allow') {
     _otdCaptureFinalSegment(closeOTD);
   } else {
     closeOTD();
   }
+}
+
+function _sendOtdSessionEmail() {
+  if (typeof fbDb === 'undefined') return;
+  if (['localhost','127.0.0.1','wc-app-alpha.firebaseapp.com','wc-app-alpha.web.app','thewcapp.netlify.app'].indexOf(window.location.hostname) !== -1) return;
+  var _s = _safeAdminSettings();
+  var toEmail = _s.dispoEmailTo;
+  if (!toEmail) return;
+  var repName = localStorage.getItem('ce_user_name') || 'Rep';
+  var doors = _otdSessionDoors || 0;
+  var contacts = _otdSessionContact || 0;
+  var durSecs = _otdSessSecs || 0;
+  var durMin = Math.floor(durSecs / 60);
+  var durStr = durMin > 0 ? durMin + ' min' : durSecs + ' sec';
+  fbDb.collection('mail').add({
+    to: toEmail,
+    message: {
+      subject: '\uD83D\uDCCA OTD Session Complete \u2014 ' + repName,
+      html: '<div style="font-family:sans-serif;max-width:520px;margin:0 auto">' +
+        '<div style="background:#148f98;padding:16px 20px;border-radius:10px 10px 0 0"><h2 style="color:#fff;margin:0;font-size:16px">OTD Session Summary</h2></div>' +
+        '<div style="background:#f9f9f9;border:1px solid #e5e5e5;border-top:none;border-radius:0 0 10px 10px;padding:20px;font-size:14px">' +
+        '<p><strong>Rep:</strong> ' + repName + '<br>' +
+        '<strong>Doors:</strong> ' + doors + '<br>' +
+        '<strong>Contacts:</strong> ' + contacts + '<br>' +
+        '<strong>Duration:</strong> ' + durStr + '<br>' +
+        '<strong>Ended:</strong> ' + new Date().toLocaleString() + '</p></div>' +
+        '<p style="color:#bbb;font-size:11px;text-align:center;margin-top:12px">Sent automatically by WC App</p></div>'
+    }
+  }).catch(function(e) { console.warn('[Mail] OTD session email failed:', e.message); });
 }
 
 /* ─── UI reset for next door ─── */
@@ -25127,7 +25245,7 @@ function _otdAttachVoice(entry) {
 /* ─── Email dispo results to manager ─── */
 function _sendApptDispoEmail(appt, result) {
   if (typeof fbDb === 'undefined') return;
-  if (window.location.hostname !== 'tritonenergy.netlify.app') return;
+  if (['localhost','127.0.0.1','wc-app-alpha.firebaseapp.com','wc-app-alpha.web.app','thewcapp.netlify.app'].indexOf(window.location.hostname) !== -1) return;
   var _s = {}; try { _s = _safeAdminSettings(); } catch(_) {}
   var _toEmail   = _s.dispoEmailTo   || 'Olashawan@tritonenergyllc.net';
   var _fromEmail = _s.dispoEmailFrom || '';
@@ -25168,9 +25286,31 @@ function _sendApptDispoEmail(appt, result) {
   fbDb.collection('mail').add(_apptMailDoc).catch(function(e) { console.warn('[ApptDispoEmail] Failed to queue:', e.message); });
 }
 
+function _sendSoldEmail(appt, repName, custName) {
+  if (typeof fbDb === 'undefined') return;
+  if (['localhost','127.0.0.1','wc-app-alpha.firebaseapp.com','wc-app-alpha.web.app','thewcapp.netlify.app'].indexOf(window.location.hostname) !== -1) return;
+  var toEmail = _safeAdminSettings().dispoEmailTo;
+  if (!toEmail) return;
+  var addr = appt ? (appt.street || appt.address || '') : '';
+  fbDb.collection('mail').add({
+    to: toEmail,
+    message: {
+      subject: '\uD83C\uDFC6 SOLD \u2014 ' + (addr || custName || 'New Deal'),
+      html: '<div style="font-family:sans-serif;max-width:520px;margin:0 auto">' +
+        '<div style="background:#22c55e;padding:16px 20px;border-radius:10px 10px 0 0"><h2 style="color:#fff;margin:0;font-size:16px">\uD83C\uDFC6 DEAL SIGNED!</h2></div>' +
+        '<div style="background:#f9f9f9;border:1px solid #e5e5e5;border-top:none;border-radius:0 0 10px 10px;padding:20px;font-size:14px">' +
+        '<p><strong>Rep/Closer:</strong> ' + (repName || 'Unknown') + '<br>' +
+        '<strong>Address:</strong> ' + (addr || 'Not recorded') + '<br>' +
+        '<strong>Customer:</strong> ' + (custName || 'Not recorded') + '<br>' +
+        '<strong>Time:</strong> ' + new Date().toLocaleString() + '</p></div>' +
+        '<p style="color:#bbb;font-size:11px;text-align:center;margin-top:12px">Sent automatically by WC App</p></div>'
+    }
+  }).catch(function(e) { console.warn('[Mail] Sold email failed:', e.message); });
+}
+
 function _sendDispoEmail(entry) {
   if (typeof fbDb === 'undefined') return;
-  if (window.location.hostname !== 'tritonenergy.netlify.app') return;
+  if (['localhost','127.0.0.1','wc-app-alpha.firebaseapp.com','wc-app-alpha.web.app','thewcapp.netlify.app'].indexOf(window.location.hostname) !== -1) return;
   var _s = {}; try { _s = _safeAdminSettings(); } catch(_) {}
   var _toEmail   = _s.dispoEmailTo   || 'Olashawan@tritonenergyllc.net';
   var _fromEmail = _s.dispoEmailFrom || '';
