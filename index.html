@@ -12126,7 +12126,8 @@ async function drainToFirestore() {
   if (!navigator.onLine) { console.log('[Firestore] Drain skipped — offline'); return; }
 
   const uid   = user.uid;
-  const orgId = localStorage.getItem('wc_org_id') || uid;
+  const orgId = localStorage.getItem('wc_org_id');
+  if (!orgId) { console.warn('[Firestore] Drain skipped — no wc_org_id set'); return; }
   let queue;
   try { queue = JSON.parse(localStorage.getItem('wc_sync_queue') || '[]'); } catch(_) { queue = []; }
   const entities = queue.length ? [...new Set(queue.map(function(q) { return q.entity; }))] : [];
@@ -12309,7 +12310,8 @@ async function drainToFirestore() {
 function saveOrgSettingsToFirestore() {
   var user = (typeof fbAuth !== 'undefined') ? fbAuth.currentUser : null;
   if (!user || !navigator.onLine) return;
-  var orgId = localStorage.getItem('wc_org_id') || user.uid;
+  var orgId = localStorage.getItem('wc_org_id');
+  if (!orgId) { console.warn('[Firestore] saveOrgSettings skipped — no wc_org_id set'); return; }
   var s = {};
   try { s = _safeAdminSettings(); } catch(_) {}
   var payload = {
@@ -12586,8 +12588,8 @@ function applyOrgBranding(orgId, org) {
 
       // 5. Read org settings from Firestore → apply to this device (managers/SA only;
       //    reps load from wc_org_id in step 7 below)
-      var _orgId5 = localStorage.getItem('wc_org_id') || user.uid;
-      if (navigator.onLine) {
+      var _orgId5 = localStorage.getItem('wc_org_id');
+      if (navigator.onLine && _orgId5) {
         fbDb.collection('organizations').doc(_orgId5).get()
           .then(function(doc) {
             if (doc.exists) {
@@ -20494,7 +20496,7 @@ document.getElementById('ma-logo-upload')?.addEventListener('change', e => {
           const url = await storageRef.getDownloadURL();
           s.logoUrl = url;
           localStorage.setItem('wc_admin', JSON.stringify(s));
-          await fbDb.collection('organizations').doc(localStorage.getItem('wc_org_id') || user.uid).set({ logoUrl: url }, { merge: true });
+          var _logoOrgId = localStorage.getItem('wc_org_id'); if (_logoOrgId) await fbDb.collection('organizations').doc(_logoOrgId).set({ logoUrl: url }, { merge: true });
         } catch(uploadErr) { console.warn('[Logo] Storage upload failed:', uploadErr); }
       }
     } catch(_) { showToast('Upload failed.'); }
@@ -21819,7 +21821,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
             const url = await storageRef.getDownloadURL();
             s.logoUrl = url;
             localStorage.setItem('wc_admin', JSON.stringify(s));
-            await fbDb.collection('organizations').doc(localStorage.getItem('wc_org_id') || user.uid).set({ logoUrl: url }, { merge: true });
+            var _logoOrgId = localStorage.getItem('wc_org_id'); if (_logoOrgId) await fbDb.collection('organizations').doc(_logoOrgId).set({ logoUrl: url }, { merge: true });
           } catch(uploadErr) { console.warn('[Logo] Storage upload failed:', uploadErr); }
         }
       } catch(e) { showToast('Failed to save logo.'); }
@@ -21857,7 +21859,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
       const user = fbAuth.currentUser;
       if (user) {
         try {
-          await fbDb.collection('organizations').doc(localStorage.getItem('wc_org_id') || user.uid).update({
+          var _delOrgId = localStorage.getItem('wc_org_id'); if (_delOrgId) await fbDb.collection('organizations').doc(_delOrgId).update({
             logoUrl: firebase.firestore.FieldValue.delete()
           });
         } catch(e) { console.warn('[Logo] Failed to clear logoUrl from Firestore:', e); }
@@ -24127,7 +24129,7 @@ function _openPendingAssignments() {
         const user = fbAuth.currentUser;
         if (user) {
           const docId = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || ('rep_' + Date.now());
-          fbDb.collection('organizations').doc(localStorage.getItem('wc_org_id') || user.uid)
+          var _obOrgId = localStorage.getItem('wc_org_id'); if (_obOrgId) fbDb.collection('organizations').doc(_obOrgId)
             .collection('team').doc(docId)
             .set({ name, email: user.email || '', phone, role: 'closer' }, { merge: true })
             .catch(e => console.warn('[onboard] team Firestore:', e));
