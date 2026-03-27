@@ -10173,8 +10173,14 @@
           <div id="admin-bg-reminder-status" style="font-size:12px;color:var(--text-3);margin-top:6px"></div>
 
           <div id="admin-dispo-email-section" style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
-            <p style="font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-3);margin:0 0 10px">Dispo Email Notifications</p>
-            <label style="font-size:13px;color:var(--text-2);display:block;margin-bottom:4px">Send dispo results to</label>
+            <p style="font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-3);margin:0 0 10px">Notification Email</p>
+            <label style="font-size:13px;color:var(--text-2);display:block;margin-bottom:4px">Shared notification email (set during org setup)</label>
+            <input type="email" id="admin-notify-email" data-validate="email" placeholder="e.g. alerts@yourcompany.com"
+              style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-size:14px;background:var(--bg-2);color:var(--text-1);margin-bottom:4px">
+            <div style="font-size:11px;color:var(--text-3);margin-bottom:14px">Fallback for all notifications when no dispo email is set. Updated in org settings.</div>
+
+            <p style="font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-3);margin:0 0 10px">Dispo Email Override</p>
+            <label style="font-size:13px;color:var(--text-2);display:block;margin-bottom:4px">Send dispo results to (overrides notification email)</label>
             <input type="email" id="admin-dispo-email-to" data-validate="email" placeholder="manager@company.com"
               style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-size:14px;background:var(--bg-2);color:var(--text-1);margin-bottom:10px">
             <label style="font-size:13px;color:var(--text-2);display:block;margin-bottom:4px">Send from (your company email, e.g. appointments@yourcompany.com)</label>
@@ -11275,6 +11281,13 @@
             <input class="sa-input" id="sa-org-icon-file" type="file" accept="image/*" style="padding:8px;cursor:pointer;font-size:12px" />
           </div>
         </div>
+        <div class="sa-row">
+          <div class="sa-field" style="grid-column:1/-1">
+            <label class="sa-label">Shared Notification Email <span style="color:#ef4444">*</span></label>
+            <input class="sa-input" id="sa-org-notify-email" type="email" data-validate="required,email" placeholder="e.g. alerts@yourcompany.com" inputmode="email" />
+            <div style="font-size:11px;color:var(--text-3);margin-top:4px">All dispo alerts, appointment notifications, and session summaries go here. Each manager also gets their own copy.</div>
+          </div>
+        </div>
         <button class="sa-btn sa-btn--full sa-btn--primary" id="sa-create-org-btn" onclick="_saCreateOrg()">Create Org →</button>
         <div class="sa-result" id="sa-create-org-result"></div>
       </div>
@@ -12339,15 +12352,18 @@ function applyOrgSettings(data) {
   if (data.tagline)        s.tagline        = data.tagline;
   if (data.gosoloUrl)      s.gosoloUrl      = data.gosoloUrl;
   if (data.gridUrl)        s.gridUrl        = data.gridUrl;
-  if (data.dispoEmailTo)   s.dispoEmailTo   = data.dispoEmailTo;
-  if (data.dispoEmailFrom) s.dispoEmailFrom = data.dispoEmailFrom;
+  if (data.notificationEmail) s.notificationEmail = data.notificationEmail;
+  if (data.dispoEmailTo)     s.dispoEmailTo     = data.dispoEmailTo;
+  if (data.dispoEmailFrom)   s.dispoEmailFrom   = data.dispoEmailFrom;
   try { localStorage.setItem('ce_admin', JSON.stringify(s)); } catch(_) {}
 
   // Populate admin settings inputs if visible
+  var _neI = document.getElementById('admin-notify-email');
   var _det = document.getElementById('admin-dispo-email-to');
   var _def = document.getElementById('admin-dispo-email-from');
-  if (_det && data.dispoEmailTo)   _det.value = data.dispoEmailTo;
-  if (_def && data.dispoEmailFrom) _def.value = data.dispoEmailFrom;
+  if (_neI && data.notificationEmail) _neI.value = data.notificationEmail;
+  if (_det && data.dispoEmailTo)      _det.value = data.dispoEmailTo;
+  if (_def && data.dispoEmailFrom)    _def.value = data.dispoEmailFrom;
 
   if (data.appName) {
     try { localStorage.setItem('ce_app_name', data.appName); } catch(_) {}
@@ -14484,7 +14500,9 @@ async function _saCreateOrg() {
   const logoInput = document.getElementById('sa-org-logo-file');
   const iconInput = document.getElementById('sa-org-icon-file');
 
+  var notifyEmail = (document.getElementById('sa-org-notify-email')?.value || '').trim();
   if (!name) { showToast('Enter an org name'); return; }
+  if (!notifyEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notifyEmail)) { showToast('Enter a valid notification email'); document.getElementById('sa-org-notify-email')?.focus(); return; }
   btn.disabled = true; btn.textContent = 'CREATING…';
 
   const orgId = Date.now().toString(36);
@@ -14511,6 +14529,7 @@ async function _saCreateOrg() {
   try {
     await fbDb.collection('organizations').doc(orgId).set({
       name, niche, primaryColor: color, logoUrl, iconUrl,
+      notificationEmail: notifyEmail,
       customDomain,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       createdBy: SUPER_ADMIN_UID
@@ -21547,8 +21566,10 @@ function loadAdminSettings() {
   document.getElementById('admin-rep-phone').value     = s.repPhone    || '';
   document.getElementById('admin-rep-email').value     = s.repEmail    || '';
   document.getElementById('admin-review-url').value    = s.reviewUrl   || ADMIN_DEFAULTS.reviewUrl;
-  const _detEl = document.getElementById('admin-dispo-email-to');
-  const _defEl = document.getElementById('admin-dispo-email-from');
+  var _neEl  = document.getElementById('admin-notify-email');
+  var _detEl = document.getElementById('admin-dispo-email-to');
+  var _defEl = document.getElementById('admin-dispo-email-from');
+  if (_neEl)  _neEl.value  = s.notificationEmail || '';
   if (_detEl) _detEl.value = s.dispoEmailTo   || '';
   if (_defEl) _defEl.value = s.dispoEmailFrom || '';
 
@@ -21613,6 +21634,7 @@ function saveAdminSettings() {
     repPhone:       document.getElementById('admin-rep-phone').value.trim(),
     repEmail:       document.getElementById('admin-rep-email').value.trim(),
     reviewUrl:      document.getElementById('admin-review-url').value.trim(),
+    notificationEmail: (document.getElementById('admin-notify-email') || {}).value?.trim() || '',
     dispoEmailTo:   (document.getElementById('admin-dispo-email-to')   || {}).value?.trim()  || '',
     dispoEmailFrom: (document.getElementById('admin-dispo-email-from') || {}).value?.trim()  || '',
   };
@@ -24804,14 +24826,17 @@ function otdRequestClose() {
 // Resolve notification email: admin setting → org admin → hardcoded fallback
 function _resolveNotifyEmail() {
   var s = _safeAdminSettings();
+  // 1. Explicit dispo email override (admin settings)
   if (s.dispoEmailTo) return s.dispoEmailTo;
-  if (s.adminEmail)   return s.adminEmail;
-  // Try org settings from localStorage
+  // 2. Org notification email (set during org creation)
+  if (s.notificationEmail) return s.notificationEmail;
+  // 3. Try org doc notificationEmail from localStorage
   try {
     var orgSettings = JSON.parse(localStorage.getItem('ce_org_settings') || '{}');
-    if (orgSettings.adminEmail) return orgSettings.adminEmail;
+    if (orgSettings.notificationEmail) return orgSettings.notificationEmail;
   } catch(_) {}
-  return 'appointments@tritonenergyllc.net';
+  // 4. No email configured — return empty (caller should handle)
+  return '';
 }
 
 function _sendOtdSessionEmail() {
