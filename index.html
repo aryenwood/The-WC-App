@@ -9651,7 +9651,7 @@
         <span style="font-size:12px;color:var(--text-2);margin-left:8px" id="adder-pdf-name"></span>
       </div>
 
-      <!-- State tabs — rendered dynamically from ce_adder_sheets -->
+      <!-- State tabs — rendered dynamically from wc_adder_sheets -->
       <div class="adder-tabs" id="adder-tabs-container"></div>
 
       <!-- Search -->
@@ -10929,15 +10929,15 @@
         <p style="font-size:11px;color:rgba(239,68,68,0.50);margin:8px 0 14px;line-height:1.5">Troubleshooting only. Clears localStorage keys — no Firestore data touched unless noted.</p>
         <div class="ma-field">
           <button class="ma-btn ma-btn--danger" id="ma-dev-reset-onboarding">↺ Reset Onboarding</button>
-          <span style="display:block;margin-top:5px;font-size:11px;color:rgba(240,248,255,0.3)">Clears ce_onboarding_done + ce_user_role. Reruns on next reload.</span>
+          <span style="display:block;margin-top:5px;font-size:11px;color:rgba(240,248,255,0.3)">Clears wc_onboarding_done + wc_user_role. Reruns on next reload.</span>
         </div>
         <div class="ma-field">
           <button class="ma-btn ma-btn--danger" id="ma-dev-reset-role">↺ Reset Role Only</button>
-          <span style="display:block;margin-top:5px;font-size:11px;color:rgba(240,248,255,0.3)">Clears ce_user_role only. Forces role picker on next reload.</span>
+          <span style="display:block;margin-top:5px;font-size:11px;color:rgba(240,248,255,0.3)">Clears wc_user_role only. Forces role picker on next reload.</span>
         </div>
         <div class="ma-field">
           <button class="ma-btn ma-btn--danger" id="ma-dev-reset-profile">↺ Reset User Profile</button>
-          <span style="display:block;margin-top:5px;font-size:11px;color:rgba(240,248,255,0.3)">Clears ce_user_phone, ce_user_region, ce_user_headshot.</span>
+          <span style="display:block;margin-top:5px;font-size:11px;color:rgba(240,248,255,0.3)">Clears wc_user_phone, wc_user_region, wc_user_headshot.</span>
         </div>
         <div class="ma-field">
           <button class="ma-btn" id="ma-dev-force-drain"><span class="icon-svg" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></span> Force Drain to Firestore</button>
@@ -12098,7 +12098,7 @@ function _applyFirebaseIdentity(user) {
   // Dashboard greeting — update immediately (also re-run on _updateDashboard)
   var greetEl = document.getElementById('dash-greeting-text');
   if (greetEl && typeof greetingText === 'function') {
-    var firstName = (user.displayName || localStorage.getItem('ce_user_name') || '').split(' ')[0];
+    var firstName = (user.displayName || localStorage.getItem('wc_user_name') || '').split(' ')[0];
     greetEl.textContent = greetingText() + (firstName ? ', ' + firstName : '');
   }
 }
@@ -12113,7 +12113,7 @@ function _clearFirebaseIdentity() {
 }
 
 // ── Phase 2: Drain sync queue to Firestore ────────────────────────────────
-// Reads ce_sync_queue, writes each dirty entity to its Firestore collection,
+// Reads wc_sync_queue, writes each dirty entity to its Firestore collection,
 // then clears the queue only on full success. localStorage is untouched.
 // Collections:
 //   log_entries  → addresses/{sanitizedAddress}
@@ -12126,9 +12126,9 @@ async function drainToFirestore() {
   if (!navigator.onLine) { console.log('[Firestore] Drain skipped — offline'); return; }
 
   const uid   = user.uid;
-  const orgId = localStorage.getItem('ce_org_id') || uid;
+  const orgId = localStorage.getItem('wc_org_id') || uid;
   let queue;
-  try { queue = JSON.parse(localStorage.getItem('ce_sync_queue') || '[]'); } catch(_) { queue = []; }
+  try { queue = JSON.parse(localStorage.getItem('wc_sync_queue') || '[]'); } catch(_) { queue = []; }
   const entities = queue.length ? [...new Set(queue.map(function(q) { return q.entity; }))] : [];
   if (entities.length) console.log('[Firestore] Drain starting — entities: ' + entities.join(', '));
 
@@ -12231,7 +12231,7 @@ async function drainToFirestore() {
 
   // ── adder sheets ──────────────────────────────────────────────────────────
   try {
-    var adderSheets = JSON.parse(localStorage.getItem('ce_adder_sheets') || 'null');
+    var adderSheets = JSON.parse(localStorage.getItem('wc_adder_sheets') || 'null');
     if (adderSheets) {
       writes.push(
         fbDb.collection('organizations').doc(orgId).collection('settings').doc('adderSheets')
@@ -12243,7 +12243,7 @@ async function drainToFirestore() {
 
   // ── resource docs ─────────────────────────────────────────────────────────
   try {
-    var resourceDocs = JSON.parse(localStorage.getItem('ce_resource_docs') || 'null');
+    var resourceDocs = JSON.parse(localStorage.getItem('wc_resource_docs') || 'null');
     if (resourceDocs && resourceDocs.length) {
       var docsStripped = resourceDocs.map(function(d) { var o = Object.assign({}, d); delete o.dataUrl; return o; });
       writes.push(
@@ -12256,8 +12256,8 @@ async function drainToFirestore() {
 
   // ── customer files ────────────────────────────────────────────────────────
   try {
-    Object.keys(localStorage).filter(function(k) { return k.startsWith('ce_cust_files_'); }).forEach(function(k) {
-      var custId = k.replace('ce_cust_files_', '');
+    Object.keys(localStorage).filter(function(k) { return k.startsWith('wc_cust_files_'); }).forEach(function(k) {
+      var custId = k.replace('wc_cust_files_', '');
       var files;
       try { files = JSON.parse(localStorage.getItem(k) || '[]'); } catch(_) { files = []; }
       if (!files.length) return;
@@ -12278,7 +12278,7 @@ async function drainToFirestore() {
 
   if (!writes.length) {
     console.log('[Firestore] Drain complete — 0 writes (entity data arrays were empty; queue cleared)');
-    try { localStorage.removeItem('ce_sync_queue'); } catch(_) {}
+    try { localStorage.removeItem('wc_sync_queue'); } catch(_) {}
     return;
   }
 
@@ -12288,7 +12288,7 @@ async function drainToFirestore() {
     await Promise.all(writes);
     console.log('[Firestore] Drain complete — ' + totalWritten + ' documents written (' + entities.join(', ') + ')');
     // Clear queue only after all writes succeed — preserves it for retry on failure
-    try { localStorage.removeItem('ce_sync_queue'); } catch(_) {}
+    try { localStorage.removeItem('wc_sync_queue'); } catch(_) {}
   } catch (err) {
     if (err && err.code === 'permission-denied') {
       console.error(
@@ -12309,7 +12309,7 @@ async function drainToFirestore() {
 
 // ── Phase 3: Org settings sync ────────────────────────────────────────────
 // Writes branding / config fields to organizations/{uid}.
-// Never touches base64 logos, personal rep fields, or ce_chat_api_url.
+// Never touches base64 logos, personal rep fields, or wc_chat_api_url.
 function saveOrgSettingsToFirestore() {
   var user = (typeof fbAuth !== 'undefined') ? fbAuth.currentUser : null;
   if (!user || !navigator.onLine) return;
@@ -12320,9 +12320,9 @@ function saveOrgSettingsToFirestore() {
     tagline:        s.tagline        || '',
     gosoloUrl:      s.gosoloUrl      || '',
     gridUrl:        s.gridUrl        || '',
-    themePrimary:   localStorage.getItem('ce_theme_primary') || '',
-    glassColor:     localStorage.getItem('ce_glass_color')   || '',
-    appName:        localStorage.getItem('ce_app_name')      || '',
+    themePrimary:   localStorage.getItem('wc_theme_primary') || '',
+    glassColor:     localStorage.getItem('wc_glass_color')   || '',
+    appName:        localStorage.getItem('wc_app_name')      || '',
     dispoEmailTo:   s.dispoEmailTo   || '',
     dispoEmailFrom: s.dispoEmailFrom || '',
     updatedAt:      firebase.firestore.FieldValue.serverTimestamp()
@@ -12355,7 +12355,7 @@ function applyOrgSettings(data) {
   if (data.notificationEmail) s.notificationEmail = data.notificationEmail;
   if (data.dispoEmailTo)     s.dispoEmailTo     = data.dispoEmailTo;
   if (data.dispoEmailFrom)   s.dispoEmailFrom   = data.dispoEmailFrom;
-  try { localStorage.setItem('ce_admin', JSON.stringify(s)); } catch(_) {}
+  try { localStorage.setItem('wc_admin', JSON.stringify(s)); } catch(_) {}
 
   // Populate admin settings inputs if visible
   var _neI = document.getElementById('admin-notify-email');
@@ -12366,15 +12366,15 @@ function applyOrgSettings(data) {
   if (_def && data.dispoEmailFrom)    _def.value = data.dispoEmailFrom;
 
   if (data.appName) {
-    try { localStorage.setItem('ce_app_name', data.appName); } catch(_) {}
+    try { localStorage.setItem('wc_app_name', data.appName); } catch(_) {}
     document.title = data.appName;
   }
   if (data.themePrimary && /^#[0-9a-fA-F]{6}$/.test(data.themePrimary)) {
-    try { localStorage.setItem('ce_theme_primary', data.themePrimary); } catch(_) {}
+    try { localStorage.setItem('wc_theme_primary', data.themePrimary); } catch(_) {}
     if (typeof applyThemePrimary === 'function') applyThemePrimary(data.themePrimary);
   }
   if (data.glassColor && /^#[0-9a-fA-F]{6}$/.test(data.glassColor)) {
-    try { localStorage.setItem('ce_glass_color', data.glassColor); } catch(_) {}
+    try { localStorage.setItem('wc_glass_color', data.glassColor); } catch(_) {}
     if (typeof applyGlassColor === 'function') applyGlassColor(data.glassColor);
   }
 
@@ -12382,7 +12382,7 @@ function applyOrgSettings(data) {
     try {
       var _ls = _safeAdminSettings();
       _ls.logoUrl = data.logoUrl;
-      localStorage.setItem('ce_admin', JSON.stringify(_ls));
+      localStorage.setItem('wc_admin', JSON.stringify(_ls));
     } catch(_) {}
     var _hbl = document.getElementById('header-brand-img');
     if (_hbl) _hbl.src = data.logoUrl;
@@ -12397,7 +12397,7 @@ function applyOrgSettings(data) {
     try {
       var _ls2 = _safeAdminSettings();
       _ls2.iconUrl = data.iconUrl;
-      localStorage.setItem('ce_admin', JSON.stringify(_ls2));
+      localStorage.setItem('wc_admin', JSON.stringify(_ls2));
     } catch(_) {}
     var _hli = document.getElementById('header-logo');
     if (_hli) { var _hliImg = _hli.querySelector('img'); if (_hliImg) _hliImg.src = data.iconUrl; }
@@ -12458,14 +12458,14 @@ if (_urlOrgId) {
 
 // ── Domain Org Branding ───────────────────────────────────────────────────
 // Fires before auth so the correct org logo/color appears on splash + login.
-// Sets ce_org_id so the post-auth flow picks it up without extra work.
+// Sets wc_org_id so the post-auth flow picks it up without extra work.
 
 function applyOrgBranding(orgId, org) {
   if (!orgId || !org) return;
-  localStorage.setItem('ce_org_id',    orgId);
-  localStorage.setItem('ce_org_logo',  org.logoUrl      || '');
-  localStorage.setItem('ce_org_name',  org.name || org.companyName || '');
-  localStorage.setItem('ce_org_color', org.primaryColor || '');
+  localStorage.setItem('wc_org_id',    orgId);
+  localStorage.setItem('wc_org_logo',  org.logoUrl      || '');
+  localStorage.setItem('wc_org_name',  org.name || org.companyName || '');
+  localStorage.setItem('wc_org_color', org.primaryColor || '');
 
   if (org.primaryColor) {
     document.documentElement.style.setProperty('--primary', org.primaryColor);
@@ -12545,8 +12545,8 @@ function applyOrgBranding(orgId, org) {
     if (user) {
       // 0. Super admin: stamp role FIRST before any other logic can run
       if (user.uid === SUPER_ADMIN_UID) {
-        try { localStorage.setItem('ce_user_role', 'super_admin'); } catch(_) {}
-        try { localStorage.removeItem('ce_impersonate_role'); } catch(_) {} // never let impersonation override SA
+        try { localStorage.setItem('wc_user_role', 'super_admin'); } catch(_) {}
+        try { localStorage.removeItem('wc_impersonate_role'); } catch(_) {} // never let impersonation override SA
       }
 
       loginScreen.classList.add('hidden');
@@ -12569,9 +12569,9 @@ function applyOrgBranding(orgId, org) {
         }
       });
 
-      // 2. Seed ce_user_name from Google display name (only if not yet set)
-      if (user.displayName && !localStorage.getItem('ce_user_name')) {
-        try { localStorage.setItem('ce_user_name', user.displayName); } catch(_) {}
+      // 2. Seed wc_user_name from Google display name (only if not yet set)
+      if (user.displayName && !localStorage.getItem('wc_user_name')) {
+        try { localStorage.setItem('wc_user_name', user.displayName); } catch(_) {}
       }
 
       // 3. Wire photo + name into UI
@@ -12584,7 +12584,7 @@ function applyOrgBranding(orgId, org) {
       if (navigator.onLine) drainToFirestore();
 
       // 5. Read org settings from Firestore → apply to this device (managers/SA only;
-      //    reps load from ce_org_id in step 7 below)
+      //    reps load from wc_org_id in step 7 below)
       if (navigator.onLine) {
         fbDb.collection('organizations').doc(user.uid).get()
           .then(function(doc) {
@@ -12598,20 +12598,20 @@ function applyOrgBranding(orgId, org) {
             } else {
               console.log('[Firestore] No org settings doc yet for', user.uid);
             }
-            // Dismiss splash for managers (ce_org_id === user.uid) and SA (no ce_org_id)
-            var _oid5 = localStorage.getItem('ce_org_id');
+            // Dismiss splash for managers (wc_org_id === user.uid) and SA (no wc_org_id)
+            var _oid5 = localStorage.getItem('wc_org_id');
             if (!_oid5 || _oid5 === user.uid) _dismissSplash();
           })
           .catch(function(e) {
             console.warn('[Firestore] Org settings read failed (using localStorage):', e.code, e.message);
-            var _oid5c = localStorage.getItem('ce_org_id');
+            var _oid5c = localStorage.getItem('wc_org_id');
             if (!_oid5c || _oid5c === user.uid) _dismissSplash();
           });
       }
 
       // 6a. Super admin: always grant role + show platform admin menu item
       if (user.uid === SUPER_ADMIN_UID) {
-        localStorage.setItem('ce_user_role', 'super_admin');
+        localStorage.setItem('wc_user_role', 'super_admin');
       }
       var _saItemEl = document.getElementById('pdd-super-admin');
       var _saDivEl  = document.getElementById('pdd-super-admin-divider');
@@ -12619,18 +12619,18 @@ function applyOrgBranding(orgId, org) {
       if (_saDivEl)  _saDivEl.style.display  = user.uid === SUPER_ADMIN_UID ? '' : 'none';
 
       // 6b. First-time user: apply pending invite (pre-auth) or show role setup
-      if (!localStorage.getItem('ce_user_role')) {
+      if (!localStorage.getItem('wc_user_role')) {
         if (_pendingInvite) {
           var pi = _pendingInvite;
           _pendingInvite = null;
-          localStorage.setItem('ce_user_role', pi.role);
+          localStorage.setItem('wc_user_role', pi.role);
           if (pi.orgId) {
-            localStorage.setItem('ce_org_id', pi.orgId);
-            console.log('[Invite] ce_org_id set:', pi.orgId, '(role:', pi.role + ')');
+            localStorage.setItem('wc_org_id', pi.orgId);
+            console.log('[Invite] wc_org_id set:', pi.orgId, '(role:', pi.role + ')');
           } else {
             console.warn('[Invite] _pendingInvite has no orgId — branding will not load');
           }
-          var _piRepName = user.displayName || localStorage.getItem('ce_user_name') || '';
+          var _piRepName = user.displayName || localStorage.getItem('wc_user_name') || '';
           if (pi.orgId) {
             fbDb.collection('organizations').doc(pi.orgId)
               .collection('team').doc(user.uid)
@@ -12660,10 +12660,10 @@ function applyOrgBranding(orgId, org) {
           setTimeout(function() { showOnboarding && showOnboarding(); }, 100);
         } else if (_urlOrgId) {
           // No invite code but opened via ?org= link — auto-join org as canvasser
-          var _joinName = user.displayName || localStorage.getItem('ce_user_name') || '';
-          localStorage.setItem('ce_user_role', 'canvasser');
-          localStorage.setItem('ce_org_id', _urlOrgId);
-          console.log('[OrgUrl] ce_org_id set from ?org= param:', _urlOrgId);
+          var _joinName = user.displayName || localStorage.getItem('wc_user_name') || '';
+          localStorage.setItem('wc_user_role', 'canvasser');
+          localStorage.setItem('wc_org_id', _urlOrgId);
+          console.log('[OrgUrl] wc_org_id set from ?org= param:', _urlOrgId);
           fbDb.collection('organizations').doc(_urlOrgId)
             .collection('team').doc(user.uid)
             .set({ name: _joinName, email: user.email || '', role: 'canvasser',
@@ -12676,9 +12676,9 @@ function applyOrgBranding(orgId, org) {
         }
       }
 
-      // 7. Load org branding from ce_org_id (reps belong to a different org than their own uid)
-      var _orgIdForBrand = localStorage.getItem('ce_org_id');
-      console.log('[Branding] user.uid:', user.uid, '| ce_org_id:', _orgIdForBrand);
+      // 7. Load org branding from wc_org_id (reps belong to a different org than their own uid)
+      var _orgIdForBrand = localStorage.getItem('wc_org_id');
+      console.log('[Branding] user.uid:', user.uid, '| wc_org_id:', _orgIdForBrand);
       if (_orgIdForBrand) {
         if (navigator.onLine) {
           console.log('[Branding] Loading org ' + _orgIdForBrand + '...');
@@ -12760,7 +12760,7 @@ function applyOrgBranding(orgId, org) {
             });
         } else {
           // SA or unaffiliated with no ?org= param — WC App defaults
-          console.log('[Branding] No ce_org_id — showing WC App defaults');
+          console.log('[Branding] No wc_org_id — showing WC App defaults');
           var _defBrand = document.getElementById('header-brand-img');
           var _defSplashImg2 = document.getElementById('splash-logo');
           if (_defBrand) _defBrand.src = 'W.png';
@@ -12768,12 +12768,12 @@ function applyOrgBranding(orgId, org) {
           _dismissSplash();
         }
       }
-      // else: no ce_org_id — SA or unaffiliated, handled above
+      // else: no wc_org_id — SA or unaffiliated, handled above
     } else {
       appEl.style.display = 'none';
       _clearFirebaseIdentity();
       // Show invite gate only for brand-new users (no role and no onboarding done)
-      var _isNewUser = !localStorage.getItem('ce_onboarding_done') && !localStorage.getItem('ce_user_role');
+      var _isNewUser = !localStorage.getItem('wc_onboarding_done') && !localStorage.getItem('wc_user_role');
       function _showLoginOrGate() {
         if (_isNewUser) {
           var gateScr = document.getElementById('invite-gate-screen');
@@ -13218,8 +13218,6 @@ const DataStore = (() => {
     entries:      'ce_log_entries',
     appointments: 'ce_appointments',
     team:         'ce_team',
-    wins:         'ce_wins',        // v76: Wall of Wins
-    cardViews:    'ce_card_views',  // v76: business card view counter
   };
   const _cache = {};  // In-memory cache to avoid repeated JSON.parse
   function _read(key, fallback) {
@@ -13247,15 +13245,15 @@ const DataStore = (() => {
         if (typeof showToast === 'function') showToast('Storage is full — some data may not be saved. Clear old entries in the CRM.');
       }
     }
-    _appendSync(key.replace('ce_',''));
+    _appendSync(key.replace('wc_',''));
   }
   function _appendSync(entity) {
     // v78: sync queue is kept for future backend use but no longer drives any UI badge
     try {
-      const q = JSON.parse(localStorage.getItem('ce_sync_queue') || '[]');
-      q.push({ op:'upsert', entity, timestamp: Date.now(), deviceId: localStorage.getItem('ce_device_id') || 'unknown' });
+      const q = JSON.parse(localStorage.getItem('wc_sync_queue') || '[]');
+      q.push({ op:'upsert', entity, timestamp: Date.now(), deviceId: localStorage.getItem('wc_device_id') || 'unknown' });
       if (q.length > 500) q.splice(0, q.length - 500);
-      localStorage.setItem('ce_sync_queue', JSON.stringify(q));
+      localStorage.setItem('wc_sync_queue', JSON.stringify(q));
     } catch(_) {}
   }
   function _updateBadge() { /* v78: badge removed — offline state handled by #offline-banner */ }
@@ -13271,7 +13269,7 @@ const DataStore = (() => {
       if (typeof drainToFirestore === 'function') {
         drainToFirestore(); // async — clears queue only on success
       } else {
-        localStorage.removeItem('ce_sync_queue');
+        localStorage.removeItem('wc_sync_queue');
       }
       _updateBadge();
     },
@@ -13294,19 +13292,19 @@ const DataStore = (() => {
 })();
 
 // Unique device ID
-if (!localStorage.getItem('ce_device_id')) {
-  try { localStorage.setItem('ce_device_id', Date.now().toString(36) + Math.random().toString(36).slice(2)); } catch(_) {}
+if (!localStorage.getItem('wc_device_id')) {
+  try { localStorage.setItem('wc_device_id', Date.now().toString(36) + Math.random().toString(36).slice(2)); } catch(_) {}
 }
 
 // ── Identity helpers — supports impersonation (F10) ───────────────────────
 function getActiveRole() {
   if (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid === SUPER_ADMIN_UID) return 'super_admin';
-  return localStorage.getItem('ce_impersonate_role') || localStorage.getItem('ce_user_role') || 'canvasser';
+  return localStorage.getItem('wc_impersonate_role') || localStorage.getItem('wc_user_role') || 'canvasser';
 }
 function getActiveName() {
-  return localStorage.getItem('ce_impersonate_name') || localStorage.getItem('ce_user_name') || '';
+  return localStorage.getItem('wc_impersonate_name') || localStorage.getItem('wc_user_name') || '';
 }
-function isImpersonating() { return !!localStorage.getItem('ce_impersonate_name'); }
+function isImpersonating() { return !!localStorage.getItem('wc_impersonate_name'); }
 function applyImpersonateBanner() {
   const banner = document.getElementById('impersonate-banner');
   const label  = document.getElementById('impersonate-label');
@@ -14144,9 +14142,9 @@ const TrainerBot = {
     this.stopMic();
     if (this.state.messageCount > 2) {
       try {
-        var stats = JSON.parse(localStorage.getItem('ce_trainer_stats') || '{}');
+        var stats = JSON.parse(localStorage.getItem('wc_trainer_stats') || '{}');
         stats.sessions = (stats.sessions || 0) + 1;
-        localStorage.setItem('ce_trainer_stats', JSON.stringify(stats));
+        localStorage.setItem('wc_trainer_stats', JSON.stringify(stats));
       } catch(_) {}
     }
     if (this.state.mode === 'agent') { this.startAgent(); }
@@ -14346,7 +14344,7 @@ function activateTab(tabId) {
       panel.classList.toggle('active', panel.id === `panel-${tabId}`);
     });
     // Persist last tab
-    try { localStorage.setItem('ce_active_tab', tabId); } catch(_) {}
+    try { localStorage.setItem('wc_active_tab', tabId); } catch(_) {}
 
     if (tabId !== 'map') stopGpsWatch();
     if (tabId === 'dashboard')   { renderDashboard(); _smkDashEntrance(); }
@@ -14439,7 +14437,7 @@ navItems.forEach(btn => {
     }
     if (typeof fbAuth !== 'undefined') {
       fbAuth.signOut();
-      ['ce_user_role','ce_org_id','ce_org_logo','ce_org_name','ce_org_color'].forEach(k => localStorage.removeItem(k));
+      ['wc_user_role','wc_org_id','wc_org_logo','wc_org_name','wc_org_color'].forEach(k => localStorage.removeItem(k));
     }
   });
   if (pddSuperAdmin) pddSuperAdmin.addEventListener('click', () => {
@@ -14831,15 +14829,15 @@ function _initApp() {
   migrateDataV1();
 
   // Apply saved theme color immediately
-  const savedColor = localStorage.getItem('ce_theme_primary');
+  const savedColor = localStorage.getItem('wc_theme_primary');
   if (savedColor) applyThemePrimary(savedColor);
 
   // Apply saved glass tint color
-  const savedGlass = localStorage.getItem('ce_glass_color');
+  const savedGlass = localStorage.getItem('wc_glass_color');
   if (savedGlass) applyGlassColor(savedGlass);
 
   // Apply saved app name
-  const savedName = localStorage.getItem('ce_app_name');
+  const savedName = localStorage.getItem('wc_app_name');
   if (savedName) {
     document.title = savedName;
     const brandImg = document.getElementById('header-brand-img');
@@ -14858,7 +14856,7 @@ function _initApp() {
   }
   // Only apply cached icon if user belongs to an org (not SA viewing via ?org= param)
   const _cachedIcon = _cachedAdmin.iconUrl;
-  if (_cachedIcon && localStorage.getItem('ce_org_id')) {
+  if (_cachedIcon && localStorage.getItem('wc_org_id')) {
     const _hli = document.getElementById('header-logo');
     if (_hli) { const _hliImg = _hli.querySelector('img'); if (_hliImg) _hliImg.src = _cachedIcon; }
   }
@@ -14870,13 +14868,13 @@ function _initApp() {
   }
 
   // Role UI applied after auth now — see onAuthStateChanged in Firebase block
-  const _isFirstRun = !localStorage.getItem('ce_user_role');
+  const _isFirstRun = !localStorage.getItem('wc_user_role');
   applyRoleUI();
 
   const params  = new URLSearchParams(location.search);
   const qTab    = params.get('tab');
   const qAction = params.get('action');
-  const stored  = localStorage.getItem('ce_active_tab');
+  const stored  = localStorage.getItem('wc_active_tab');
   const initial = qTab || stored || 'dashboard';
   const valid   = ['dashboard', 'log', 'map', 'installs', 'leaderboard', 'resources', 'admin', 'calendar', 'trainer'];
   activateTab(valid.includes(initial) ? initial : 'dashboard');
@@ -15556,7 +15554,7 @@ function renderGameStats(passedEntries, passedAppts) {
   // v76: Rank badge row — compute rank from ALL-TIME data (not range-filtered)
   try {
     const role2   = getActiveRole();
-    const myName2 = (localStorage.getItem('ce_user_name') || '').toLowerCase();
+    const myName2 = (localStorage.getItem('wc_user_name') || '').toLowerCase();
     const allEntries2 = passedEntries ?? (() => { try { return JSON.parse(localStorage.getItem('ce_log_entries')||'[]'); } catch(_){return [];} })();
     const allAppts2   = passedAppts   ?? (() => { try { return JSON.parse(localStorage.getItem('ce_appointments')||'[]'); } catch(_){return [];} })();
     const myE2 = myName2 ? allEntries2.filter(e => (e.repName||e.name||'').toLowerCase()===myName2) : allEntries2;
@@ -15671,12 +15669,12 @@ document.querySelectorAll('.dash-date-pill').forEach(pill => {
   }
 
   // Init: saved pref wins; if none saved, follow system
-  const saved = localStorage.getItem('ce_dark_mode');
+  const saved = localStorage.getItem('wc_dark_mode');
   applyDark(saved === 'on' || (saved === null && mq.matches));
 
   // Live system change — only follow if user hasn't manually overridden
   mq.addEventListener('change', function(e) {
-    if (localStorage.getItem('ce_dark_mode') === null) {
+    if (localStorage.getItem('wc_dark_mode') === null) {
       applyDark(e.matches);
     }
   });
@@ -15685,14 +15683,14 @@ document.querySelectorAll('.dash-date-pill').forEach(pill => {
   toggle.addEventListener('click', function() {
     const isDark = document.documentElement.classList.toggle('dark-mode');
     icon.innerHTML = isDark ? SUN : MOON;
-    localStorage.setItem('ce_dark_mode', isDark ? 'on' : 'off');
+    localStorage.setItem('wc_dark_mode', isDark ? 'on' : 'off');
   });
 
   // Long-press (600ms) = reset to system default
   let _pressTimer = null;
   toggle.addEventListener('pointerdown', function() {
     _pressTimer = setTimeout(function() {
-      localStorage.removeItem('ce_dark_mode');
+      localStorage.removeItem('wc_dark_mode');
       applyDark(mq.matches);
       // brief visual feedback
       toggle.style.outline = '2px solid var(--amber)';
@@ -16190,7 +16188,7 @@ function renderBookCovers() {
 
   // Show reading progress badges on cards that have been opened before
   document.querySelectorAll('.book-card[data-pdf]').forEach(card => {
-    const key  = 'ce_book_pg_' + card.dataset.pdf.replace(/[^a-z0-9]/gi, '_');
+    const key  = 'wc_book_pg_' + card.dataset.pdf.replace(/[^a-z0-9]/gi, '_');
     const page = parseInt(localStorage.getItem(key));
     if (!page || page <= 1) return;
     // Add a small "p.N" badge to show saved page
@@ -16206,7 +16204,7 @@ function renderBookCovers() {
 
 function refreshBookBadges() {
   document.querySelectorAll('.book-card[data-pdf]').forEach(card => {
-    const key  = 'ce_book_pg_' + card.dataset.pdf.replace(/[^a-z0-9]/gi, '_');
+    const key  = 'wc_book_pg_' + card.dataset.pdf.replace(/[^a-z0-9]/gi, '_');
     const page = parseInt(localStorage.getItem(key));
     let badge  = card.querySelector('.book-progress-badge');
     if (!page || page <= 1) {
@@ -16226,11 +16224,11 @@ function refreshBookBadges() {
 const _ADDER_DEFAULTS = [{key:'az',label:'AZ / NV'},{key:'ca',label:'CA'},{key:'tx',label:'TX'}];
 
 function getAdderSheets() {
-  try { return JSON.parse(localStorage.getItem('ce_adder_sheets') || 'null') || _ADDER_DEFAULTS.map(s => ({...s})); }
+  try { return JSON.parse(localStorage.getItem('wc_adder_sheets') || 'null') || _ADDER_DEFAULTS.map(s => ({...s})); }
   catch(_) { return _ADDER_DEFAULTS.map(s => ({...s})); }
 }
 function saveAdderSheets(sheets) {
-  try { localStorage.setItem('ce_adder_sheets', JSON.stringify(sheets)); } catch(_) {}
+  try { localStorage.setItem('wc_adder_sheets', JSON.stringify(sheets)); } catch(_) {}
 }
 
 let _adderActiveState = null;
@@ -16366,7 +16364,7 @@ function maAdderAdd() {
 
 // ── Documents upload (Resources tab) ────────────────────────────────────
 (function() {
-  const STORE_KEY = 'ce_resource_docs';
+  const STORE_KEY = 'wc_resource_docs';
 
   function loadDocs() {
     try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch(_) { return []; }
@@ -16627,7 +16625,7 @@ function captureLocation() {
 }
 
 function _safeAdminSettings() {
-  try { return JSON.parse(localStorage.getItem('ce_admin') || '{}'); } catch(_) { return {}; }
+  try { return JSON.parse(localStorage.getItem('wc_admin') || '{}'); } catch(_) { return {}; }
 }
 
 // ── Haptic feedback (iOS PWA + Android vibration API) ──────────────────
@@ -17174,7 +17172,7 @@ logForm.addEventListener('submit', e => {
       lat:            pendingLat,
       lng:            pendingLng,
       geocodePending,
-      repName:        localStorage.getItem('ce_user_name') || '',
+      repName:        localStorage.getItem('wc_user_name') || '',
     });
   }
 
@@ -17191,20 +17189,20 @@ logForm.addEventListener('submit', e => {
       const fileName  = `Note – ${dateLabel}.txt`;
       const noteText  = `[Door knock note – ${dateLabel}]\nStatus: ${savedEntry.status || 'not-home'}\n\n${savedEntry.notes}`;
       const dataUrl   = 'data:text/plain;charset=utf-8,' + encodeURIComponent(noteText);
-      const custFiles = (() => { try { return JSON.parse(localStorage.getItem(`ce_cust_files_${custKey}`) || '[]'); } catch(_) { return []; } })();
+      const custFiles = (() => { try { return JSON.parse(localStorage.getItem(`wc_cust_files_${custKey}`) || '[]'); } catch(_) { return []; } })();
       custFiles.unshift({
         id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
         name: fileName,
         type: 'text/plain',
         ext:  'txt',
         size: noteText.length,
-        uploadedBy: localStorage.getItem('ce_user_name') || 'Rep',
+        uploadedBy: localStorage.getItem('wc_user_name') || 'Rep',
         uploadedAt: Date.now(),
         dataUrl,
       });
       // Keep last 20 note files per customer
       const trimmed = custFiles.slice(0, 20);
-      localStorage.setItem(`ce_cust_files_${custKey}`, JSON.stringify(trimmed));
+      localStorage.setItem(`wc_cust_files_${custKey}`, JSON.stringify(trimmed));
     } catch(_) {}
   }
 
@@ -17559,7 +17557,7 @@ function switchCrmPane(pane) {
 function loadCrmAppointments() {
   const all    = loadAppointments();
   const role   = getActiveRole();
-  const myName = (localStorage.getItem('ce_user_name') || '').trim().toLowerCase();
+  const myName = (localStorage.getItem('wc_user_name') || '').trim().toLowerCase();
   if (!myName || role === 'manager' || role === 'master_admin') return all;
   if (role === 'closer') {
     return all.filter(a => (a.closer || '').trim().toLowerCase() === myName);
@@ -18143,14 +18141,14 @@ function _buildCustDetailHTML({ c, initials, hasSigned, latestResult, latestColo
 }
 
 // ── Customer Files ────────────────────────────────────────────────────────────
-// Storage key: ce_cust_files_<customerId>
+// Storage key: wc_cust_files_<customerId>
 // Each file: { id, name, type (mime), ext, size, uploadedBy, uploadedAt, dataUrl }
 
 function _loadCustFiles(custId) {
-  try { return JSON.parse(localStorage.getItem(`ce_cust_files_${custId}`) || '[]'); } catch(_) { return []; }
+  try { return JSON.parse(localStorage.getItem(`wc_cust_files_${custId}`) || '[]'); } catch(_) { return []; }
 }
 function _saveCustFiles(custId, files) {
-  try { localStorage.setItem(`ce_cust_files_${custId}`, JSON.stringify(files)); } catch(e) { console.warn('Files save failed', e); }
+  try { localStorage.setItem(`wc_cust_files_${custId}`, JSON.stringify(files)); } catch(e) { console.warn('Files save failed', e); }
 }
 
 function _fileIcon(ext) {
@@ -18269,7 +18267,7 @@ function _initCustFilesListeners(custId) {
         ext,
         type:       file.type,
         size:       file.size,
-        uploadedBy: localStorage.getItem('ce_user_name') || 'Manager',
+        uploadedBy: localStorage.getItem('wc_user_name') || 'Manager',
         uploadedAt: new Date().toISOString(),
         dataUrl:    ev.target.result,
       };
@@ -18333,7 +18331,7 @@ function _startVoiceMemo(custId) {
       var now = new Date();
       var ds  = now.toISOString().slice(0,16).replace('T', ' ').replace(':', '-');
       var baseName = 'Voice Memo ' + ds;
-      var uploaderName = localStorage.getItem('ce_user_name') || 'Rep';
+      var uploaderName = localStorage.getItem('wc_user_name') || 'Rep';
 
       var fr = new FileReader();
       fr.onloadend = function() {
@@ -18765,7 +18763,7 @@ updateLogBadge();
 // ══════════════════════════════════════════════════════════════════════════
 ;(function() {
 
-  var ADDR_CACHE_KEY = 'ce_addr_cache';
+  var ADDR_CACHE_KEY = 'wc_addr_cache';
   var ADDR_CACHE_MAX = 200;  // max cached suggestions
   var _addrDebounce  = {};
 
@@ -19086,7 +19084,7 @@ window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   deferredPrompt = e;
   // Only show if not previously dismissed
-  if (!localStorage.getItem('ce_install_dismissed')) {
+  if (!localStorage.getItem('wc_install_dismissed')) {
     banner.classList.add('visible');
   }
 });
@@ -19103,7 +19101,7 @@ if (installBtn) installBtn.addEventListener('click', async () => {
 
 dismissBtn.addEventListener('click', () => {
   banner.classList.remove('visible');
-  try { localStorage.setItem('ce_install_dismissed', '1'); } catch(_) {}
+  try { localStorage.setItem('wc_install_dismissed', '1'); } catch(_) {}
 });
 
 window.addEventListener('appinstalled', () => {
@@ -19193,7 +19191,7 @@ function populateCloserDropdown() {
   while (sel.options.length > 1) sel.remove(1);
 
   var role  = getActiveRole();
-  var uname = (localStorage.getItem('ce_user_name') || '').trim();
+  var uname = (localStorage.getItem('wc_user_name') || '').trim();
 
   // If current user IS a closer → lock the dropdown to themselves
   if (role === 'closer' && uname) {
@@ -19396,7 +19394,7 @@ bookingForm.addEventListener('submit', e => {
     lng:       pendingLng,
     result:    isBestAvailable ? 'pending_assignment' : 'Pending',
     ubPhoto:   (function() { var p = document.getElementById('b-bill-preview'); return (p && p.src && p.style.display !== 'none') ? p.src : null; })(),
-    repName:   localStorage.getItem('ce_user_name') || '',
+    repName:   localStorage.getItem('wc_user_name') || '',
   };
 
   // Best available extras
@@ -19936,9 +19934,9 @@ document.getElementById('cal-filter-bar').addEventListener('click', e => {
 
 // ── Data migration (v1) — backfill repName on existing entries ─────────────
 function migrateDataV1() {
-  if (localStorage.getItem('ce_data_migrated_v1')) return;
-  const userName = localStorage.getItem('ce_user_name') || '';
-  if (!userName) { localStorage.setItem('ce_data_migrated_v1', 'true'); return; }
+  if (localStorage.getItem('wc_data_migrated_v1')) return;
+  const userName = localStorage.getItem('wc_user_name') || '';
+  if (!userName) { localStorage.setItem('wc_data_migrated_v1', 'true'); return; }
 
   // Backfill log entries — v93: use DataStore to keep cache in sync
   try {
@@ -19948,7 +19946,7 @@ function migrateDataV1() {
     if (changed) DataStore.saveEntries(entries);
   } catch(_) {}
 
-  localStorage.setItem('ce_data_migrated_v1', 'true');
+  localStorage.setItem('wc_data_migrated_v1', 'true');
 }
 
 // ── Apply role-based UI — show/hide elements based on role ─────────────────
@@ -20067,12 +20065,12 @@ document.getElementById('role-setup-go').addEventListener('click', () => {
     if (nameInput) { nameInput.focus(); nameInput.style.borderColor = '#ef4444'; setTimeout(() => nameInput.style.borderColor = '', 1500); }
     return;
   }
-  localStorage.setItem('ce_user_role', _selectedRole);
-  localStorage.setItem('ce_user_name', name);
-  // Also save name into ce_admin.repName so business card picks it up
+  localStorage.setItem('wc_user_role', _selectedRole);
+  localStorage.setItem('wc_user_name', name);
+  // Also save name into wc_admin.repName so business card picks it up
   try {
     const s = _safeAdminSettings();
-    if (!s.repName) { s.repName = name; localStorage.setItem('ce_admin', JSON.stringify(s)); }
+    if (!s.repName) { s.repName = name; localStorage.setItem('wc_admin', JSON.stringify(s)); }
   } catch(_) {}
   migrateDataV1();
   applyRoleUI();
@@ -20138,7 +20136,7 @@ function initMasterAdminTapDetector() {
 }
 
 function openMasterAdminFlow() {
-  const pin = localStorage.getItem('ce_master_pin');
+  const pin = localStorage.getItem('wc_master_pin');
   if (!pin) {
     // First time: create PIN
     showPINOverlay('create');
@@ -20215,7 +20213,7 @@ function handlePINKey(key) {
   setTimeout(() => renderPINDots(), 80);
 
   if (_pinMode === 'verify') {
-    const stored = localStorage.getItem('ce_master_pin');
+    const stored = localStorage.getItem('wc_master_pin');
     if (entered === stored) {
       hidePINOverlay();
       openMasterAdmin();
@@ -20232,7 +20230,7 @@ function handlePINKey(key) {
       setTimeout(() => renderPINDots(), 80);
     } else {
       if (entered === _pinFirst) {
-        localStorage.setItem('ce_master_pin', entered);
+        localStorage.setItem('wc_master_pin', entered);
         hidePINOverlay();
         if (_pinMode === 'create') openMasterAdmin();
         // If 'change', just close
@@ -20255,8 +20253,8 @@ document.getElementById('pin-cancel').addEventListener('click', hidePINOverlay);
 
 // ── Open Master Admin Sheet ─────────────────────────────────────────────────
 function openMasterAdmin() {
-  _prevRole = localStorage.getItem('ce_user_role');
-  localStorage.setItem('ce_user_role', 'master_admin');
+  _prevRole = localStorage.getItem('wc_user_role');
+  localStorage.setItem('wc_user_role', 'master_admin');
   applyRoleUI();
 
   const sheet = document.getElementById('master-admin-sheet');
@@ -20269,7 +20267,7 @@ function openMasterAdmin() {
   const maChatApi = document.getElementById('ma-chat-api-url');
   if (maGoSolo)   maGoSolo.value   = s.gosoloUrl || 'https://phx.gosolo.io/';
   if (maGrid)     maGrid.value     = s.gridUrl   || 'https://procfu.com/widgets/mcapp/qWhbwtv797R7';
-  if (maChatApi)  maChatApi.value  = localStorage.getItem('ce_chat_api_url') || '';
+  if (maChatApi)  maChatApi.value  = localStorage.getItem('wc_chat_api_url') || '';
 
   // Storage info
   refreshStorageInfo();
@@ -20282,7 +20280,7 @@ function openMasterAdmin() {
       `SW cache:      capital-energy-v100\n` +
       `Build date:    ${new Date().toLocaleDateString()}\n` +
       `User role:     master_admin\n` +
-      `localStorage:  ${Object.keys(localStorage).filter(k => k.startsWith('ce_')).length} keys`;
+      `localStorage:  ${Object.keys(localStorage).filter(k => k.startsWith('wc_')).length} keys`;
   }
 
   // Status bar
@@ -20309,7 +20307,7 @@ function openMasterAdmin() {
   // Status dots: green if brand config is saved
   const brandDot = document.getElementById('ma-dot-brand');
   if (brandDot) {
-    const hasBrand = !!(localStorage.getItem('ce_app_name') || localStorage.getItem('ce_theme_primary'));
+    const hasBrand = !!(localStorage.getItem('wc_app_name') || localStorage.getItem('wc_theme_primary'));
     if (hasBrand) brandDot.classList.add('ma-card-dot--on');
     else brandDot.classList.remove('ma-card-dot--on');
   }
@@ -20329,7 +20327,7 @@ function refreshStorageInfo() {
   const infoEl = document.getElementById('ma-storage-info');
   if (!infoEl) return;
   const lines = [];
-  Object.keys(localStorage).filter(k => k.startsWith('ce_')).sort().forEach(k => {
+  Object.keys(localStorage).filter(k => k.startsWith('wc_')).sort().forEach(k => {
     const bytes = new Blob([localStorage.getItem(k)]).size;
     lines.push(`${k.padEnd(28)} ${bytes > 1024 ? (bytes/1024).toFixed(1)+'KB' : bytes+'B'}`);
   });
@@ -20360,16 +20358,16 @@ document.getElementById('ma-save-links-btn').addEventListener('click', () => {
   const s = _safeAdminSettings();
   if (gosoloUrl) s.gosoloUrl = gosoloUrl;
   if (gridUrl)   s.gridUrl   = gridUrl;
-  localStorage.setItem('ce_admin', JSON.stringify(s));
+  localStorage.setItem('wc_admin', JSON.stringify(s));
   // Update hidden admin fields so GoSolo/Grid buttons still work
   document.getElementById('admin-gosolo-url').value = gosoloUrl || s.gosoloUrl;
   document.getElementById('admin-grid-url').value   = gridUrl   || s.gridUrl;
   // Save AI Chat API URL — updates TrainerBot live
   if (chatApiUrl) {
-    localStorage.setItem('ce_chat_api_url', chatApiUrl);
+    localStorage.setItem('wc_chat_api_url', chatApiUrl);
     if (window.TrainerBot) TrainerBot._apiUrl = chatApiUrl;
   } else {
-    localStorage.removeItem('ce_chat_api_url');
+    localStorage.removeItem('wc_chat_api_url');
     if (window.TrainerBot) TrainerBot._apiUrl = 'http://localhost:8080/api/chat';
   }
   // Sync org-level URLs to Firestore
@@ -20383,7 +20381,7 @@ document.getElementById('ma-save-links-btn').addEventListener('click', () => {
 // ── Drop Call: save from manager Admin Settings ─────────────────────────────
 document.getElementById('admin-save-drop-call-btn')?.addEventListener('click', () => {
   const raw = (document.getElementById('admin-drop-call-numbers')?.value || '').trim();
-  localStorage.setItem('ce_drop_call_numbers', raw);
+  localStorage.setItem('wc_drop_call_numbers', raw);
   _otdSyncDropCallBtn();
   const btn = document.getElementById('admin-save-drop-call-btn');
   if (btn) { btn.textContent = '✓ Saved!'; setTimeout(() => { btn.textContent = '💾 Save Drop Call Numbers'; }, 1500); }
@@ -20397,13 +20395,13 @@ const _origOpenMA = openMasterAdmin;
 
 // ── Drop Call: OTD button visibility + sheet ───────────────────────────────
 function _otdSyncDropCallBtn() {
-  const raw = localStorage.getItem('ce_drop_call_numbers') || '';
+  const raw = localStorage.getItem('wc_drop_call_numbers') || '';
   const btn = document.getElementById('otd-drop-call-btn');
   if (btn) btn.style.display = raw.trim() ? '' : 'none';
 }
 
 function _parseDropCallNumbers() {
-  const raw = localStorage.getItem('ce_drop_call_numbers') || '';
+  const raw = localStorage.getItem('wc_drop_call_numbers') || '';
   return raw.split('\n')
     .map(line => line.trim())
     .filter(Boolean)
@@ -20441,7 +20439,7 @@ document.getElementById('ma-logo-upload')?.addEventListener('change', e => {
   const reader = new FileReader();
   reader.onload = ev => {
     const dataUrl = ev.target.result;
-    localStorage.setItem('ce_logo', dataUrl);
+    localStorage.setItem('wc_logo', dataUrl);
     const headerLogoImg = document.getElementById('header-logo');
     if (headerLogoImg) { const img = headerLogoImg.querySelector('img'); if (img) img.src = dataUrl; }
   };
@@ -20473,7 +20471,7 @@ document.getElementById('ma-logo-upload')?.addEventListener('change', e => {
     try {
       const b64 = await _f2b64(file);
       const s = _safeAdminSettings();
-      s.customLogo = b64; localStorage.setItem('ce_admin', JSON.stringify(s));
+      s.customLogo = b64; localStorage.setItem('wc_admin', JSON.stringify(s));
       _applyBranding(s); _loadMaBrandingStatus(); showToast('Logo updated!');
       // Upload to Firebase Storage and persist URL to Firestore
       const user = fbAuth.currentUser;
@@ -20483,7 +20481,7 @@ document.getElementById('ma-logo-upload')?.addEventListener('change', e => {
           await storageRef.put(file);
           const url = await storageRef.getDownloadURL();
           s.logoUrl = url;
-          localStorage.setItem('ce_admin', JSON.stringify(s));
+          localStorage.setItem('wc_admin', JSON.stringify(s));
           await fbDb.collection('organizations').doc(user.uid).set({ logoUrl: url }, { merge: true });
         } catch(uploadErr) { console.warn('[Logo] Storage upload failed:', uploadErr); }
       }
@@ -20496,7 +20494,7 @@ document.getElementById('ma-logo-upload')?.addEventListener('change', e => {
     try {
       const b64 = await _f2b64(file);
       const s = _safeAdminSettings();
-      s.customIcon = b64; localStorage.setItem('ce_admin', JSON.stringify(s));
+      s.customIcon = b64; localStorage.setItem('wc_admin', JSON.stringify(s));
       _applyBranding(s); _loadMaBrandingStatus(); showToast('App icon updated!');
     } catch(_) { showToast('Upload failed.'); }
   });
@@ -20506,7 +20504,7 @@ document.getElementById('ma-logo-upload')?.addEventListener('change', e => {
     const s = _safeAdminSettings();
     const name = document.getElementById('ma-company-name-field')?.value.trim();
     if (name) s.companyName = name;
-    localStorage.setItem('ce_admin', JSON.stringify(s));
+    localStorage.setItem('wc_admin', JSON.stringify(s));
     _applyBranding(s);
     const btn = document.getElementById('ma-save-branding-btn');
     if (btn) { btn.textContent = '✓ Saved!'; setTimeout(() => { btn.textContent = '💾 Save Branding'; }, 1500); }
@@ -20521,7 +20519,7 @@ document.getElementById('ma-logo-upload')?.addEventListener('change', e => {
       const b64 = await _f2b64(file);
       const s = _safeAdminSettings();
       s.checklistPdf = { name: file.name, data: b64, type: file.type };
-      localStorage.setItem('ce_admin', JSON.stringify(s));
+      localStorage.setItem('wc_admin', JSON.stringify(s));
       const el = document.getElementById('ma-checklist-status');
       if (el) el.textContent = `✓ ${file.name}`;
       showToast('Checklist uploaded!');
@@ -20586,7 +20584,7 @@ document.getElementById('ma-logo-upload')?.addEventListener('change', e => {
 // Export all data
 document.getElementById('ma-export-btn').addEventListener('click', () => {
   const data = {};
-  Object.keys(localStorage).filter(k => k.startsWith('ce_')).forEach(k => {
+  Object.keys(localStorage).filter(k => k.startsWith('wc_')).forEach(k => {
     try { data[k] = JSON.parse(localStorage.getItem(k)); } catch(_) { data[k] = localStorage.getItem(k); }
   });
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -20609,29 +20607,29 @@ document.getElementById('ma-clear-btn').addEventListener('click', async () => {
   if (navigator.onLine && typeof drainToFirestore === 'function') {
     try { await drainToFirestore(); } catch(_) {}
   }
-  Object.keys(localStorage).filter(k => k.startsWith('ce_')).forEach(k => localStorage.removeItem(k));
+  Object.keys(localStorage).filter(k => k.startsWith('wc_') || k.startsWith('ce_')).forEach(k => localStorage.removeItem(k));
   location.reload();
 });
 
 // Dev Tools — Troubleshooting Only
 document.getElementById('ma-dev-reset-onboarding').addEventListener('click', () => {
-  if (!confirm('Reset Onboarding?\n\nThis clears ce_onboarding_done and ce_user_role from localStorage only. No knock entries, appointments, or Firestore data will be touched. The onboarding flow will run again on next reload.')) return;
-  localStorage.removeItem('ce_onboarding_done');
-  localStorage.removeItem('ce_user_role');
+  if (!confirm('Reset Onboarding?\n\nThis clears wc_onboarding_done and wc_user_role from localStorage only. No knock entries, appointments, or Firestore data will be touched. The onboarding flow will run again on next reload.')) return;
+  localStorage.removeItem('wc_onboarding_done');
+  localStorage.removeItem('wc_user_role');
   showToast('Onboarding reset — reloading…');
   setTimeout(() => location.reload(), 900);
 });
 
 document.getElementById('ma-dev-reset-role').addEventListener('click', () => {
-  if (!confirm('Reset Role Only?\n\nThis clears ce_user_role from localStorage. The role picker will show on next reload. Nothing else is touched.')) return;
-  localStorage.removeItem('ce_user_role');
+  if (!confirm('Reset Role Only?\n\nThis clears wc_user_role from localStorage. The role picker will show on next reload. Nothing else is touched.')) return;
+  localStorage.removeItem('wc_user_role');
   showToast('Role cleared — reloading…');
   setTimeout(() => location.reload(), 900);
 });
 
 document.getElementById('ma-dev-reset-profile').addEventListener('click', () => {
-  if (!confirm('Reset User Profile?\n\nThis clears ce_user_phone, ce_user_region, and ce_user_headshot from localStorage. Firebase auth and Firestore are not touched.')) return;
-  ['ce_user_phone', 'ce_user_region', 'ce_user_headshot'].forEach(k => localStorage.removeItem(k));
+  if (!confirm('Reset User Profile?\n\nThis clears wc_user_phone, wc_user_region, and wc_user_headshot from localStorage. Firebase auth and Firestore are not touched.')) return;
+  ['wc_user_phone', 'wc_user_region', 'wc_user_headshot'].forEach(k => localStorage.removeItem(k));
   showToast('User profile cleared — reloading…');
   setTimeout(() => location.reload(), 900);
 });
@@ -20663,7 +20661,7 @@ document.getElementById('ma-change-pin-btn').addEventListener('click', () => {
 // Remove PIN
 document.getElementById('ma-remove-pin-btn').addEventListener('click', () => {
   if (!confirm('Remove Master Admin PIN? This will disable the secret console.')) return;
-  localStorage.removeItem('ce_master_pin');
+  localStorage.removeItem('wc_master_pin');
   const btn = document.getElementById('ma-remove-pin-btn');
   btn.textContent = '✓ PIN removed';
   setTimeout(() => { btn.textContent = '🗑 Remove PIN (disable Master Admin)'; }, 2000);
@@ -20675,7 +20673,7 @@ function _exitMasterAdmin() {
   // v82: delay role restore until after the 350ms slide-out transition completes
   // — prevents white flash caused by DOM updates while sheet is still animating
   setTimeout(() => {
-    localStorage.setItem('ce_user_role', _prevRole || 'canvasser');
+    localStorage.setItem('wc_user_role', _prevRole || 'canvasser');
     applyRoleUI();
   }, 380);
 }
@@ -20700,7 +20698,7 @@ document.getElementById('master-admin-close-btn').addEventListener('click', _exi
 // LEADERBOARD — Compute + render
 // ══════════════════════════════════════════════════════════════════════════════
 
-let _lbRange = localStorage.getItem('ce_lb_range') || 'week';
+let _lbRange = localStorage.getItem('wc_lb_range') || 'week';
 
 function getLBRangeMs(range) {
   const ms = { day: 864e5, week: 6048e5, month: 2592e6, year: 31536e6 };
@@ -20763,7 +20761,7 @@ function computeShowRateStats(range) {
 // v76: Overall show rate (all closers combined) for current user / range
 function computeShowRate(range) {
   const role   = getActiveRole();
-  const myName = (localStorage.getItem('ce_user_name') || '').toLowerCase();
+  const myName = (localStorage.getItem('wc_user_name') || '').toLowerCase();
   let appts = [];
   try { appts = JSON.parse(localStorage.getItem('ce_appointments') || '[]'); } catch(_) {}
   if (myName && (role === 'canvasser' || role === 'closer')) {
@@ -21010,7 +21008,7 @@ function renderLeaderboard() {
     boards.innerHTML = skRow.repeat(5);
   }
   const role    = getActiveRole();
-  const youName = localStorage.getItem('ce_user_name') || '';
+  const youName = localStorage.getItem('wc_user_name') || '';
 
   const canvStats = computeCanvasserStats(_lbRange);
   const closerStats = computeCloserStats(_lbRange);
@@ -21088,7 +21086,7 @@ document.querySelectorAll('.lb-range-tab').forEach(btn => {
     document.querySelectorAll('.lb-range-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     _lbRange = btn.dataset.range;
-    try { localStorage.setItem('ce_lb_range', _lbRange); } catch(_) {}
+    try { localStorage.setItem('wc_lb_range', _lbRange); } catch(_) {}
     // v72: branch for momentum/trend tab
     var momPanel = document.getElementById('lb-momentum-panel');
     var lbBoards = document.getElementById('lb-boards');
@@ -21561,7 +21559,7 @@ function loadAdminSettings() {
   document.getElementById('admin-gosolo-url').value    = s.gosoloUrl   || ADMIN_DEFAULTS.gosoloUrl;
   document.getElementById('admin-grid-url').value      = s.gridUrl     || ADMIN_DEFAULTS.gridUrl;
   // Visible fields
-  document.getElementById('admin-rep-name').value      = s.repName     || localStorage.getItem('ce_user_name') || '';
+  document.getElementById('admin-rep-name').value      = s.repName     || localStorage.getItem('wc_user_name') || '';
   document.getElementById('admin-rep-title').value     = s.repTitle    || ADMIN_DEFAULTS.repTitle;
   document.getElementById('admin-rep-phone').value     = s.repPhone    || '';
   document.getElementById('admin-rep-email').value     = s.repEmail    || '';
@@ -21579,7 +21577,7 @@ function loadAdminSettings() {
   if (roleEl) {
     const curRole = getActiveRole();
     if (curRole && curRole !== 'master_admin') roleEl.value = curRole;
-    const effectiveRole = localStorage.getItem('ce_impersonate_role') || curRole || 'canvasser';
+    const effectiveRole = localStorage.getItem('wc_impersonate_role') || curRole || 'canvasser';
     if (effectiveRole === 'canvasser') {
       roleEl.disabled = true;
       roleEl.title = 'Role locked — ask your manager to upgrade your access';
@@ -21602,7 +21600,7 @@ function loadAdminSettings() {
   }
 
   // Restore custom logo if saved
-  const logo = localStorage.getItem('ce_logo');
+  const logo = localStorage.getItem('wc_logo');
   if (logo) {
     const logoImg = document.getElementById('admin-logo-img');
     if (logoImg) logoImg.src = logo;
@@ -21613,7 +21611,7 @@ function loadAdminSettings() {
   // Font size slider
   const fSlider = document.getElementById('admin-font-size');
   const fVal = document.getElementById('admin-font-size-val');
-  const savedFs = localStorage.getItem('ce_font_size') || '16';
+  const savedFs = localStorage.getItem('wc_font_size') || '16';
   if (fSlider) { fSlider.value = savedFs; }
   if (fVal) { fVal.textContent = savedFs + 'px'; }
 
@@ -21622,7 +21620,7 @@ function loadAdminSettings() {
 
 function saveAdminSettings() {
   if (!_validateForm(document.getElementById('panel-admin'))) return;
-  // v93: merge into existing ce_admin instead of replacing — preserves logos, adder sheets, checklist, etc.
+  // v93: merge into existing wc_admin instead of replacing — preserves logos, adder sheets, checklist, etc.
   const existing = _safeAdminSettings();
   const updates = {
     companyName: document.getElementById('admin-company-name').value.trim() || ADMIN_DEFAULTS.companyName,
@@ -21639,18 +21637,18 @@ function saveAdminSettings() {
     dispoEmailFrom: (document.getElementById('admin-dispo-email-from') || {}).value?.trim()  || '',
   };
   const s = Object.assign(existing, updates);
-  localStorage.setItem('ce_admin', JSON.stringify(s));
+  localStorage.setItem('wc_admin', JSON.stringify(s));
 
   // Save name + role from new fields
   const newName = s.repName;
-  if (newName) localStorage.setItem('ce_user_name', newName);
+  if (newName) localStorage.setItem('wc_user_name', newName);
   const roleEl = document.getElementById('admin-role-select');
-  if (roleEl && roleEl.value) localStorage.setItem('ce_user_role', roleEl.value);
+  if (roleEl && roleEl.value) localStorage.setItem('wc_user_role', roleEl.value);
   applyRoleUI();
 
   // Save font size
   const fSlider = document.getElementById('admin-font-size');
-  if (fSlider) localStorage.setItem('ce_font_size', fSlider.value);
+  if (fSlider) localStorage.setItem('wc_font_size', fSlider.value);
 
   // Sync org-level fields to Firestore
   if (typeof saveOrgSettingsToFirestore === 'function') saveOrgSettingsToFirestore();
@@ -21797,7 +21795,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
         const b64 = await _fileToBase64(file);
         const s = _safeAdminSettings();
         s.customLogo = b64;
-        localStorage.setItem('ce_admin', JSON.stringify(s));
+        localStorage.setItem('wc_admin', JSON.stringify(s));
         _loadAdminAssets();
         showToast('Logo updated!');
         // Upload to Firebase Storage and persist URL to Firestore
@@ -21808,7 +21806,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
             await storageRef.put(file);
             const url = await storageRef.getDownloadURL();
             s.logoUrl = url;
-            localStorage.setItem('ce_admin', JSON.stringify(s));
+            localStorage.setItem('wc_admin', JSON.stringify(s));
             await fbDb.collection('organizations').doc(user.uid).set({ logoUrl: url }, { merge: true });
           } catch(uploadErr) { console.warn('[Logo] Storage upload failed:', uploadErr); }
         }
@@ -21824,7 +21822,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
         const b64 = await _fileToBase64(iconFile.files[0]);
         const s = _safeAdminSettings();
         s.customIcon = b64;
-        localStorage.setItem('ce_admin', JSON.stringify(s));
+        localStorage.setItem('wc_admin', JSON.stringify(s));
         _loadAdminAssets();
         showToast('App icon updated!');
       } catch(e) { showToast('Failed to save icon.'); }
@@ -21837,7 +21835,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
       const s = _safeAdminSettings();
       delete s.customLogo;
       delete s.logoUrl;
-      localStorage.setItem('ce_admin', JSON.stringify(s));
+      localStorage.setItem('wc_admin', JSON.stringify(s));
       const logoPreview = document.getElementById('admin-logo-preview');
       if (logoPreview) logoPreview.style.display = 'none';
       const hbl = document.getElementById('header-brand-img');
@@ -21860,7 +21858,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
     iconRemove.addEventListener('click', () => {
       const s = _safeAdminSettings();
       delete s.customIcon;
-      localStorage.setItem('ce_admin', JSON.stringify(s));
+      localStorage.setItem('wc_admin', JSON.stringify(s));
       const iconPreview = document.getElementById('admin-icon-preview');
       if (iconPreview) iconPreview.style.display = 'none';
       const hil = document.getElementById('header-logo');
@@ -21925,7 +21923,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
         const s = _safeAdminSettings();
         if (!s.adderSheets) s.adderSheets = {};
         s.adderSheets[stateKey] = { name: file.name, data: b64, type: file.type };
-        localStorage.setItem('ce_admin', JSON.stringify(s));
+        localStorage.setItem('wc_admin', JSON.stringify(s));
         _setAdderStatus(stateKey, file.name);
         showToast(`${stateKey.toUpperCase()} adder sheet uploaded!`);
         // Refresh the adder pane if currently open
@@ -21970,7 +21968,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
         const b64 = await _fileToBase64(file);
         const s = _safeAdminSettings();
         s.checklistPdf = { name: file.name, data: b64, type: file.type };
-        localStorage.setItem('ce_admin', JSON.stringify(s));
+        localStorage.setItem('wc_admin', JSON.stringify(s));
         _loadChecklistStatus();
         showToast('Checklist uploaded!');
         // Refresh checklist pane
@@ -21993,11 +21991,11 @@ const DEFAULT_QUICK_LINKS = [
 ];
 
 function _loadQuickLinkConfig() {
-  try { return JSON.parse(localStorage.getItem('ce_quicklinks') || 'null'); } catch(_) { return null; }
+  try { return JSON.parse(localStorage.getItem('wc_quicklinks') || 'null'); } catch(_) { return null; }
 }
 
 function _saveQuickLinkConfig(arr) {
-  try { localStorage.setItem('ce_quicklinks', JSON.stringify(arr)); } catch(_) {}
+  try { localStorage.setItem('wc_quicklinks', JSON.stringify(arr)); } catch(_) {}
 }
 
 function _applyQuickLinkConfig() {
@@ -22059,7 +22057,7 @@ document.getElementById('admin-ql-save-btn')?.addEventListener('click', () => {
         renderAdminQuickLinks();
         // Populate drop call numbers textarea
         const dcTextarea = document.getElementById('admin-drop-call-numbers');
-        if (dcTextarea) dcTextarea.value = localStorage.getItem('ce_drop_call_numbers') || '';
+        if (dcTextarea) dcTextarea.value = localStorage.getItem('wc_drop_call_numbers') || '';
         // Show drop call section only for manager / master_admin
         const dcSection = document.getElementById('admin-drop-call-section');
         if (dcSection) {
@@ -22091,7 +22089,7 @@ document.getElementById('admin-save-btn').addEventListener('click', saveAdminSet
     document.documentElement.style.setProperty('--fs-base', px + 'px');
   }
   // Restore saved size on load
-  var saved = localStorage.getItem('ce_font_size');
+  var saved = localStorage.getItem('wc_font_size');
   if (saved) applyFontSize(parseInt(saved, 10));
 
   var slider = document.getElementById('admin-font-size');
@@ -22101,7 +22099,7 @@ document.getElementById('admin-save-btn').addEventListener('click', saveAdminSet
       var px = parseInt(slider.value, 10);
       if (valEl) valEl.textContent = px + 'px';
       applyFontSize(px);
-      localStorage.setItem('ce_font_size', px);
+      localStorage.setItem('wc_font_size', px);
     });
   }
 })();
@@ -22205,15 +22203,15 @@ function _bcardRefreshStaticView(d) {
 }
 
 function openBcard() {
-  // Fix 8: auto-populate from onboarding ce_user_* keys if rep card fields are still empty
+  // Fix 8: auto-populate from onboarding wc_user_* keys if rep card fields are still empty
   (function() {
     const s = _safeAdminSettings();
     let changed = false;
-    if (!s.repName  && localStorage.getItem('ce_user_name'))  { s.repName  = localStorage.getItem('ce_user_name');  changed = true; }
-    if (!s.repPhone && localStorage.getItem('ce_user_phone')) { s.repPhone = localStorage.getItem('ce_user_phone'); changed = true; }
-    if (changed) localStorage.setItem('ce_admin', JSON.stringify(s));
-    if (!localStorage.getItem('ce_headshot') && localStorage.getItem('ce_user_headshot')) {
-      localStorage.setItem('ce_headshot', localStorage.getItem('ce_user_headshot'));
+    if (!s.repName  && localStorage.getItem('wc_user_name'))  { s.repName  = localStorage.getItem('wc_user_name');  changed = true; }
+    if (!s.repPhone && localStorage.getItem('wc_user_phone')) { s.repPhone = localStorage.getItem('wc_user_phone'); changed = true; }
+    if (changed) localStorage.setItem('wc_admin', JSON.stringify(s));
+    if (!localStorage.getItem('wc_headshot') && localStorage.getItem('wc_user_headshot')) {
+      localStorage.setItem('wc_headshot', localStorage.getItem('wc_user_headshot'));
     }
   })();
 
@@ -22244,11 +22242,11 @@ function openBcard() {
   document.getElementById('bcard-edit-label').textContent = 'Edit';
 
   // Logo
-  const logo = localStorage.getItem('ce_logo');
+  const logo = localStorage.getItem('wc_logo');
   if (logo) document.getElementById('bcard-logo-img').src = logo;
 
   // Headshot
-  _bcardApplyHeadshot(localStorage.getItem('ce_headshot'));
+  _bcardApplyHeadshot(localStorage.getItem('wc_headshot'));
 
   // Draw QR
   _drawQR(document.getElementById('bcard-qr-canvas'), _bcardBuildVCard(d), 160);
@@ -22311,7 +22309,7 @@ function _bcardSaveEdits() {
   s.repTagline = tagline; // v76
   s.repIg      = ig;      // v76
   s.repLi      = li;      // v76
-  localStorage.setItem('ce_admin', JSON.stringify(s));
+  localStorage.setItem('wc_admin', JSON.stringify(s));
 
   // Refresh static view
   const d = { name: name || s.repName, title, company, phone, email, tagline, ig, li };
@@ -22328,7 +22326,7 @@ document.getElementById('bcard-headshot-upload').addEventListener('change', e =>
   const reader = new FileReader();
   reader.onload = ev => {
     const dataUrl = ev.target.result;
-    localStorage.setItem('ce_headshot', dataUrl);
+    localStorage.setItem('wc_headshot', dataUrl);
     _bcardApplyHeadshot(dataUrl);
   };
   reader.readAsDataURL(file);
@@ -23179,7 +23177,7 @@ document.getElementById('ql-save-btn').addEventListener('click', () => {
     lat: quickLogLat,
     lng: quickLogLng,
     photo: null,
-    repName: localStorage.getItem('ce_user_name') || '',
+    repName: localStorage.getItem('wc_user_name') || '',
   });
   saveEntries(entries);
   closeQuickLog();
@@ -23266,7 +23264,7 @@ function openResultSheet(apptId) {
         // v76: auto-post to Wall of Wins
         try {
           const sAppt  = loadAppointments().find(a => a.id === editingApptId);
-          const sName  = localStorage.getItem('ce_user_name') || sAppt?.closer || 'Closer';
+          const sName  = localStorage.getItem('wc_user_name') || sAppt?.closer || 'Closer';
           const custN  = sAppt ? [sAppt.firstName, sAppt.lastName].filter(Boolean).join(' ') : 'a customer';
           postWinRaw(sName, `just SIGNED a deal with ${custN}! 🏆🎉`);
           _sendSoldEmail(sAppt, sName, custN);
@@ -23474,7 +23472,7 @@ let _pdfSrc       = '';
 let _pdfRendering = false;
 
 function _pdfProgressKey(src) {
-  return 'ce_book_pg_' + src.replace(/[^a-z0-9]/gi, '_');
+  return 'wc_book_pg_' + src.replace(/[^a-z0-9]/gi, '_');
 }
 
 function _pdfSaveProgress() {
@@ -23686,7 +23684,7 @@ function openDispoSheet() {
               try {
                 const dAppts = loadAppointments();
                 const dAppt  = dAppts.find(a => a.id === dispoApptId);
-                const dName  = localStorage.getItem('ce_user_name') || dAppt?.closer || 'Closer';
+                const dName  = localStorage.getItem('wc_user_name') || dAppt?.closer || 'Closer';
                 const dCust  = dAppt ? [dAppt.firstName, dAppt.lastName].filter(Boolean).join(' ') : 'a customer';
                 postWinRaw(dName, `just SIGNED a deal with ${dCust}! 🏆🎉`);
                 _sendSoldEmail(dAppt, dName, dCust);
@@ -23798,7 +23796,7 @@ document.getElementById('assign-closer-list').addEventListener('click', function
 async function _notifyAssignedCloser(appt, closerName) {
   try {
     if (!fbAuth.currentUser || !navigator.onLine) return;
-    var orgId = localStorage.getItem('ce_org_id');
+    var orgId = localStorage.getItem('wc_org_id');
     if (!orgId) return;
     var custName = [appt.firstName, appt.lastName].filter(Boolean).join(' ') || 'Customer';
     var addr = appt.street || appt.city || '';
@@ -23858,7 +23856,7 @@ function _initPendingAssignListener() {
     _updatePendingCard();
     return;
   }
-  var orgId = localStorage.getItem('ce_org_id');
+  var orgId = localStorage.getItem('wc_org_id');
   if (!orgId) { _updatePendingCard(); return; }
 
   // Clean up previous listener
@@ -23969,14 +23967,14 @@ function _openPendingAssignments() {
   function _saveContactInfo() {
     const phone  = (document.getElementById('onboard-phone')?.value  || '').trim();
     const region = (document.getElementById('onboard-region')?.value || '').trim();
-    if (phone)  localStorage.setItem('ce_user_phone',  phone);
-    if (region) localStorage.setItem('ce_user_region', region);
-    // Mirror into ce_admin so rep card picks it up immediately
+    if (phone)  localStorage.setItem('wc_user_phone',  phone);
+    if (region) localStorage.setItem('wc_user_region', region);
+    // Mirror into wc_admin so rep card picks it up immediately
     const s = _safeAdminSettings();
     if (phone  && !s.repPhone)  { s.repPhone  = phone; }
     if (region && !s.repRegion) { s.repRegion = region; }
-    if (!s.repName) { s.repName = localStorage.getItem('ce_user_name') || ''; }
-    localStorage.setItem('ce_admin', JSON.stringify(s));
+    if (!s.repName) { s.repName = localStorage.getItem('wc_user_name') || ''; }
+    localStorage.setItem('wc_admin', JSON.stringify(s));
     // Sync phone+region to Firestore users/{uid}
     try {
       if (window.fbAuth && window.fbDb) {
@@ -23992,7 +23990,7 @@ function _openPendingAssignments() {
   }
 
   window.showOnboarding = function() {
-    if (localStorage.getItem('ce_onboarding_done')) return;
+    if (localStorage.getItem('wc_onboarding_done')) return;
     const ov = document.getElementById('onboarding-overlay');
     if (!ov) return;
     _step = 0;
@@ -24011,11 +24009,11 @@ function _openPendingAssignments() {
   window.hideOnboarding = function() {
     const ov = document.getElementById('onboarding-overlay');
     if (ov) ov.classList.remove('open');
-    localStorage.setItem('ce_onboarding_done', '1');
+    localStorage.setItem('wc_onboarding_done', '1');
 
     const role = getActiveRole();
-    const name = localStorage.getItem('ce_user_name') || '';
-    const phone = localStorage.getItem('ce_user_phone') || '';
+    const name = localStorage.getItem('wc_user_name') || '';
+    const phone = localStorage.getItem('wc_user_phone') || '';
 
     // Fix 5 + Fix 9: auto-add manager (manager role) + closer (closer role) to local team
     if ((role === 'manager' || role === 'master_admin') && name) {
@@ -24056,8 +24054,8 @@ function _openPendingAssignments() {
         const reader = new FileReader();
         reader.onload = ev => {
           const dataUrl = ev.target.result;
-          localStorage.setItem('ce_headshot',       dataUrl);
-          localStorage.setItem('ce_user_headshot',  dataUrl);
+          localStorage.setItem('wc_headshot',       dataUrl);
+          localStorage.setItem('wc_user_headshot',  dataUrl);
           const statusEl = document.getElementById('onboard-photo-status');
           if (statusEl) statusEl.textContent = '✓ ' + file.name;
         };
@@ -24090,14 +24088,14 @@ var _fcmVapidKey = 'BI-aJamoQF9e36NwLbVeVmSNX7Z4QE0snijGcvxb1WKkWHq5HW59wEcRwZ4t
 async function _saveFcmToken(token) {
   if (!token || !fbAuth.currentUser) return;
   var uid = fbAuth.currentUser.uid;
-  var storedToken = localStorage.getItem('ce_fcm_token');
+  var storedToken = localStorage.getItem('wc_fcm_token');
   if (token === storedToken) return; // unchanged — skip write
   try {
     await fbDb.collection('users').doc(uid).set({
       fcmToken: token,
       fcmTokenUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
-    localStorage.setItem('ce_fcm_token', token);
+    localStorage.setItem('wc_fcm_token', token);
     console.log('[FCM] Token saved to Firestore');
   } catch (err) {
     console.error('[FCM] Token save failed:', err);
@@ -24202,7 +24200,7 @@ async function sendNotification(targetUid, title, body, data) {
 async function _notifyManagersNewAssignment(appt) {
   try {
     if (!fbAuth.currentUser || !navigator.onLine) return;
-    var orgId = localStorage.getItem('ce_org_id');
+    var orgId = localStorage.getItem('wc_org_id');
     if (!orgId) return;
     var custName = [appt.firstName, appt.lastName].filter(Boolean).join(' ') || 'Unknown';
     var addr = appt.street || appt.city || '';
@@ -24307,8 +24305,8 @@ function _lookupInvitePreAuth(code) {
 
     if (action === 'skip') {
       // Set minimal local state so the app renders without hitting auth
-      try { localStorage.setItem('ce_user_role', 'canvasser'); } catch(_) {}
-      try { localStorage.setItem('ce_onboarding_done', '1'); } catch(_) {}
+      try { localStorage.setItem('wc_user_role', 'canvasser'); } catch(_) {}
+      try { localStorage.setItem('wc_onboarding_done', '1'); } catch(_) {}
       var gate = document.getElementById('invite-gate-screen');
       var login = document.getElementById('login-screen');
       var app = document.getElementById('app');
@@ -24320,7 +24318,7 @@ function _lookupInvitePreAuth(code) {
     }
 
     if (action === 'reset') {
-      ['ce_onboarding_done','ce_user_role','ce_org_id'].forEach(function(k) {
+      ['wc_onboarding_done','wc_user_role','wc_org_id'].forEach(function(k) {
         try { localStorage.removeItem(k); } catch(_) {}
       });
       console.warn('[DEV] Onboarding reset — reloading');
@@ -24329,7 +24327,7 @@ function _lookupInvitePreAuth(code) {
     }
 
     if (action === 'role') {
-      try { localStorage.removeItem('ce_user_role'); } catch(_) {}
+      try { localStorage.removeItem('wc_user_role'); } catch(_) {}
       var gate2 = document.getElementById('invite-gate-screen');
       var login2 = document.getElementById('login-screen');
       var app2 = document.getElementById('app');
@@ -24471,7 +24469,7 @@ function generateInviteCode() {
   var uid  = user.uid;
   var s    = _safeAdminSettings();
   var orgName   = s.companyName || 'Capital Energy';
-  var repName   = localStorage.getItem('ce_user_name') || user.displayName || '';
+  var repName   = localStorage.getItem('wc_user_name') || user.displayName || '';
   var code      = _genInviteCode();
   var now       = new Date();
   var expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -24526,7 +24524,7 @@ function shareInviteViaMessage() {
   if (!_currentInviteCode) return;
   var s           = _safeAdminSettings();
   var orgName     = s.companyName || 'Capital Energy';
-  var managerName = localStorage.getItem('ce_user_name') || 'Your manager';
+  var managerName = localStorage.getItem('wc_user_name') || 'Your manager';
   var repName     = (_currentInviteRepName || '').trim() || 'there';
   var msg =
     'Hey ' + repName + '! 👋\n\n' +
@@ -24640,7 +24638,7 @@ function submitCoachingNote() {
   if (!entries[idx].coachingNotes) entries[idx].coachingNotes = [];
   entries[idx].coachingNotes.push({
     id:          Date.now().toString(36),
-    managerName: getActiveName() || localStorage.getItem('ce_user_name') || 'Manager',
+    managerName: getActiveName() || localStorage.getItem('wc_user_name') || 'Manager',
     text:        text,
     timestamp:   Date.now(),
   });
@@ -24728,7 +24726,7 @@ function otdToggleTap() {
     openOTD(); return;
   }
   // First time: show recording consent modal, then proceed
-  if (!localStorage.getItem('ce_recording_consent')) {
+  if (!localStorage.getItem('wc_recording_consent')) {
     _otdShowConsentSheet();
     return;
   }
@@ -24816,7 +24814,7 @@ function otdRequestClose() {
   if (!confirm('End your OTD session? The session will be closed.')) return;
   // Send OTD session summary email
   _sendOtdSessionEmail();
-  if (_otdSessActive && localStorage.getItem('ce_recording_consent') === 'allow') {
+  if (_otdSessActive && localStorage.getItem('wc_recording_consent') === 'allow') {
     _otdCaptureFinalSegment(closeOTD);
   } else {
     closeOTD();
@@ -24830,12 +24828,7 @@ function _resolveNotifyEmail() {
   if (s.dispoEmailTo) return s.dispoEmailTo;
   // 2. Org notification email (set during org creation)
   if (s.notificationEmail) return s.notificationEmail;
-  // 3. Try org doc notificationEmail from localStorage
-  try {
-    var orgSettings = JSON.parse(localStorage.getItem('ce_org_settings') || '{}');
-    if (orgSettings.notificationEmail) return orgSettings.notificationEmail;
-  } catch(_) {}
-  // 4. No email configured — return empty (caller should handle)
+  // 3. No email configured — return empty (caller should handle)
   return '';
 }
 
@@ -24843,7 +24836,7 @@ function _sendOtdSessionEmail() {
   if (typeof fbDb === 'undefined') return;
   if (['localhost','127.0.0.1','wc-app-alpha.firebaseapp.com','wc-app-alpha.web.app'].indexOf(window.location.hostname) !== -1) return;
   var toEmail = _resolveNotifyEmail();
-  var repName = localStorage.getItem('ce_user_name') || 'Rep';
+  var repName = localStorage.getItem('wc_user_name') || 'Rep';
   var doors = _otdSessionDoors || 0;
   var contacts = _otdSessionContact || 0;
   var durSecs = _otdSessSecs || 0;
@@ -25014,7 +25007,7 @@ function otdSelectStatus(btn) {
     otdCloseDispoSheet();
 
     // Segment session recording and show save/skip prompt if active
-    if (_otdSessActive && localStorage.getItem('ce_recording_consent') === 'allow') {
+    if (_otdSessActive && localStorage.getItem('wc_recording_consent') === 'allow') {
       var mimeType = (_otdSessRec && _otdSessRec.mimeType) || 'audio/webm';
       var doorStart = _otdDoorRecStart;
       if (_otdSessRec && _otdSessRec.state !== 'inactive') {
@@ -25064,7 +25057,7 @@ function _otdBuildEntry(extra) {
     email:     ((document.getElementById('otd-ho-email') || {}).value || '').trim(),
     bill:      ((document.getElementById('otd-ho-bill')  || {}).value || '').trim(),
     notes:     ((document.getElementById('otd-ho-notes') || {}).value || '').trim(),
-    repName:   localStorage.getItem('ce_user_name') || '',
+    repName:   localStorage.getItem('wc_user_name') || '',
     photo: null, ubPhoto: null,
     geocodePending: !_otdAddr,
   }, extra || {});
@@ -25079,7 +25072,7 @@ function _otdAttachVoice(entry) {
     var normPhone = function(p) { return (p || '').replace(/\D/g,'').slice(-10); };
     var normAddr  = function(a) { return (a || '').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,20); };
     var custKey   = normPhone(entry.phone) || normAddr(entry.address) || ('log-' + entry.id);
-    var uploaderName = localStorage.getItem('ce_user_name') || 'Rep';
+    var uploaderName = localStorage.getItem('wc_user_name') || 'Rep';
     var now = new Date();
     var ds  = now.toISOString().slice(0,16).replace('T',' ');
     var mimeType = blob.type || 'audio/webm';
@@ -25098,7 +25091,7 @@ function _otdAttachVoice(entry) {
         isVoiceMemo: true,
       };
       try {
-        var existing = JSON.parse(localStorage.getItem('ce_cust_files_' + custKey) || '[]');
+        var existing = JSON.parse(localStorage.getItem('wc_cust_files_' + custKey) || '[]');
         existing.unshift(audioFile);
         if (entry.notes) {
           var noteText = '[OTD Note – ' + ds + ']\nStatus: ' + (entry.status || '') + '\n\n' + entry.notes;
@@ -25112,7 +25105,7 @@ function _otdAttachVoice(entry) {
             dataUrl: 'data:text/plain;charset=utf-8,' + encodeURIComponent(noteText),
           });
         }
-        localStorage.setItem('ce_cust_files_' + custKey, JSON.stringify(existing.slice(0, 20)));
+        localStorage.setItem('wc_cust_files_' + custKey, JSON.stringify(existing.slice(0, 20)));
       } catch(e) {}
     };
     fr.readAsDataURL(blob);
@@ -25127,7 +25120,7 @@ function _sendApptDispoEmail(appt, result) {
   var _s = {}; try { _s = _safeAdminSettings(); } catch(_) {}
   var _toEmail   = _s.dispoEmailTo || _resolveNotifyEmail();
   var _fromEmail = _s.dispoEmailFrom || '';
-  var repName = localStorage.getItem('ce_user_name') || 'Rep';
+  var repName = localStorage.getItem('wc_user_name') || 'Rep';
   var custName = [appt.firstName, appt.lastName].filter(Boolean).join(' ') || '—';
   var date = appt.date || appt.apptDate || '';
   var time = appt.time || appt.apptTime || '';
@@ -25339,7 +25332,7 @@ function _otdPopulateCloser() {
   if (!sel) return;
   while (sel.options.length > 1) sel.remove(1);
   var role = getActiveRole();
-  var uname = (localStorage.getItem('ce_user_name') || '').trim();
+  var uname = (localStorage.getItem('wc_user_name') || '').trim();
   if (role === 'closer' && uname) {
     var opt = document.createElement('option');
     opt.value = uname; opt.textContent = uname;
@@ -25396,7 +25389,7 @@ function _otdPopulateCloser() {
         lat:       _otdLat,
         lng:       _otdLng,
         result:    'Pending',
-        repName:   localStorage.getItem('ce_user_name') || '',
+        repName:   localStorage.getItem('wc_user_name') || '',
       };
 
       var appts = loadAppointments();
@@ -25611,12 +25604,12 @@ function _otdHideConsentSheet() {
   if (s) s.classList.remove('open');
 }
 function otdConsentAllow() {
-  localStorage.setItem('ce_recording_consent', 'allow');
+  localStorage.setItem('wc_recording_consent', 'allow');
   _otdHideConsentSheet();
   _otdProceedToConfirm();
 }
 function otdConsentSkip() {
-  localStorage.setItem('ce_recording_consent', 'skip');
+  localStorage.setItem('wc_recording_consent', 'skip');
   _otdHideConsentSheet();
   _otdProceedToConfirm();
 }
@@ -25717,7 +25710,7 @@ function otdSkipSegment() {
   if (_otdFinalCallback) { var cb = _otdFinalCallback; _otdFinalCallback = null; cb(); }
 }
 function _otdCaptureFinalSegment(callback) {
-  if (!_otdSessActive || localStorage.getItem('ce_recording_consent') !== 'allow') { callback(); return; }
+  if (!_otdSessActive || localStorage.getItem('wc_recording_consent') !== 'allow') { callback(); return; }
   var mimeType = (_otdSessRec && _otdSessRec.mimeType) || 'audio/webm';
   var doorStart = _otdDoorRecStart;
   if (_otdSessRec && _otdSessRec.state !== 'inactive') _otdSessRec.requestData();
@@ -25804,7 +25797,7 @@ function _otdWriteFirestoreActivity(meta, recordingUrl) {
       recordingDuration: meta.duration || 0,
       transcriptStatus: 'pending',
       repUid: user.uid,
-      repName: localStorage.getItem('ce_user_name') || '',
+      repName: localStorage.getItem('wc_user_name') || '',
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       lat: meta.lat || null,
       lng: meta.lng || null,
@@ -25815,7 +25808,7 @@ function _otdWriteFirestoreActivity(meta, recordingUrl) {
 
 /* ─── IndexedDB Offline Queue ─── */
 var _otdIDB = null;
-var OTD_IDB_NAME  = 'ce_recordings_queue';
+var OTD_IDB_NAME  = 'wc_recordings_queue';
 var OTD_IDB_STORE = 'queue';
 
 function _otdInitIDB(callback) {
@@ -26036,7 +26029,7 @@ function postWinRaw(who, what) {
 }
 
 function postWin(message) {
-  const name = localStorage.getItem('ce_user_name') || 'Someone';
+  const name = localStorage.getItem('wc_user_name') || 'Someone';
   postWinRaw(name, message || 'scored a win! 🏆');
 }
 
@@ -26277,8 +26270,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var sel = document.getElementById('ma-impersonate-select');
     if (!sel || !sel.value) return;
     var parts = sel.value.split('::');
-    localStorage.setItem('ce_impersonate_name', parts[0]);
-    localStorage.setItem('ce_impersonate_role', parts[1] || 'canvasser');
+    localStorage.setItem('wc_impersonate_name', parts[0]);
+    localStorage.setItem('wc_impersonate_role', parts[1] || 'canvasser');
     applyImpersonateBanner();
     try { closeMasterAdmin && closeMasterAdmin(); } catch(_) {}
     try { renderDashboard && renderDashboard(); } catch(_) {}
@@ -26287,8 +26280,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // Exit impersonation button
   var exitBtn = document.getElementById('impersonate-exit');
   if (exitBtn) exitBtn.addEventListener('click', function() {
-    localStorage.removeItem('ce_impersonate_name');
-    localStorage.removeItem('ce_impersonate_role');
+    localStorage.removeItem('wc_impersonate_name');
+    localStorage.removeItem('wc_impersonate_role');
     applyImpersonateBanner();
     try { applyRoleUI && applyRoleUI(); } catch(_) {}
     try { renderDashboard && renderDashboard(); } catch(_) {}
@@ -26303,10 +26296,10 @@ var REMINDER_WINDOWS_SW = [
   { ms:     10*60*1000, label: '10 minutes' },
 ];
 function _loadPendingReminders() {
-  try { return JSON.parse(localStorage.getItem('ce_pending_reminders') || '[]'); } catch(_) { return []; }
+  try { return JSON.parse(localStorage.getItem('wc_pending_reminders') || '[]'); } catch(_) { return []; }
 }
 function _savePendingReminders(arr) {
-  try { localStorage.setItem('ce_pending_reminders', JSON.stringify(arr)); } catch(_) {}
+  try { localStorage.setItem('wc_pending_reminders', JSON.stringify(arr)); } catch(_) {}
 }
 function scheduleSwReminder(appt) {
   if (!('serviceWorker' in navigator)) return;
