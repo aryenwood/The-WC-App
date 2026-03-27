@@ -4471,153 +4471,74 @@
     }
     .btn-submit:active { transform: scale(0.97); box-shadow: 0 0 12px rgba(20,143,152,0.14); }
 
-    /* ── Splash screen — Sprint 2: Branded dark gradient ─────────────────── */
+    /* ── Splash screen ─────────────────────────────────────────────────── */
     #splash {
-      position: fixed; inset: 0; z-index: 9999;
+      position: fixed; inset: 0; z-index: var(--z-splash);
       background: #030c12;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      gap: 0;
-      transition: opacity 0.50s var(--ease-out), transform 0.50s var(--ease-out);
+      transition: opacity 0.5s var(--ease-out);
       overflow: hidden;
     }
-    #splash.splash--hidden {
-      opacity: 0;
-      transform: scale(1.05);
-      pointer-events: none;
+    #splash.splash--hidden { opacity: 0; pointer-events: none; }
+    /* Color pulse ring — expands from center on org reveal */
+    #splash-pulse {
+      position: absolute; width: 0; height: 0; border-radius: 50%;
+      opacity: 0; pointer-events: none;
+      transition: none;
     }
-    /* Galaxy nebula clouds — slow rotating */
-    #splash::before {
-      content: '';
-      position: absolute;
-      inset: -60%;
-      pointer-events: none;
-      background:
-        radial-gradient(ellipse 65% 45% at 32% 58%, rgba(26,107,122,0.38) 0%, transparent 65%),
-        radial-gradient(ellipse 45% 65% at 70% 26%, rgba(30,200,213,0.18) 0%, transparent 58%),
-        radial-gradient(ellipse 85% 38% at 50% 88%, rgba(10,50,65,0.55) 0%, transparent 65%),
-        radial-gradient(ellipse 32% 52% at 16% 20%, rgba(30,200,213,0.12) 0%, transparent 55%),
-        radial-gradient(ellipse 55% 32% at 82% 72%, rgba(26,107,122,0.28) 0%, transparent 60%),
-        radial-gradient(ellipse 40% 40% at 58% 42%, rgba(20,143,152,0.10) 0%, transparent 50%);
-      animation: nebulaRotate 40s linear infinite;
+    #splash-pulse.fire {
+      width: 200vmax; height: 200vmax;
+      margin-left: -100vmax; margin-top: -100vmax;
+      opacity: 0.25;
+      transition: width 0.8s var(--ease-out), height 0.8s var(--ease-out),
+                  margin 0.8s var(--ease-out), opacity 1.2s ease-out;
     }
-    /* Dense starfield — twinkling */
-    #splash::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background-image:
-        radial-gradient(1px 1px at 4%  8%,  rgba(30,200,213,0.90) 50%, transparent 100%),
-        radial-gradient(1px 1px at 11% 31%, rgba(255,255,255,0.75) 50%, transparent 100%),
-        radial-gradient(1.5px 1.5px at 17% 72%, rgba(30,200,213,0.85) 50%, transparent 100%),
-        radial-gradient(1px 1px at 23% 14%, rgba(255,255,255,0.60) 50%, transparent 100%),
-        radial-gradient(1px 1px at 29% 88%, rgba(30,200,213,0.70) 50%, transparent 100%),
-        radial-gradient(2px 2px at 36% 48%, rgba(255,255,255,0.90) 50%, transparent 100%),
-        radial-gradient(1px 1px at 41% 5%,  rgba(30,200,213,0.65) 50%, transparent 100%),
-        radial-gradient(1px 1px at 46% 63%, rgba(255,255,255,0.55) 50%, transparent 100%),
-        radial-gradient(1.5px 1.5px at 53% 27%, rgba(30,200,213,0.80) 50%, transparent 100%),
-        radial-gradient(1px 1px at 59% 79%, rgba(255,255,255,0.70) 50%, transparent 100%),
-        radial-gradient(1px 1px at 64% 17%, rgba(30,200,213,0.60) 50%, transparent 100%),
-        radial-gradient(2px 2px at 71% 52%, rgba(255,255,255,0.85) 50%, transparent 100%),
-        radial-gradient(1px 1px at 76% 93%, rgba(30,200,213,0.75) 50%, transparent 100%),
-        radial-gradient(1px 1px at 83% 36%, rgba(255,255,255,0.50) 50%, transparent 100%),
-        radial-gradient(1.5px 1.5px at 89% 61%, rgba(30,200,213,0.88) 50%, transparent 100%),
-        radial-gradient(1px 1px at 94% 22%, rgba(255,255,255,0.65) 50%, transparent 100%),
-        radial-gradient(1px 1px at 97% 76%, rgba(30,200,213,0.55) 50%, transparent 100%),
-        radial-gradient(1px 1px at 7%  55%, rgba(255,255,255,0.45) 50%, transparent 100%),
-        radial-gradient(1px 1px at 49% 96%, rgba(30,200,213,0.70) 50%, transparent 100%),
-        radial-gradient(2px 2px at 15% 42%, rgba(255,255,255,0.80) 50%, transparent 100%),
-        radial-gradient(1px 1px at 63% 38%, rgba(30,200,213,0.50) 50%, transparent 100%),
-        radial-gradient(1px 1px at 31% 24%, rgba(255,255,255,0.40) 50%, transparent 100%),
-        radial-gradient(1.5px 1.5px at 78% 11%, rgba(30,200,213,0.95) 50%, transparent 100%),
-        radial-gradient(1px 1px at 9%  83%, rgba(255,255,255,0.60) 50%, transparent 100%),
-        radial-gradient(1px 1px at 55% 58%, rgba(30,200,213,0.45) 50%, transparent 100%),
-        radial-gradient(1px 1px at 87% 44%, rgba(255,255,255,0.35) 50%, transparent 100%),
-        radial-gradient(2px 2px at 44% 19%, rgba(30,200,213,0.80) 50%, transparent 100%),
-        radial-gradient(1px 1px at 68% 67%, rgba(255,255,255,0.70) 50%, transparent 100%);
-      background-size: 100% 100%;
-      animation: starTwinkle 3.5s ease-in-out infinite alternate;
-    }
-    @keyframes nebulaRotate {
-      0%   { transform: rotate(0deg) scale(1); }
-      50%  { transform: rotate(180deg) scale(1.06); }
-      100% { transform: rotate(360deg) scale(1); }
-    }
-    @keyframes starTwinkle {
-      0%   { opacity: 0.55; }
-      100% { opacity: 1; }
-    }
-    @keyframes splashLogoFlash {
-      0%   { opacity: 0; transform: scale(0.72); filter: brightness(6) blur(12px); }
-      30%  { opacity: 1; transform: scale(1.10); filter: brightness(2.5) blur(0px); }
-      60%  { opacity: 1; transform: scale(1.04); filter: brightness(1.4) blur(0px); }
-      100% { opacity: 1; transform: scale(1);    filter: brightness(1) blur(0px); }
-    }
-    @keyframes logoFlashBurst {
-      0%   { opacity: 0;   transform: translate(-50%, -50%) scale(0.2); }
-      18%  { opacity: 0.9; transform: translate(-50%, -50%) scale(1.1); }
-      100% { opacity: 0;   transform: translate(-50%, -50%) scale(2.4); }
-    }
-    @keyframes splashTaglineIn {
-      0%   { opacity: 0; transform: translateY(8px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes splashBarFill {
-      0%   { width: 0%; }
-      100% { width: 100%; }
-    }
-    @keyframes splashBarAppear {
-      0%   { opacity: 0; }
-      100% { opacity: 1; }
-    }
-
+    #splash-pulse.fade { opacity: 0; transition: opacity 0.4s ease-out; }
+    /* Logo stack */
     #splash-logo-wrap {
-      display: flex; flex-direction: column;
-      align-items: center; gap: 22px;
       position: relative; z-index: 1;
+      display: flex; flex-direction: column; align-items: center; gap: 16px;
     }
-    /* Flash burst that radiates out from behind the logo */
-    #splash-logo-wrap::before {
-      content: '';
-      position: absolute;
-      top: 40%; left: 50%;
-      width: 280px; height: 280px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(30,200,213,0.55) 35%, transparent 70%);
-      pointer-events: none;
-      animation: logoFlashBurst 0.85s ease-out 0.15s both;
-      z-index: -1;
+    #splash-logo-stack {
+      position: relative; width: 160px; height: 160px;
+    }
+    #splash-logo, #splash-org-logo {
+      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;
     }
     #splash-logo {
-      width: 180px; height: auto;
-      border-radius: 0;
-      animation: splashLogoFlash 0.90s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+      opacity: 0; transform: scale(0.8);
+      animation: splashIn 0.7s var(--ease-out) 0.1s both;
+    }
+    #splash-org-logo {
+      opacity: 0; transform: scale(0.7); filter: blur(6px);
+      transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-spring), filter 0.5s ease-out;
+    }
+    #splash-org-logo.visible {
+      opacity: 1; transform: scale(1); filter: blur(0);
+    }
+    @keyframes splashIn {
+      0%   { opacity: 0; transform: scale(0.8); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    /* WC logo dissolve-out state */
+    #splash-logo.dissolve {
+      opacity: 0; transform: scale(1.2); filter: blur(16px);
+      transition: opacity 0.5s ease-in, transform 0.5s ease-in, filter 0.4s ease-in;
     }
     #splash-tagline {
-      font-family: var(--font-body);
-      font-size: 12px; font-weight: 400;
-      color: rgba(30, 200, 213, 0.80);
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      margin-top: -12px;
-      animation: splashTaglineIn 0.50s var(--ease-out) 0.90s both;
+      font-family: var(--font-body); font-size: 12px; font-weight: 400;
+      color: rgba(30,200,213,0.7); letter-spacing: 0.12em; text-transform: uppercase;
+      opacity: 0; animation: splashIn 0.5s var(--ease-out) 0.6s both;
     }
-    #splash-bar-wrap {
-      position: absolute; bottom: 12%; left: 50%;
-      transform: translateX(-50%);
-      width: 140px; height: 2px;
-      border-radius: 99px;
-      background: rgba(30,200,213,0.12);
-      overflow: hidden;
-      animation: splashBarAppear 0.3s ease 0.6s both;
+    #splash-tagline.hide { opacity: 0 !important; transition: opacity 0.3s; }
+    #splash-org-name {
+      font-family: var(--font-display); font-size: 20px; font-weight: 800;
+      color: #fff; letter-spacing: 0.02em; text-align: center;
+      opacity: 0; transform: translateY(6px);
+      transition: opacity 0.5s var(--ease-out), transform 0.5s var(--ease-out);
     }
-    #splash-bar {
-      height: 100%; width: 0%; border-radius: 99px;
-      background: linear-gradient(90deg, #1a6b7a 0%, var(--amber-bright) 50%, #30e8f5 100%);
-      box-shadow: 0 0 12px rgba(30,200,213,0.80), 0 0 28px rgba(30,200,213,0.35);
-      animation: splashBarFill 1.3s cubic-bezier(0.4, 0, 0.2, 1) 0.35s both;
-    }
+    #splash-org-name.visible { opacity: 1; transform: translateY(0); }
   /* ── Business Card Modal ─────────────────────────────────────────────── */
   #bcard-overlay {
     position: fixed; inset: 0; z-index: 9000;
@@ -8316,29 +8237,16 @@
 <div id="orb-br" aria-hidden="true"></div>
 <div id="orb-center" aria-hidden="true"></div>
 
-<!-- ── Splash screen — cinematic video splash ── -->
+<!-- ── Splash screen ── -->
 <div id="splash">
-  <video
-    id="splash-video"
-    src="splash.mp4"
-    autoplay
-    muted
-    playsinline
-    style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0"
-  ></video>
-  <!-- Canvas for dissolve particle transition -->
-  <canvas id="splash-org-canvas" style="position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;display:none"></canvas>
-  <!-- WC logo + org logo layered for cross-dissolve -->
-  <div id="splash-logo-wrap" style="display:none;position:relative;z-index:2;flex-direction:column;align-items:center;gap:22px">
-    <div id="splash-logo-stack" style="position:relative;width:180px;height:180px">
-      <img id="splash-logo" src="W.png" alt="WC App" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity 0.8s ease-out,transform 0.8s ease-out,filter 0.8s ease-out" />
-      <img id="splash-org-logo" src="" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transform:scale(0.85);filter:blur(8px);transition:opacity 1s ease-out 0.2s,transform 1s cubic-bezier(0.34,1.56,0.64,1) 0.2s,filter 0.8s ease-out 0.3s" />
+  <div id="splash-pulse"></div>
+  <div id="splash-logo-wrap">
+    <div id="splash-logo-stack">
+      <img id="splash-logo" src="W.png" alt="WC App" />
+      <img id="splash-org-logo" src="" alt="" />
     </div>
-    <div id="splash-tagline" style="font-size:12px;color:rgba(30,200,213,0.8);letter-spacing:0.12em;text-transform:uppercase">The D2D Sales Platform</div>
-    <div id="splash-org-name" style="opacity:0;font-family:'Outfit',sans-serif;font-size:22px;font-weight:800;color:#fff;letter-spacing:0.02em;text-align:center;transition:opacity 0.6s ease-out,transform 0.6s ease-out;transform:translateY(8px)"></div>
-  </div>
-  <div id="splash-bar-wrap">
-    <div id="splash-bar"></div>
+    <div id="splash-tagline">The D2D Sales Platform</div>
+    <div id="splash-org-name"></div>
   </div>
 </div>
 
@@ -14843,109 +14751,58 @@ function _dismissSplash() {
   }, 460);
 }
 
-// ── wcSplash API — controls the cinematic video splash ──────────────────────
+// ── wcSplash API — clean rebuild ─────────────────────────────────────────────
 (function() {
-  var _LOOP_FRAME = 230;
-  var _FPS = 60;
-  var _LOOP_TIME = _LOOP_FRAME / _FPS; // ~3.833s
-
-  // Wire video loop: pause at loop point and jump back each time
-  function _initSplashVideo() {
-    var vid = document.getElementById('splash-video');
-    if (!vid) return;
-    vid.addEventListener('timeupdate', function() {
-      if (vid.currentTime >= _LOOP_TIME) {
-        vid.currentTime = 0;
-      }
-    });
-    vid.addEventListener('error', function() {
-      // Fallback: show static logo if video fails
-      vid.style.display = 'none';
-      var wrap = document.getElementById('splash-logo-wrap');
-      if (wrap) wrap.style.display = 'flex';
-    });
-  }
-
-  // Org reveal — WC logo dissolves into org logo with particle burst
+  // Org reveal: WC logo → color pulse → org logo materializes
   function _revealOrg(orgName, orgLogoUrl, orgColor) {
-    var canvas = document.getElementById('splash-org-canvas');
-    var vid = document.getElementById('splash-video');
-    var wcLogo = document.getElementById('splash-logo');
-    var orgLogo = document.getElementById('splash-org-logo');
-    var orgNameEl = document.getElementById('splash-org-name');
-    var tagline = document.getElementById('splash-tagline');
-    var logoWrap = document.getElementById('splash-logo-wrap');
+    if (_splashDismissed) return;
+    var wcLogo    = document.getElementById('splash-logo');
+    var orgLogo   = document.getElementById('splash-org-logo');
+    var pulse     = document.getElementById('splash-pulse');
+    var tagline   = document.getElementById('splash-tagline');
+    var nameEl    = document.getElementById('splash-org-name');
+    var color     = orgColor || '#148f98';
 
-    if (!orgLogoUrl) { setTimeout(function() { window.wcSplash.dismiss(); }, 800); return; }
+    // No org logo → just dismiss
+    if (!orgLogoUrl) { window.wcSplash.dismiss(); return; }
 
-    var color = orgColor || '#148f98';
-    function hexToRgb(hex) {
-      hex = (hex || '#148f98').replace('#','');
-      if (hex.length !== 6) hex = '148f98';
-      return { r: parseInt(hex.slice(0,2),16), g: parseInt(hex.slice(2,4),16), b: parseInt(hex.slice(4,6),16) };
-    }
-    var rgb = hexToRgb(color);
-    if (logoWrap) logoWrap.style.display = 'flex';
+    // Preload org logo
     if (orgLogo) orgLogo.src = orgLogoUrl;
-    if (vid) { vid.style.transition = 'opacity 0.6s ease-out'; vid.style.opacity = '0.3'; setTimeout(function() { vid.pause(); }, 600); }
 
-    // Particle canvas setup
-    var particlesRunning = false, particles = [], ctx, W, H;
-    if (canvas) {
-      canvas.style.display = 'block';
-      ctx = canvas.getContext('2d'); W = canvas.offsetWidth; H = canvas.offsetHeight;
-      var dpr = window.devicePixelRatio || 1; canvas.width = W * dpr; canvas.height = H * dpr; ctx.scale(dpr, dpr);
-      var cx = W / 2, cy = H / 2 - 30;
-      for (var i = 0; i < 60; i++) {
-        var angle = Math.random() * Math.PI * 2, speed = 0.5 + Math.random() * 2.5, baseLife = 40 + Math.random() * 40;
-        particles.push({ x: cx + (Math.random()-0.5)*80, y: cy + (Math.random()-0.5)*80, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed, size: 1+Math.random()*3, life: baseLife, maxLife: baseLife, teal: Math.random()>0.5 });
+    // 0.8s — Dissolve WC logo out
+    setTimeout(function() {
+      if (wcLogo) wcLogo.classList.add('dissolve');
+      if (tagline) tagline.classList.add('hide');
+      // Fire color pulse
+      if (pulse) {
+        pulse.style.background = 'radial-gradient(circle, ' + color + ' 0%, transparent 70%)';
+        pulse.classList.add('fire');
       }
-    }
-    function animateParticles() {
-      if (!particlesRunning || !ctx) return;
-      ctx.clearRect(0,0,W,H); var alive = false;
-      for (var j = 0; j < particles.length; j++) {
-        var p = particles[j]; if (p.life <= 0) continue; alive = true;
-        p.x += p.vx; p.y += p.vy; p.vy += 0.02; p.life--;
-        var alpha = (p.life/p.maxLife)*0.8, r2 = p.size*(p.life/p.maxLife);
-        ctx.shadowBlur = r2*3;
-        if (p.teal) { ctx.fillStyle='rgba('+rgb.r+','+rgb.g+','+rgb.b+','+alpha+')'; ctx.shadowColor='rgba('+rgb.r+','+rgb.g+','+rgb.b+',0.6)'; }
-        else { ctx.fillStyle='rgba(255,255,255,'+alpha+')'; ctx.shadowColor='rgba(255,255,255,0.4)'; }
-        ctx.beginPath(); ctx.arc(p.x,p.y,r2,0,Math.PI*2); ctx.fill();
+    }, 800);
+
+    // 1.4s — Org logo fades in
+    setTimeout(function() {
+      if (orgLogo) orgLogo.classList.add('visible');
+      if (pulse) pulse.classList.add('fade');
+    }, 1400);
+
+    // 2.0s — Org name
+    setTimeout(function() {
+      if (nameEl && orgName) {
+        nameEl.textContent = orgName;
+        nameEl.classList.add('visible');
       }
-      ctx.shadowBlur = 0;
-      if (alive) requestAnimationFrame(animateParticles);
-    }
-    // Phase 1 (600ms): Dissolve WC logo, fire particles
-    setTimeout(function() {
-      if (wcLogo) { wcLogo.style.opacity='0'; wcLogo.style.transform='scale(1.15)'; wcLogo.style.filter='blur(12px)'; }
-      if (canvas) { particlesRunning = true; requestAnimationFrame(animateParticles); }
-      if (tagline) { tagline.style.transition='opacity 0.4s ease-out'; tagline.style.opacity='0'; }
-    }, 600);
-    // Phase 2 (1200ms): Org logo crystallizes in
-    setTimeout(function() {
-      if (orgLogo) { orgLogo.style.opacity='1'; orgLogo.style.transform='scale(1)'; orgLogo.style.filter='blur(0)'; }
-    }, 1200);
-    // Phase 3 (1800ms): Org name fades in
-    setTimeout(function() {
-      if (orgNameEl && orgName) { orgNameEl.textContent=orgName; orgNameEl.style.opacity='1'; orgNameEl.style.transform='translateY(0)'; }
-    }, 1800);
-    // Phase 4 (3200ms): Dismiss
-    setTimeout(function() { window.wcSplash.dismiss(); }, 3200);
+    }, 2000);
+
+    // 3.0s — Dismiss
+    setTimeout(function() { window.wcSplash.dismiss(); }, 3000);
   }
 
   window.wcSplash = {
-    init: _initSplashVideo,
+    init: function() {},  // no video to init
     revealOrg: _revealOrg,
     dismiss: _dismissSplash,
   };
-
-  // Auto-init on DOM ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', _initSplashVideo);
-  } else {
-    _initSplashVideo();
-  }
 })();
 
 function _initApp() {
