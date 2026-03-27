@@ -12199,7 +12199,7 @@ async function drainToFirestore() {
         var member = team[k];
         var memberDocId = toDocId(member.name);
         batch3.set(
-          fbDb.collection('organizations').doc(uid).collection('team').doc(memberDocId),
+          fbDb.collection('organizations').doc(orgId).collection('team').doc(memberDocId),
           Object.assign({}, member, { repUid: uid, syncedAt: Date.now() }),
           { merge: true }
         );
@@ -12313,6 +12313,7 @@ async function drainToFirestore() {
 function saveOrgSettingsToFirestore() {
   var user = (typeof fbAuth !== 'undefined') ? fbAuth.currentUser : null;
   if (!user || !navigator.onLine) return;
+  var orgId = localStorage.getItem('wc_org_id') || user.uid;
   var s = {};
   try { s = _safeAdminSettings(); } catch(_) {}
   var payload = {
@@ -12325,11 +12326,12 @@ function saveOrgSettingsToFirestore() {
     appName:        localStorage.getItem('wc_app_name')      || '',
     dispoEmailTo:   s.dispoEmailTo   || '',
     dispoEmailFrom: s.dispoEmailFrom || '',
+    notificationEmail: s.notificationEmail || '',
     updatedAt:      firebase.firestore.FieldValue.serverTimestamp()
   };
-  fbDb.collection('organizations').doc(user.uid).set(payload, { merge: true })
+  fbDb.collection('organizations').doc(orgId).set(payload, { merge: true })
     .then(function() {
-      console.log('[Firestore] Org settings saved to organizations/' + user.uid);
+      console.log('[Firestore] Org settings saved to organizations/' + orgId);
     })
     .catch(function(e) {
       console.warn('[Firestore] Org settings save failed:', e.code, e.message);
@@ -12585,8 +12587,9 @@ function applyOrgBranding(orgId, org) {
 
       // 5. Read org settings from Firestore → apply to this device (managers/SA only;
       //    reps load from wc_org_id in step 7 below)
+      var _orgId5 = localStorage.getItem('wc_org_id') || user.uid;
       if (navigator.onLine) {
-        fbDb.collection('organizations').doc(user.uid).get()
+        fbDb.collection('organizations').doc(_orgId5).get()
           .then(function(doc) {
             if (doc.exists) {
               var _d5 = doc.data();
@@ -20482,7 +20485,7 @@ document.getElementById('ma-logo-upload')?.addEventListener('change', e => {
           const url = await storageRef.getDownloadURL();
           s.logoUrl = url;
           localStorage.setItem('wc_admin', JSON.stringify(s));
-          await fbDb.collection('organizations').doc(user.uid).set({ logoUrl: url }, { merge: true });
+          await fbDb.collection('organizations').doc(localStorage.getItem('wc_org_id') || user.uid).set({ logoUrl: url }, { merge: true });
         } catch(uploadErr) { console.warn('[Logo] Storage upload failed:', uploadErr); }
       }
     } catch(_) { showToast('Upload failed.'); }
@@ -21807,7 +21810,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
             const url = await storageRef.getDownloadURL();
             s.logoUrl = url;
             localStorage.setItem('wc_admin', JSON.stringify(s));
-            await fbDb.collection('organizations').doc(user.uid).set({ logoUrl: url }, { merge: true });
+            await fbDb.collection('organizations').doc(localStorage.getItem('wc_org_id') || user.uid).set({ logoUrl: url }, { merge: true });
           } catch(uploadErr) { console.warn('[Logo] Storage upload failed:', uploadErr); }
         }
       } catch(e) { showToast('Failed to save logo.'); }
@@ -21845,7 +21848,7 @@ document.getElementById('admin-add-member').addEventListener('click', () => {
       const user = fbAuth.currentUser;
       if (user) {
         try {
-          await fbDb.collection('organizations').doc(user.uid).update({
+          await fbDb.collection('organizations').doc(localStorage.getItem('wc_org_id') || user.uid).update({
             logoUrl: firebase.firestore.FieldValue.delete()
           });
         } catch(e) { console.warn('[Logo] Failed to clear logoUrl from Firestore:', e); }
@@ -24033,7 +24036,7 @@ function _openPendingAssignments() {
         const user = fbAuth.currentUser;
         if (user) {
           const docId = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || ('rep_' + Date.now());
-          fbDb.collection('organizations').doc(user.uid)
+          fbDb.collection('organizations').doc(localStorage.getItem('wc_org_id') || user.uid)
             .collection('team').doc(docId)
             .set({ name, email: user.email || '', phone, role: 'closer' }, { merge: true })
             .catch(e => console.warn('[onboard] team Firestore:', e));
