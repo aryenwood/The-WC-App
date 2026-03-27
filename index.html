@@ -12150,17 +12150,17 @@ async function drainToFirestore() {
   var totalWritten = 0;
   var writes = [];
 
-  // ── addresses (log_entries) ──────────────────────────────────────────────
+  // ── entries (log_entries) → organizations/{orgId}/entries/{entryId} ──────
   if (entities.includes('log_entries')) {
     var entries = DataStore.loadEntries();
     if (entries.length) {
       var batch = fbDb.batch(); var n = 0;
       for (var i = 0; i < entries.length; i++) {
         var entry = entries[i];
-        var docId = toDocId(entry.address);
+        var entryDocId = toDocId(entry.id || entry.address);
         batch.set(
-          fbDb.collection('addresses').doc(docId),
-          Object.assign(stripMedia(entry), { repUid: uid, syncedAt: Date.now() }),
+          fbDb.collection('organizations').doc(orgId).collection('entries').doc(entryDocId),
+          Object.assign(stripMedia(entry), { orgId: orgId, repUid: uid, syncedAt: Date.now() }),
           { merge: true }
         );
         totalWritten++; n++;
@@ -12170,17 +12170,16 @@ async function drainToFirestore() {
     }
   }
 
-  // ── appointments ─────────────────────────────────────────────────────────
+  // ── appointments → organizations/{orgId}/appointments/{apptId} ─────────
   if (entities.includes('appointments')) {
     var appts = DataStore.loadAppointments();
     if (appts.length) {
       var batch2 = fbDb.batch(); var n2 = 0;
       for (var j = 0; j < appts.length; j++) {
         var appt = appts[j];
-        var addressId = toDocId([appt.street, appt.city, appt.state].filter(Boolean).join(', '));
         batch2.set(
-          fbDb.collection('appointments').doc(appt.id),
-          Object.assign(stripMedia(appt), { addressId: addressId, repUid: uid, syncedAt: Date.now() }),
+          fbDb.collection('organizations').doc(orgId).collection('appointments').doc(appt.id),
+          Object.assign(stripMedia(appt), { orgId: orgId, repUid: uid, syncedAt: Date.now() }),
           { merge: true }
         );
         totalWritten++; n2++;
@@ -12210,7 +12209,7 @@ async function drainToFirestore() {
     }
   }
 
-  // ── wins ─────────────────────────────────────────────────────────────────
+  // ── wins → organizations/{orgId}/wins/{winId} ──────────────────────────
   if (entities.includes('wins')) {
     var wins = DataStore.loadWins();
     if (wins.length) {
@@ -12218,8 +12217,8 @@ async function drainToFirestore() {
       for (var m = 0; m < wins.length; m++) {
         var win = wins[m];
         batch4.set(
-          fbDb.collection('wins').doc(win.id),
-          Object.assign({}, win, { repUid: uid, syncedAt: Date.now() }),
+          fbDb.collection('organizations').doc(orgId).collection('wins').doc(win.id),
+          Object.assign({}, win, { orgId: orgId, repUid: uid, syncedAt: Date.now() }),
           { merge: true }
         );
         totalWritten++; n4++;
@@ -12266,8 +12265,8 @@ async function drainToFirestore() {
         if (!f.id) return;
         var stripped = Object.assign({}, f); delete stripped.dataUrl;
         batchF.set(
-          fbDb.collection('addresses').doc(toDocId(custId)).collection('files').doc(toDocId(f.id)),
-          Object.assign(stripped, { repUid: uid, syncedAt: Date.now() }),
+          fbDb.collection('organizations').doc(orgId).collection('entries').doc(toDocId(custId)).collection('files').doc(toDocId(f.id)),
+          Object.assign(stripped, { orgId: orgId, repUid: uid, syncedAt: Date.now() }),
           { merge: true }
         );
         totalWritten++; nF++;
@@ -12295,10 +12294,7 @@ async function drainToFirestore() {
         '[Firestore] Drain blocked by security rules — no documents written, queue preserved.\n' +
         'Fix: open Firebase Console → Firestore Database → Rules and allow authenticated writes.\n' +
         'Minimum rules needed:\n' +
-        '  match /addresses/{d}    { allow write: if request.auth != null; }\n' +
-        '  match /appointments/{d} { allow write: if request.auth != null; }\n' +
-        '  match /wins/{d}         { allow write: if request.auth != null; }\n' +
-        '  match /organizations/{uid}/team/{d} { allow write: if request.auth.uid == uid; }\n' +
+        '  match /organizations/{orgId}/{sub}/{d} { allow read, write: if request.auth != null; }\n' +
         'Raw error:', err.message
       );
     } else {
@@ -12581,6 +12577,9 @@ function applyOrgBranding(orgId, org) {
 
       // 3b. Init push notifications (waits for SW ready before requesting token)
       if (typeof _initFCM === 'function') _initFCM();
+
+      // 3c. Start real-time Firestore sync for org data
+      if (typeof _initFirestoreSync === 'function') setTimeout(_initFirestoreSync, 2000);
 
       // 4. Drain any queued entities to Firestore (online only)
       if (navigator.onLine) drainToFirestore();
@@ -13221,6 +13220,8 @@ const DataStore = (() => {
     entries:      'wc_log_entries',
     appointments: 'wc_appointments',
     team:         'wc_team',
+    wins:         'wc_wins',
+    cardViews:    'wc_card_views',
   };
   const _cache = {};  // In-memory cache to avoid repeated JSON.parse
   function _read(key, fallback) {
@@ -16984,6 +16985,11 @@ function runDeferredGeocode() {
 window.addEventListener('online', runDeferredGeocode);
 window.addEventListener('online', function() {
   if (typeof drainToFirestore === 'function') setTimeout(drainToFirestore, 3000);
+  // Restart real-time sync listeners on reconnect
+  if (typeof _initFirestoreSync === 'function') setTimeout(function() {
+    _firestoreSyncActive = false; // force re-init
+    _initFirestoreSync();
+  }, 4000);
 });
 
 // ── v78: Offline detection banner ─────────────────────────────────────────
@@ -17025,7 +17031,10 @@ window.addEventListener('online', function() {
   // Set initial state (in case app loaded while already offline)
   if (!navigator.onLine) showOffline();
 
-  window.addEventListener('offline', showOffline);
+  window.addEventListener('offline', function() {
+    showOffline();
+    if (typeof _stopFirestoreSync === 'function') _stopFirestoreSync();
+  });
   window.addEventListener('online',  showRestored);
 })();
 
@@ -23850,6 +23859,89 @@ document.getElementById('appt-crm-list')?.addEventListener('click', function(e) 
 var _pendingAssignUnsub = null;
 var _pendingAssignAppts = [];
 
+// ── Real-time Firestore sync for org data ────────────────────────────────
+var _firestoreSyncUnsubs = [];
+var _firestoreSyncActive = false;
+
+function _initFirestoreSync() {
+  if (_firestoreSyncActive) return;
+  if (!fbAuth.currentUser || !navigator.onLine) return;
+  var orgId = localStorage.getItem('wc_org_id');
+  if (!orgId) return;
+  _firestoreSyncActive = true;
+
+  // Clean up any previous listeners
+  _firestoreSyncUnsubs.forEach(function(fn) { try { fn(); } catch(_) {} });
+  _firestoreSyncUnsubs = [];
+
+  var orgRef = fbDb.collection('organizations').doc(orgId);
+
+  // 1. Entries (log_entries) — org-scoped
+  _firestoreSyncUnsubs.push(
+    orgRef.collection('entries').onSnapshot(function(snap) {
+      var remote = [];
+      snap.forEach(function(doc) { remote.push(Object.assign({ _docId: doc.id }, doc.data())); });
+      if (!remote.length) return; // don't overwrite local with empty remote
+      // Merge: keep local entries not yet in remote, add remote entries
+      var local = DataStore.loadEntries();
+      var remoteIds = new Set(remote.map(function(r) { return r.id || r._docId; }));
+      var localOnly = local.filter(function(e) { return !remoteIds.has(e.id); });
+      var merged = remote.concat(localOnly);
+      merged.sort(function(a, b) { return (b.timestamp || 0) - (a.timestamp || 0); });
+      localStorage.setItem('wc_log_entries', JSON.stringify(merged));
+      console.log('[Sync] Entries: ' + remote.length + ' remote + ' + localOnly.length + ' local-only');
+    }, function(err) { console.warn('[Sync] Entries listener error:', err.code); })
+  );
+
+  // 2. Appointments — org-scoped
+  _firestoreSyncUnsubs.push(
+    orgRef.collection('appointments').onSnapshot(function(snap) {
+      var remote = [];
+      snap.forEach(function(doc) { remote.push(Object.assign({ _docId: doc.id }, doc.data())); });
+      if (!remote.length) return;
+      var local = DataStore.loadAppointments();
+      var remoteIds = new Set(remote.map(function(r) { return r.id || r._docId; }));
+      var localOnly = local.filter(function(a) { return !remoteIds.has(a.id); });
+      var merged = remote.concat(localOnly);
+      merged.sort(function(a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+      localStorage.setItem('wc_appointments', JSON.stringify(merged));
+      console.log('[Sync] Appointments: ' + remote.length + ' remote + ' + localOnly.length + ' local-only');
+    }, function(err) { console.warn('[Sync] Appointments listener error:', err.code); })
+  );
+
+  // 3. Team — org-scoped
+  _firestoreSyncUnsubs.push(
+    orgRef.collection('team').onSnapshot(function(snap) {
+      var remote = [];
+      snap.forEach(function(doc) { remote.push(Object.assign({ _docId: doc.id }, doc.data())); });
+      localStorage.setItem('wc_team', JSON.stringify(remote));
+      console.log('[Sync] Team: ' + remote.length + ' members');
+    }, function(err) { console.warn('[Sync] Team listener error:', err.code); })
+  );
+
+  // 4. Wins — org-scoped
+  _firestoreSyncUnsubs.push(
+    orgRef.collection('wins').orderBy('timestamp', 'desc').limit(100).onSnapshot(function(snap) {
+      var remote = [];
+      snap.forEach(function(doc) { remote.push(Object.assign({ _docId: doc.id }, doc.data())); });
+      var local = DataStore.loadWins();
+      var remoteIds = new Set(remote.map(function(r) { return r.id || r._docId; }));
+      var localOnly = local.filter(function(w) { return !remoteIds.has(w.id); });
+      var merged = remote.concat(localOnly);
+      localStorage.setItem('wc_wins', JSON.stringify(merged));
+      console.log('[Sync] Wins: ' + remote.length + ' remote + ' + localOnly.length + ' local-only');
+    }, function(err) { console.warn('[Sync] Wins listener error:', err.code); })
+  );
+
+  console.log('[Sync] Real-time listeners active for org ' + orgId);
+}
+
+function _stopFirestoreSync() {
+  _firestoreSyncUnsubs.forEach(function(fn) { try { fn(); } catch(_) {} });
+  _firestoreSyncUnsubs = [];
+  _firestoreSyncActive = false;
+}
+
 function _initPendingAssignListener() {
   // Only for managers/master_admins
   var role = getActiveRole();
@@ -23866,8 +23958,7 @@ function _initPendingAssignListener() {
   if (_pendingAssignUnsub) _pendingAssignUnsub();
 
   try {
-    _pendingAssignUnsub = fbDb.collection('appointments')
-      .where('orgId', '==', orgId)
+    _pendingAssignUnsub = fbDb.collection('organizations').doc(orgId).collection('appointments')
       .where('result', '==', 'pending_assignment')
       .onSnapshot(function(snap) {
         _pendingAssignAppts = [];
