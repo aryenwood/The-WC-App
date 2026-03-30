@@ -6,6 +6,9 @@ serve.py
 test.html
 apply_v71.py
 stitch-designs/
+wc_tradeshow_*.html
+wc_tradeshow_*.html.bak
+*.bak
 node_modules
 
 node_modules/
