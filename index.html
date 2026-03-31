@@ -7784,21 +7784,6 @@
   .pulse-item-dot--teal  { background: var(--teal);   box-shadow: 0 0 8px var(--teal); }
   .pulse-item-dot--purple { background: var(--purple);  box-shadow: 0 0 8px var(--purple); }
 
-  /* ── v76 Dashboard Rank Row ── */
-  #dash-rank-row {
-    display: flex; align-items: center; gap: 8px;
-    margin: 0 16px 12px; flex-wrap: nowrap;
-  }
-  #dash-rank-progress {
-    flex: 1; height: 5px; background: var(--g-border);
-    border-radius: 3px; overflow: hidden; min-width: 40px;
-  }
-  #dash-rank-progress-bar {
-    height: 100%; border-radius: 3px;
-    background: linear-gradient(90deg, var(--primary), var(--teal));
-    transition: width 0.8s var(--slide-up);
-  }
-
   /* ── v76 Follow-Up Queue ── */
   .fq-header { padding: 16px 0 8px; }
   .fq-title   { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--text); }
@@ -15880,49 +15865,34 @@ function renderGameStats(passedEntries, passedAppts) {
     [1,  '<span class="icon-svg" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> Getting Data','stat-xp--teal'],
   ]);
 
-  // v76: Rank badge row — compute rank from ALL-TIME data (not range-filtered)
+  // Tier progress bar — hidden for admins; hidden for reps until ≥1 door logged
   try {
-    const role2   = getActiveRole();
-    const myName2 = (localStorage.getItem('wc_user_name') || '').toLowerCase();
-    const allEntries2 = passedEntries ?? (() => { try { return JSON.parse(localStorage.getItem('wc_log_entries')||'[]'); } catch(_){return [];} })();
-    const allAppts2   = passedAppts   ?? (() => { try { return JSON.parse(localStorage.getItem('wc_appointments')||'[]'); } catch(_){return [];} })();
-    const myE2 = myName2 ? allEntries2.filter(e => (e.repName||e.name||'').toLowerCase()===myName2) : allEntries2;
-    const myA2 = myName2 ? allAppts2.filter(a   => (a.closer||a.repName||'').toLowerCase()===myName2) : allAppts2;
-    const allDoors2    = myE2.length;
-    const allContacts2 = myE2.filter(e => ['go-back','made-contact'].includes(e.status)).length;
-    const allSigned2   = myA2.filter(a => (a.result||'').toLowerCase()==='signed').length;
-    const score2       = allDoors2 + (allContacts2 * 3) + (allSigned2 * 10);
-    const rankData2    = _computeRepRank ? _computeRepRank(score2) : null;
-    if (rankData2) {
-      const rankRow  = document.getElementById('dash-rank-row');
-      const rankBadge = document.getElementById('dash-rank-badge');
-      const rankBar   = document.getElementById('dash-rank-progress-bar');
-      const rankScore = document.getElementById('dash-rank-score');
-      if (rankRow)   rankRow.style.display = '';
-      if (rankBadge) { rankBadge.className = 'rank-badge ' + rankData2.cls; rankBadge.textContent = rankData2.emoji + ' ' + rankData2.tier; }
-      const nextPts  = rankData2.tier==='Legend'?score2:rankData2.tier==='Elite'?500:rankData2.tier==='Pro'?200:75;
-      const pct2     = rankData2.tier==='Legend'?100:Math.min(100,Math.round(score2/nextPts*100));
-      if (rankBar)   rankBar.style.width = pct2 + '%';
-      if (rankScore) rankScore.textContent = score2 + ' pts';
-    }
-    // Tier progress bar — appointment-based tiers from patch
-    // Hidden for admins; hidden for reps until they have ≥1 door logged
     if (typeof renderTierProgress === 'function') {
       const tierEl = document.getElementById('dash-tier-progress');
       if (tierEl) {
         const tierRole = getActiveRole();
-        if (tierRole === 'super_admin' || tierRole === 'master_admin' || tierRole === 'manager') {
-          tierEl.style.display = 'none';
-        } else if (allDoors2 === 0) {
+        const storedRole = localStorage.getItem('wc_user_role') || '';
+        const isAdmin = ['super_admin','master_admin','manager'].indexOf(tierRole) !== -1
+                     || ['super_admin','master_admin','manager'].indexOf(storedRole) !== -1;
+        if (isAdmin) {
           tierEl.style.display = 'none';
         } else {
-          const now3 = new Date();
-          const monthAppts = myA2.filter(a => {
-            const d = new Date(a.datetime || a.createdAt || 0);
-            return d.getMonth() === now3.getMonth() && d.getFullYear() === now3.getFullYear();
-          }).length;
-          tierEl.style.display = '';
-          renderTierProgress(tierEl, monthAppts);
+          const myName2 = (localStorage.getItem('wc_user_name') || '').toLowerCase();
+          const allEntries2 = passedEntries ?? (() => { try { return JSON.parse(localStorage.getItem('wc_log_entries')||'[]'); } catch(_){return [];} })();
+          const allAppts2   = passedAppts   ?? (() => { try { return JSON.parse(localStorage.getItem('wc_appointments')||'[]'); } catch(_){return [];} })();
+          const myE2 = myName2 ? allEntries2.filter(e => (e.repName||e.name||'').toLowerCase()===myName2) : allEntries2;
+          const myA2 = myName2 ? allAppts2.filter(a   => (a.closer||a.repName||'').toLowerCase()===myName2) : allAppts2;
+          if (myE2.length === 0) {
+            tierEl.style.display = 'none';
+          } else {
+            const now3 = new Date();
+            const monthAppts = myA2.filter(a => {
+              const d = new Date(a.datetime || a.createdAt || 0);
+              return d.getMonth() === now3.getMonth() && d.getFullYear() === now3.getFullYear();
+            }).length;
+            tierEl.style.display = '';
+            renderTierProgress(tierEl, monthAppts);
+          }
         }
       }
     }
