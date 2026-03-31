@@ -3946,7 +3946,7 @@
     /* Sticky top bar */
     .cust-d-topbar {
       display: flex; align-items: center; gap: 12px;
-      padding: 12px 14px 12px;
+      padding: calc(12px + env(safe-area-inset-top, 0px)) 14px 12px;
       border-bottom: 1px solid var(--g-border);
       background: var(--bg);
       flex-shrink: 0;
@@ -4516,7 +4516,7 @@
       display: flex; flex-direction: column; align-items: center; gap: 0;
     }
     #splash-logo-stack {
-      position: relative; width: 120px; height: 120px;
+      position: relative; width: 110px; height: 110px;
     }
     #splash-logo, #splash-org-logo {
       position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;
@@ -4535,17 +4535,7 @@
       80%  { transform: scale(0.97) translateY(1px); }
       100% { opacity: 1; transform: scale(1) translateY(0); filter: brightness(1) blur(0); }
     }
-    /* Shimmer sweep across logo */
-    #splash-logo-stack::before {
-      content: ''; position: absolute; inset: -20%;
-      background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.08) 45%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.08) 55%, transparent 60%);
-      z-index: 10; pointer-events: none;
-      animation: shimmerSweep 2.5s ease-in-out 1s both;
-    }
-    @keyframes shimmerSweep {
-      0%   { transform: translateX(-120%); }
-      100% { transform: translateX(120%); }
-    }
+    /* Shimmer removed — was clipped to logo box, looked cheap */
     /* Breathing glow — heartbeat rhythm */
     #splash-glow {
       position: absolute; width: 280px; height: 280px;
@@ -14882,7 +14872,7 @@ function _dismissSplash() {
     return [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)];
   }
 
-  // Ambient floating particles — slow, elegant, always running
+  // Ambient embers — sparse, slow, full-screen depth
   function _startAmbient(canvas, color) {
     var ctx = canvas.getContext('2d');
     var dpr = window.devicePixelRatio || 1;
@@ -14890,30 +14880,33 @@ function _dismissSplash() {
     canvas.width = W * dpr; canvas.height = H * dpr;
     ctx.scale(dpr, dpr);
     var rgb = _hexToRgb(color);
-    var dots = [];
-    for (var i = 0; i < 40; i++) {
-      dots.push({
+    var embers = [];
+    for (var i = 0; i < 25; i++) {
+      embers.push({
         x: Math.random() * W, y: Math.random() * H,
-        vx: (Math.random() - 0.5) * 0.3, vy: -0.15 - Math.random() * 0.35,
-        size: 0.8 + Math.random() * 1.5, alpha: 0.1 + Math.random() * 0.3,
-        pulse: Math.random() * Math.PI * 2
+        vx: (Math.random() - 0.5) * 0.15,
+        vy: -0.1 - Math.random() * 0.2,
+        size: 0.5 + Math.random() * 1.2,
+        alpha: 0.05 + Math.random() * 0.15,
+        pulse: Math.random() * Math.PI * 2,
+        speed: 0.008 + Math.random() * 0.015
       });
     }
     function draw() {
       ctx.clearRect(0, 0, W, H);
-      for (var j = 0; j < dots.length; j++) {
-        var d = dots[j];
-        d.x += d.vx; d.y += d.vy;
-        d.pulse += 0.02;
-        var a = d.alpha * (0.6 + 0.4 * Math.sin(d.pulse));
-        if (d.y < -10) { d.y = H + 10; d.x = Math.random() * W; }
-        if (d.x < -10) d.x = W + 10; if (d.x > W + 10) d.x = -10;
+      for (var j = 0; j < embers.length; j++) {
+        var e = embers[j];
+        e.x += e.vx; e.y += e.vy;
+        e.pulse += e.speed;
+        var a = e.alpha * (0.5 + 0.5 * Math.sin(e.pulse));
+        if (e.y < -10) { e.y = H + 10; e.x = Math.random() * W; }
+        if (e.x < -10) e.x = W + 10; if (e.x > W + 10) e.x = -10;
         ctx.save();
         ctx.globalAlpha = a;
         ctx.fillStyle = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',1)';
-        ctx.shadowColor = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.6)';
-        ctx.shadowBlur = d.size * 6;
-        ctx.beginPath(); ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowColor = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.4)';
+        ctx.shadowBlur = e.size * 8;
+        ctx.beginPath(); ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
       }
       _ambientRaf = requestAnimationFrame(draw);
@@ -14923,46 +14916,74 @@ function _dismissSplash() {
 
   function _stopAmbient() { if (_ambientRaf) cancelAnimationFrame(_ambientRaf); _ambientRaf = 0; }
 
-  // Burst particles — explode outward from center on morph
-  function _burstParticles(canvas, color, cx, cy) {
+  // Full-screen smoke dissolve — embers + ash scatter across entire viewport
+  function _smokeDissolve(canvas, color, cx, cy) {
     var ctx = canvas.getContext('2d');
     var dpr = window.devicePixelRatio || 1;
     var W = canvas.width / dpr, H = canvas.height / dpr;
     var rgb = _hexToRgb(color);
-    var sparks = [];
-    for (var i = 0; i < 30; i++) {
-      var angle = (Math.PI * 2 / 30) * i + (Math.random() - 0.5) * 0.3;
-      var speed = 1.5 + Math.random() * 3;
-      sparks.push({
+    var particles = [];
+    // Ring of embers from center — fills the whole screen
+    for (var i = 0; i < 60; i++) {
+      var angle = (Math.PI * 2 / 60) * i + (Math.random() - 0.5) * 0.4;
+      var speed = 2 + Math.random() * 5;
+      var dist = Math.max(W, H) * 0.6; // travel far enough to fill viewport
+      particles.push({
         x: cx, y: cy,
-        vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
-        size: 1 + Math.random() * 2, life: 35 + Math.random() * 20,
-        maxLife: 35 + Math.random() * 20, bright: Math.random() > 0.5
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - Math.random() * 1.5,
+        size: 1.5 + Math.random() * 3,
+        life: 50 + Math.random() * 40,
+        maxLife: 50 + Math.random() * 40,
+        bright: Math.random() > 0.65,
+        drift: (Math.random() - 0.5) * 0.08
+      });
+    }
+    // Smoke puffs — larger, softer, rise slowly
+    for (var k = 0; k < 15; k++) {
+      particles.push({
+        x: cx + (Math.random() - 0.5) * 60,
+        y: cy + (Math.random() - 0.5) * 40,
+        vx: (Math.random() - 0.5) * 1.5,
+        vy: -0.5 - Math.random() * 1.5,
+        size: 8 + Math.random() * 20,
+        life: 60 + Math.random() * 30,
+        maxLife: 60 + Math.random() * 30,
+        bright: false, drift: 0, smoke: true
       });
     }
     function animate() {
-      for (var j = sparks.length - 1; j >= 0; j--) {
-        var p = sparks[j];
+      // Don't clear — let ambient draw handle that. Just draw on top.
+      for (var j = particles.length - 1; j >= 0; j--) {
+        var p = particles[j];
         p.x += p.vx; p.y += p.vy;
-        p.vx *= 0.97; p.vy *= 0.97;
+        p.vx *= 0.98; p.vy *= 0.98;
+        p.vx += p.drift || 0;
+        p.vy -= 0.02; // slight updraft
         p.life--;
-        if (p.life <= 0) { sparks.splice(j, 1); continue; }
-        var a = (p.life / p.maxLife) * 0.8;
-        var r = p.size * (0.3 + 0.7 * (p.life / p.maxLife));
+        if (p.life <= 0) { particles.splice(j, 1); continue; }
+        var progress = p.life / p.maxLife;
+        var a = progress * (p.smoke ? 0.06 : 0.7);
+        var r = p.smoke ? p.size * (1.5 - 0.5 * progress) : p.size * progress;
         ctx.save();
         ctx.globalAlpha = a;
-        if (p.bright) {
-          ctx.fillStyle = '#fff';
-          ctx.shadowColor = 'rgba(255,255,255,0.6)';
+        if (p.smoke) {
+          ctx.fillStyle = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',1)';
+          ctx.shadowColor = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.2)';
+          ctx.shadowBlur = r * 2;
+        } else if (p.bright) {
+          ctx.fillStyle = 'rgba(255,255,255,1)';
+          ctx.shadowColor = 'rgba(255,255,255,0.5)';
+          ctx.shadowBlur = r * 4;
         } else {
           ctx.fillStyle = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',1)';
-          ctx.shadowColor = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.8)';
+          ctx.shadowColor = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.7)';
+          ctx.shadowBlur = r * 5;
         }
-        ctx.shadowBlur = r * 5;
-        ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(0.5, r), 0, Math.PI * 2); ctx.fill();
         ctx.restore();
       }
-      if (sparks.length > 0) requestAnimationFrame(animate);
+      if (particles.length > 0) requestAnimationFrame(animate);
     }
     animate();
   }
@@ -15026,22 +15047,39 @@ function _dismissSplash() {
       }
     }, 1000);
 
-    // Phase 2 (1.5s): WC logo dissolves + burst particles
+    // Phase 2 (1.5s): WC logo dissolves — full-screen smoke + flash
     setTimeout(function() {
+      // Full-screen flash — brief colored pulse across entire viewport
+      if (splashEl) {
+        var flash = document.createElement('div');
+        flash.style.cssText = 'position:absolute;inset:0;background:radial-gradient(circle at 50% 42%,rgba(' + rgb.join(',') + ',0.3) 0%,rgba(255,255,255,0.08) 40%,transparent 70%);z-index:6;pointer-events:none;opacity:0;transition:opacity 0.15s ease-out;';
+        splashEl.appendChild(flash);
+        requestAnimationFrame(function() {
+          flash.style.opacity = '1';
+          setTimeout(function() {
+            flash.style.transition = 'opacity 0.8s ease-out';
+            flash.style.opacity = '0';
+            setTimeout(function() { flash.remove(); }, 900);
+          }, 150);
+        });
+      }
+      // Smoke dissolve — embers + ash across entire viewport
       if (canvas) {
         var rect = canvas.getBoundingClientRect();
-        _burstParticles(canvas, color, rect.width / 2, rect.height * 0.42);
+        _smokeDissolve(canvas, color, rect.width / 2, rect.height * 0.42);
       }
+      // WC logo burns out
       if (wcLogo) {
-        wcLogo.style.transition = 'opacity 0.6s ease-in, transform 0.6s ease-in, filter 0.5s ease-in';
+        wcLogo.style.transition = 'opacity 0.7s ease-in, transform 0.7s ease-in, filter 0.6s ease-in';
         wcLogo.style.opacity = '0';
-        wcLogo.style.transform = 'scale(1.12)';
-        wcLogo.style.filter = 'brightness(2.5) blur(5px)';
+        wcLogo.style.transform = 'scale(1.2)';
+        wcLogo.style.filter = 'brightness(4) blur(8px)';
       }
+      // Glow contracts to nothing
       if (glow) {
-        glow.style.transition = 'opacity 0.4s, transform 0.4s';
+        glow.style.transition = 'opacity 0.5s, transform 0.5s';
         glow.style.opacity = '0';
-        glow.style.transform = 'translate(-50%,-50%) scale(0.4)';
+        glow.style.transform = 'translate(-50%,-50%) scale(0.3)';
       }
     }, 1500);
 
