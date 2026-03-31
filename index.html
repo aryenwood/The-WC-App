@@ -25923,11 +25923,14 @@ function _otdPopulateCloser() {
         return;
       }
 
+      var _otdIsBestAvail = closerVal === 'best_available';
+
       var appt = {
         id:        Date.now().toString(36) + Math.random().toString(36).slice(2,6),
         createdAt: Date.now(),
-        datetime:  dt.value,
-        closer:    closerVal,
+        datetime:  _otdIsBestAvail ? new Date().toISOString() : dt.value,
+        closer:    _otdIsBestAvail ? 'best_available' : closerVal,
+        closerName: _otdIsBestAvail ? 'Best Available Closer' : closerVal,
         firstName: first.value.trim(),
         lastName:  (document.getElementById('otd-b-last') || {}).value.trim(),
         email:     (document.getElementById('otd-b-email') || {}).value.trim(),
@@ -25938,9 +25941,14 @@ function _otdPopulateCloser() {
         avgBill:   (document.getElementById('otd-b-bill') || {}).value || '',
         lat:       _otdLat,
         lng:       _otdLng,
-        result:    'Pending',
+        result:    _otdIsBestAvail ? 'pending_assignment' : 'Pending',
         repName:   localStorage.getItem('wc_user_name') || '',
       };
+
+      if (_otdIsBestAvail) {
+        appt.timePreference = 'afternoon';
+        appt.managementNotes = '';
+      }
 
       var appts = loadAppointments();
       appts.unshift(appt);
@@ -25949,9 +25957,27 @@ function _otdPopulateCloser() {
       // Close booking sheet, stay in OTD
       otdCloseBookingSheet();
 
-      // Notify & remind — mirror main booking pipeline
-      sendApptNotification(appt);
-      scheduleApptReminders(appt);
+      if (_otdIsBestAvail) {
+        // Immediately write to Firestore + notify managers
+        var _otdBaOrgId = localStorage.getItem('wc_org_id');
+        if (_otdBaOrgId && typeof fbDb !== 'undefined' && navigator.onLine) {
+          var _otdBaDoc = Object.assign({}, appt);
+          delete _otdBaDoc.photo; delete _otdBaDoc.ubPhoto;
+          _otdBaDoc.orgId = _otdBaOrgId;
+          _otdBaDoc.repUid = fbAuth.currentUser ? fbAuth.currentUser.uid : '';
+          _otdBaDoc.syncedAt = Date.now();
+          fbDb.collection('organizations').doc(_otdBaOrgId).collection('appointments').doc(appt.id)
+            .set(_otdBaDoc, { merge: true })
+            .then(function() { console.log('[Firestore] OTD pending_assignment written:', appt.id); })
+            .catch(function(e) { console.warn('[Firestore] OTD immediate write failed:', e.message); });
+        }
+        _notifyManagersNewAssignment(appt);
+        showToast('✅ Appointment submitted — management will assign a closer');
+      } else {
+        // Notify & remind — mirror main booking pipeline
+        sendApptNotification(appt);
+        scheduleApptReminders(appt);
+      }
 
       // Celebration!
       launchConfetti('🎯 Appointment Booked! Let\'s close it!');
