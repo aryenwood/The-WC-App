@@ -15906,16 +15906,24 @@ function renderGameStats(passedEntries, passedAppts) {
       if (rankScore) rankScore.textContent = score2 + ' pts';
     }
     // Tier progress bar — appointment-based tiers from patch
+    // Hidden for admins; hidden for reps until they have ≥1 door logged
     if (typeof renderTierProgress === 'function') {
-      const now3 = new Date();
-      const monthAppts = myA2.filter(a => {
-        const d = new Date(a.datetime || a.createdAt || 0);
-        return d.getMonth() === now3.getMonth() && d.getFullYear() === now3.getFullYear();
-      }).length;
       const tierEl = document.getElementById('dash-tier-progress');
       if (tierEl) {
-        tierEl.style.display = '';
-        renderTierProgress(tierEl, monthAppts);
+        const tierRole = getActiveRole();
+        if (tierRole === 'super_admin' || tierRole === 'master_admin' || tierRole === 'manager') {
+          tierEl.style.display = 'none';
+        } else if (allDoors2 === 0) {
+          tierEl.style.display = 'none';
+        } else {
+          const now3 = new Date();
+          const monthAppts = myA2.filter(a => {
+            const d = new Date(a.datetime || a.createdAt || 0);
+            return d.getMonth() === now3.getMonth() && d.getFullYear() === now3.getFullYear();
+          }).length;
+          tierEl.style.display = '';
+          renderTierProgress(tierEl, monthAppts);
+        }
       }
     }
   } catch(_) {}
