@@ -12589,14 +12589,12 @@ function applyOrgBranding(orgId, org) {
             } else {
               console.log('[Firestore] No org settings doc yet for', user.uid);
             }
-            // Dismiss splash for managers (wc_org_id === user.uid) and SA (no wc_org_id)
-            var _oid5 = localStorage.getItem('wc_org_id');
-            if (!_oid5 || _oid5 === user.uid) _dismissSplash();
+            // Only dismiss splash here for SA with no org — step 7 handles revealOrg for everyone else
+            if (!localStorage.getItem('wc_org_id')) _dismissSplash();
           })
           .catch(function(e) {
             console.warn('[Firestore] Org settings read failed (using localStorage):', e.code, e.message);
-            var _oid5c = localStorage.getItem('wc_org_id');
-            if (!_oid5c || _oid5c === user.uid) _dismissSplash();
+            if (!localStorage.getItem('wc_org_id')) _dismissSplash();
           });
       }
 
