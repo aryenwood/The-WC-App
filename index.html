@@ -8433,6 +8433,8 @@
         </div>
         <span id="dash-rank-score" style="font-size:11px;color:var(--text-3);white-space:nowrap">0 pts</span>
       </div>
+      <!-- Tier progress bar (populated by wc-app-patch-v1.js) -->
+      <div id="dash-tier-progress" style="display:none;margin-top:6px"></div>
 
       <!-- ── Manager Control Center: Needs Closer ─────────────────────────── -->
       <div id="mgr-needs-closer-card" onclick="_openPendingAssignments()">
@@ -12011,6 +12013,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
+<!-- WC Skill Patch v1 — iOS safe area, dvh, tier progress, win overlay -->
+<script src="wc-app-patch-v1.js"></script>
 <script>
 // ── Firebase: init ────────────────────────────────────────────────────────
 const firebaseConfig = {
@@ -15072,6 +15076,9 @@ function _initApp() {
   // Safety: ensure handoff sheet and coaching sheet are always closed on load
   closeHandoffCard();
   closeCoachingSheet();
+
+  // WC Skill Patch v1 — inject CSS patches (idempotent)
+  if (typeof applyWCAppPatches === 'function') applyWCAppPatches();
 }
 
 if (document.readyState === 'complete') {
@@ -15744,6 +15751,19 @@ function renderGameStats(passedEntries, passedAppts) {
       const pct2     = rankData2.tier==='Legend'?100:Math.min(100,Math.round(score2/nextPts*100));
       if (rankBar)   rankBar.style.width = pct2 + '%';
       if (rankScore) rankScore.textContent = score2 + ' pts';
+    }
+    // Tier progress bar — appointment-based tiers from patch
+    if (typeof renderTierProgress === 'function') {
+      const now3 = new Date();
+      const monthAppts = myA2.filter(a => {
+        const d = new Date(a.datetime || a.createdAt || 0);
+        return d.getMonth() === now3.getMonth() && d.getFullYear() === now3.getFullYear();
+      }).length;
+      const tierEl = document.getElementById('dash-tier-progress');
+      if (tierEl) {
+        tierEl.style.display = '';
+        renderTierProgress(tierEl, monthAppts);
+      }
     }
   } catch(_) {}
 }
@@ -17354,6 +17374,11 @@ logForm.addEventListener('submit', e => {
   }
 
   saveEntries(entries);
+
+  // 🎯 Win moment — appointment set from door knock dispo
+  if (status === 'appointment' && typeof triggerAppointmentWin === 'function') {
+    triggerAppointmentWin(localStorage.getItem('wc_user_name') || '');
+  }
 
   // v77: auto-save dictated/typed notes as a text note file in the customer record
   const savedEntry = editingId ? entries.find(x => x.id === editingId) : entries[0];
@@ -19593,7 +19618,11 @@ bookingForm.addEventListener('submit', e => {
   } else {
     sendApptNotification(appt);
     scheduleApptReminders(appt);
-    launchConfetti('\uD83C\uDFAF Appointment Booked! Let\'s close it!');
+    if (typeof triggerAppointmentWin === 'function') {
+      triggerAppointmentWin(localStorage.getItem('wc_user_name') || '');
+    } else {
+      launchConfetti('\uD83C\uDFAF Appointment Booked! Let\'s close it!');
+    }
     setTimeout(function(){ showHandoffCard(appt); }, 900);
   }
 });
