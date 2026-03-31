@@ -11,10 +11,17 @@
     "remotion": "^4.0.438"
   },
   "devDependencies": {
+    "@remotion/media-utils": "^4.0.442",
+    "@remotion/motion-blur": "^4.0.442",
+    "@remotion/noise": "^4.0.442",
+    "@remotion/paths": "^4.0.442",
+    "@remotion/shapes": "^4.0.442",
+    "@remotion/transitions": "^4.0.442",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "sharp": "^0.34.5",
     "typescript": "^6.0.2"
   }
 }
