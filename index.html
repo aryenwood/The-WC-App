@@ -7012,15 +7012,20 @@
   .otd-stat-lbl { font-size: 10px; color: rgba(255,255,255,0.38); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
   .otd-stat-div { width: 1px; height: 28px; background: rgba(255,255,255,0.1); }
   .otd-conv-val { font-size: 13px; font-weight: 700; color: #22d3ee; }
+  @keyframes exit-glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(239,68,68,0.4), 0 0 20px rgba(239,68,68,0.15); }
+    50% { box-shadow: 0 0 14px rgba(239,68,68,0.6), 0 0 32px rgba(239,68,68,0.25); }
+  }
   .otd-exit-btn {
     display: flex; align-items: center; gap: 4px;
-    background: var(--g1); border: 1px solid var(--g-border);
+    background: rgba(239,68,68,0.15); border: 1.5px solid rgba(239,68,68,0.5);
     border-radius: 24px; padding: 7px 13px;
-    font-size: 12px; font-weight: 700; color: var(--text-2);
+    font-size: 12px; font-weight: 700; color: #ef4444;
     cursor: pointer; -webkit-tap-highlight-color: transparent;
-    transition: background .15s;
+    transition: background .15s, transform .12s;
+    animation: exit-glow 2s ease-in-out infinite;
   }
-  .otd-exit-btn:active { background: var(--g2); }
+  .otd-exit-btn:active { background: rgba(239,68,68,0.30); transform: scale(0.94); }
 
   /* ── GPS / Address bar — redesigned ── */
   .otd-addr-row {
@@ -12605,7 +12610,7 @@ function applyOrgBranding(orgId, org) {
         if (_pendingInvite) {
           var pi = _pendingInvite;
           _pendingInvite = null;
-          localStorage.setItem('wc_user_role', pi.role);
+          if (user.uid !== SUPER_ADMIN_UID) localStorage.setItem('wc_user_role', pi.role);
           if (pi.orgId) {
             localStorage.setItem('wc_org_id', pi.orgId);
             console.log('[Invite] wc_org_id set:', pi.orgId, '(role:', pi.role + ')');
@@ -12643,7 +12648,7 @@ function applyOrgBranding(orgId, org) {
         } else if (_urlOrgId) {
           // No invite code but opened via ?org= link — auto-join org as canvasser
           var _joinName = user.displayName || localStorage.getItem('wc_user_name') || '';
-          localStorage.setItem('wc_user_role', 'canvasser');
+          if (user.uid !== SUPER_ADMIN_UID) localStorage.setItem('wc_user_role', 'canvasser');
           localStorage.setItem('wc_org_id', _urlOrgId);
           console.log('[OrgUrl] wc_org_id set from ?org= param:', _urlOrgId);
           fbDb.collection('organizations').doc(_urlOrgId)
@@ -20262,7 +20267,7 @@ document.getElementById('role-setup-go').addEventListener('click', () => {
     if (nameInput) { nameInput.focus(); nameInput.style.borderColor = '#ef4444'; setTimeout(() => nameInput.style.borderColor = '', 1500); }
     return;
   }
-  localStorage.setItem('wc_user_role', _selectedRole);
+  if (!(window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid === SUPER_ADMIN_UID)) localStorage.setItem('wc_user_role', _selectedRole);
   localStorage.setItem('wc_user_name', name);
   // Also save name into wc_admin.repName so business card picks it up
   try {
@@ -20826,7 +20831,7 @@ function _exitMasterAdmin() {
   // v82: delay role restore until after the 350ms slide-out transition completes
   // — prevents white flash caused by DOM updates while sheet is still animating
   setTimeout(() => {
-    localStorage.setItem('wc_user_role', _prevRole || 'canvasser');
+    localStorage.setItem('wc_user_role', (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid === SUPER_ADMIN_UID) ? 'super_admin' : (_prevRole || 'canvasser'));
     applyRoleUI();
   }, 380);
 }
@@ -21790,7 +21795,7 @@ function saveAdminSettings() {
   const newName = s.repName;
   if (newName) localStorage.setItem('wc_user_name', newName);
   const roleEl = document.getElementById('admin-role-select');
-  if (roleEl && roleEl.value) localStorage.setItem('wc_user_role', roleEl.value);
+  if (roleEl && roleEl.value && !(window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid === SUPER_ADMIN_UID)) localStorage.setItem('wc_user_role', roleEl.value);
   applyRoleUI();
 
   // Save font size
@@ -24635,7 +24640,7 @@ function _lookupInvitePreAuth(code) {
 
     if (action === 'skip') {
       // Set minimal local state so the app renders without hitting auth
-      try { localStorage.setItem('wc_user_role', 'canvasser'); } catch(_) {}
+      try { if (!(window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.uid === SUPER_ADMIN_UID)) localStorage.setItem('wc_user_role', 'canvasser'); } catch(_) {}
       try { localStorage.setItem('wc_onboarding_done', '1'); } catch(_) {}
       var gate = document.getElementById('invite-gate-screen');
       var login = document.getElementById('login-screen');
