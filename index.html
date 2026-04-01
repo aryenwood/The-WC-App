@@ -19554,19 +19554,17 @@ function populateCloserDropdown() {
     });
   } catch(_) {}
 
-  // Fallback if no closers (besides best_available)
-  if (sel.options.length === 2) {
-    var fb = document.createElement('option');
-    fb.value = '__manual__'; fb.textContent = 'No closers added yet\u2026';
-    sel.appendChild(fb);
-  }
-
-  if (saved) {
+  // Auto-select: restore previous selection, match user name, or default to best_available
+  if (saved && saved !== '__manual__') {
     sel.value = saved;
-  } else if (uname && (role === 'manager' || role === 'master_admin')) {
+  } else if (uname && (role === 'manager' || role === 'master_admin' || role === 'super_admin')) {
+    var matched = false;
     for (var i = 0; i < sel.options.length; i++) {
-      if (sel.options[i].value === uname) { sel.value = uname; break; }
+      if (sel.options[i].value === uname) { sel.value = uname; matched = true; break; }
     }
+    if (!matched) sel.value = 'best_available';
+  } else {
+    sel.value = 'best_available';
   }
 
   _toggleBestAvailableUI(sel.value === 'best_available');
@@ -19683,7 +19681,7 @@ bookingForm.addEventListener('submit', e => {
 
   // Block submit when no real closer is assigned
   var closerVal = document.getElementById('b-closer').value;
-  if (!closerVal || closerVal === '__manual__') {
+  if (!closerVal) {
     var cs = document.getElementById('b-closer');
     if (cs) { cs.style.borderColor = 'rgba(239,68,68,0.6)'; setTimeout(function() { cs.style.borderColor = ''; }, 2000); cs.focus(); }
     return;
@@ -25890,6 +25888,10 @@ function _otdPopulateCloser() {
     return;
   }
   sel.disabled = false;
+  // Best Available Closer — always first real option
+  var baOpt = document.createElement('option');
+  baOpt.value = 'best_available'; baOpt.textContent = '\u2B50 Best Available Closer';
+  sel.appendChild(baOpt);
   try {
     var team = JSON.parse(localStorage.getItem('wc_team') || '[]');
     team.filter(function(m) { return (m.role || 'closer') === 'closer'; }).forEach(function(m) {
@@ -25898,11 +25900,8 @@ function _otdPopulateCloser() {
       sel.appendChild(opt);
     });
   } catch(_) {}
-  if (sel.options.length === 1) {
-    var opt = document.createElement('option');
-    opt.value = '__manual__'; opt.textContent = 'No closers added yet…';
-    sel.appendChild(opt);
-  }
+  // Default to best_available
+  sel.value = 'best_available';
 }
 
 /* ─── OTD booking form submit ─── */
@@ -25918,7 +25917,7 @@ function _otdPopulateCloser() {
       // Block submit when no real closer is assigned
       var closerEl = document.getElementById('otd-b-closer');
       var closerVal = closerEl ? closerEl.value : '';
-      if (!closerVal || closerVal === '__manual__') {
+      if (!closerVal) {
         if (closerEl) { closerEl.style.borderColor = 'rgba(239,68,68,0.6)'; setTimeout(function(){ closerEl.style.borderColor = ''; }, 2000); closerEl.focus(); }
         return;
       }
