@@ -12575,8 +12575,18 @@ function applyOrgBranding(orgId, org) {
             if (doc.exists && doc.data().orgId) {
               localStorage.setItem('wc_org_id', doc.data().orgId);
               console.log('[SA] wc_org_id set from user doc:', doc.data().orgId);
-              // Re-trigger org branding + Firestore sync now that orgId is available
+              // Re-trigger everything that depends on orgId
               if (typeof _initFirestoreSync === 'function') _initFirestoreSync();
+              if (navigator.onLine) drainToFirestore();
+              // Load org branding
+              fbDb.collection('organizations').doc(doc.data().orgId).get().then(function(orgDoc) {
+                if (orgDoc.exists) applyOrgSettings(Object.assign({}, orgDoc.data(), {
+                  companyName: orgDoc.data().companyName || orgDoc.data().name || '',
+                  themePrimary: orgDoc.data().themePrimary || orgDoc.data().primaryColor || ''
+                }));
+              }).catch(function(_) {});
+            } else {
+              console.warn('[SA] User doc has no orgId — add orgId field to users/' + user.uid + ' in Firestore console');
             }
           }).catch(function(e) { console.warn('[SA] User doc read failed:', e.message); });
         }
