@@ -12570,8 +12570,12 @@ function applyOrgBranding(orgId, org) {
       if (user.uid === SUPER_ADMIN_UID) {
         localStorage.setItem('wc_user_role', 'super_admin');
         // SA on master domains has no domain-based org — pull orgId from user doc
-        if (!localStorage.getItem('wc_org_id') && navigator.onLine) {
+        var _saCurrentOrg = localStorage.getItem('wc_org_id');
+        console.log('[SA] Auth check — wc_org_id in localStorage:', JSON.stringify(_saCurrentOrg), '| online:', navigator.onLine);
+        if (!_saCurrentOrg && navigator.onLine) {
+          console.log('[SA] No wc_org_id — fetching from users/' + user.uid);
           fbDb.collection('users').doc(user.uid).get().then(function(doc) {
+            console.log('[SA] User doc exists:', doc.exists, '| data.orgId:', doc.exists ? JSON.stringify(doc.data().orgId) : 'n/a');
             if (doc.exists && doc.data().orgId) {
               localStorage.setItem('wc_org_id', doc.data().orgId);
               console.log('[SA] wc_org_id set from user doc:', doc.data().orgId);
