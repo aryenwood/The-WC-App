@@ -12583,13 +12583,16 @@ function applyOrgBranding(orgId, org) {
       appEl.style.display = '';
 
       // 1. Write user profile to Firestore users/{uid}
-      fbDb.collection('users').doc(user.uid).set({
+      var _userProfile = {
         uid:         user.uid,
         name:        user.displayName || '',
         email:       user.email || '',
         photoURL:    user.photoURL || '',
         lastSignIn:  firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true }).catch(function(e) {
+      };
+      var _currentOrgId = localStorage.getItem('wc_org_id');
+      if (_currentOrgId) _userProfile.orgId = _currentOrgId;
+      fbDb.collection('users').doc(user.uid).set(_userProfile, { merge: true }).catch(function(e) {
         if (e && e.code === 'permission-denied') {
           console.error('[Firestore] users write blocked — Firestore security rules are denying writes. Open Firebase Console → Firestore → Rules and allow authenticated users to write to users/{uid}. Raw error:', e.message);
         } else {
@@ -12642,6 +12645,17 @@ function applyOrgBranding(orgId, org) {
       // 6a. Super admin: always grant role + show platform admin menu item
       if (user.uid === SUPER_ADMIN_UID) {
         localStorage.setItem('wc_user_role', 'super_admin');
+        // SA on master domains has no domain-based org — pull orgId from user doc
+        if (!localStorage.getItem('wc_org_id') && navigator.onLine) {
+          fbDb.collection('users').doc(user.uid).get().then(function(doc) {
+            if (doc.exists && doc.data().orgId) {
+              localStorage.setItem('wc_org_id', doc.data().orgId);
+              console.log('[SA] wc_org_id set from user doc:', doc.data().orgId);
+              // Re-trigger org branding + Firestore sync now that orgId is available
+              if (typeof _initFirestoreSync === 'function') _initFirestoreSync();
+            }
+          }).catch(function(e) { console.warn('[SA] User doc read failed:', e.message); });
+        }
       }
       var _saItemEl = document.getElementById('pdd-super-admin');
       var _saDivEl  = document.getElementById('pdd-super-admin-divider');
