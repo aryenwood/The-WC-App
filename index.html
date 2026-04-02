@@ -4494,10 +4494,8 @@
       border-radius: 50%;
       box-shadow: 0 0 20px rgba(20,143,152,0.2), inset 0 0 15px rgba(20,143,152,0.05);
       pointer-events: none; z-index: 1;
-      animation: bootLine 0.15s ease-out 0.3s both, bootRing 0.6s cubic-bezier(0.16,1,0.3,1) 0.5s both;
+      opacity: 0;
     }
-    @keyframes bootLine { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes bootRing { from { transform: translate(-50%,-50%) scaleY(0.01); } to { transform: translate(-50%,-50%) scaleY(1); } }
     #splash-logo-wrap {
       position: relative; z-index: 2;
       display: flex; flex-direction: column; align-items: center;
@@ -4509,11 +4507,7 @@
     #splash-logo, #splash-org-logo {
       position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;
     }
-    #splash-logo {
-      opacity: 0;
-      animation: bootLogo 0.4s ease-out 0.95s both;
-    }
-    @keyframes bootLogo { from { opacity: 0; } to { opacity: 1; } }
+    #splash-logo { opacity: 0; }
     #splash-org-logo { opacity: 0; clip-path: inset(100% 0 0 0); }
     /* Laser line — sweeps top to bottom during logo swap */
     #splash-laser {
@@ -12353,9 +12347,7 @@ function applyOrgSettings(data) {
     if (_hbl) _hbl.src = data.logoUrl;
     // All login/gate logo images
     document.querySelectorAll('.login-logo img').forEach(function(img) { img.src = data.logoUrl; });
-    // Splash screen logo (separate element, not inside .login-logo)
-    var _splashLogo = document.getElementById('splash-logo');
-    if (_splashLogo) _splashLogo.src = data.logoUrl;
+    // Do NOT overwrite #splash-logo — laser sweep needs WC→org crossfade
   }
 
   if (data.iconUrl) {
@@ -12471,6 +12463,15 @@ function applyOrgBranding(orgId, org) {
   if (typeof _applyOrgBranding === 'function') _applyOrgBranding(org);
 
   console.log('[Branding] Domain-based org applied:', _orgName || orgId, '| domain:', window.location.hostname);
+
+  // Fire splash sequence now that we have org data
+  if (window.wcSplash && typeof window.wcSplash.revealOrg === 'function') {
+    window.wcSplash.revealOrg(
+      org.companyName || org.name || '',
+      org.logoUrl || '',
+      org.themePrimary || org.primaryColor || '#148f98'
+    );
+  }
 }
 
 (function() {
@@ -14818,7 +14819,7 @@ function _dismissSplash() {
 (function() {
   function _revealOrg(orgName, orgLogoUrl, orgColor) {
     if (_splashDismissed) return;
-    console.log('[Splash] revealOrg called:', orgName, orgLogoUrl ? 'has logo' : 'no logo');
+    console.log('[Splash] revealOrg fired:', orgName, orgLogoUrl ? 'has logo' : 'no logo');
 
     var wcLogo  = document.getElementById('splash-logo');
     var orgLogo = document.getElementById('splash-org-logo');
@@ -14828,12 +14829,29 @@ function _dismissSplash() {
     var stack   = document.getElementById('splash-logo-stack');
     var hasOrg  = !!orgLogoUrl;
 
-    // Preload org logo
+    // Preload org logo so it's cached for the laser sweep
     if (hasOrg && orgLogo) orgLogo.src = orgLogoUrl;
 
-    // Phases 1-3 handled by CSS animations (bootLine, bootRing, bootLogo)
-    // Ring pulse at 1.3s (after CSS animations complete)
+    // ── Beat 1 (0ms): Boot line — horizontal slit of teal light ──
+    if (ring) {
+      ring.style.transition = 'opacity 0.15s ease-out';
+      ring.style.opacity = '1';
+    }
+
+    // ── Beat 2 (200ms): Line morphs into ring ──
     setTimeout(function() {
+      if (ring) {
+        ring.style.transition = 'transform 0.6s cubic-bezier(0.16,1,0.3,1)';
+        ring.style.transform = 'translate(-50%, -50%) scaleY(1)';
+      }
+    }, 200);
+
+    // ── Beat 3 (650ms): WC logo fades in, ring pulses ──
+    setTimeout(function() {
+      if (wcLogo) {
+        wcLogo.style.transition = 'opacity 0.4s ease-out';
+        wcLogo.style.opacity = '1';
+      }
       if (ring) {
         ring.style.transition = 'transform 0.25s ease-out, box-shadow 0.25s ease-out';
         ring.style.transform = 'translate(-50%, -50%) scale(1.08)';
@@ -14844,102 +14862,72 @@ function _dismissSplash() {
           ring.style.boxShadow = '0 0 20px rgba(20,143,152,0.2), inset 0 0 15px rgba(20,143,152,0.05)';
         }, 250);
       }
-    }, 1300);
+    }, 650);
 
-    // ── Phase 4 (1.6s): LASER SWEEP — the Dr. Evil moment ──
+    // ── Beat 4 (1300ms): LASER SWEEP ──
     if (hasOrg) {
       setTimeout(function() {
-        if (!laser || !orgLogo || !wcLogo || !stack) return;
-
+        if (!laser || !orgLogo || !wcLogo || !stack) { _dismissSplash(); return; }
         var H = stack.offsetHeight || 100;
         var duration = 600;
         var start = null;
-
         orgLogo.style.opacity = '1';
         laser.style.opacity = '1';
-
-        function sweep(timestamp) {
-          if (!start) start = timestamp;
-          var elapsed = timestamp - start;
-          var progress = Math.min(1, elapsed / duration);
-          // Ease-in-out quad
-          var eased = progress < 0.5
-            ? 2 * progress * progress
-            : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-
-          // Move laser line
-          laser.style.top = (eased * H) + 'px';
-          // Reveal org logo from top (clip bottom away)
-          orgLogo.style.clipPath = 'inset(0 0 ' + ((1 - eased) * 100).toFixed(1) + '% 0)';
-          // Hide WC logo from top (clip top away)
-          wcLogo.style.clipPath = 'inset(' + (eased * 100).toFixed(1) + '% 0 0 0)';
-
-          if (progress < 1) {
-            requestAnimationFrame(sweep);
-          } else {
-            // Laser fades out
+        function sweep(ts) {
+          if (!start) start = ts;
+          var p = Math.min(1, (ts - start) / duration);
+          var e = p < 0.5 ? 2*p*p : 1 - Math.pow(-2*p+2, 2)/2;
+          laser.style.top = (e * H) + 'px';
+          orgLogo.style.clipPath = 'inset(0 0 ' + ((1-e)*100).toFixed(1) + '% 0)';
+          wcLogo.style.clipPath = 'inset(' + (e*100).toFixed(1) + '% 0 0 0)';
+          if (p < 1) { requestAnimationFrame(sweep); }
+          else {
             laser.style.transition = 'opacity 0.25s ease-out';
             laser.style.opacity = '0';
-            // Clean up WC
             wcLogo.style.opacity = '0';
           }
         }
         requestAnimationFrame(sweep);
-      }, 1600);
+      }, 1300);
 
-      // ── Phase 5 (2.35s): Ring expands outward and vanishes ──
+      // ── Beat 5 (2s): Ring expands and vanishes ──
       setTimeout(function() {
         if (ring) {
           ring.style.transition = 'transform 0.7s cubic-bezier(0.16,1,0.3,1), opacity 0.7s ease-out';
           ring.style.transform = 'translate(-50%, -50%) scale(2.8)';
           ring.style.opacity = '0';
         }
-      }, 2350);
+      }, 2000);
 
-      // ── Phase 6 (2.6s): Org name types in — system readout ──
+      // ── Beat 6 (2.3s): Org name typewriter ──
       setTimeout(function() {
         if (nameEl && orgName) {
           nameEl.style.opacity = '1';
           var text = orgName.toUpperCase();
-          var i = 0;
-          nameEl.textContent = '';
-          function typeChar() {
-            nameEl.textContent = text.substring(0, ++i);
-            if (i < text.length) setTimeout(typeChar, 30);
-          }
-          typeChar();
+          var i = 0; nameEl.textContent = '';
+          function t() { nameEl.textContent = text.substring(0, ++i); if (i < text.length) setTimeout(t, 30); }
+          t();
         }
-      }, 2600);
+      }, 2300);
 
-      // ── Phase 7 (3.5s): Dismiss ──
-      setTimeout(function() {
-        _dismissSplash();
-      }, 3500);
+      // ── Beat 7 (3.2s): Dismiss ──
+      setTimeout(_dismissSplash, 3200);
 
     } else {
-      // No org logo — hold WC, show name, dismiss
+      // No org logo — show name, dismiss
       setTimeout(function() {
         if (nameEl && orgName) {
           nameEl.style.opacity = '1';
           var text = orgName.toUpperCase();
-          var i = 0;
-          nameEl.textContent = '';
-          function typeChar() {
-            nameEl.textContent = text.substring(0, ++i);
-            if (i < text.length) setTimeout(typeChar, 30);
-          }
-          typeChar();
+          var i = 0; nameEl.textContent = '';
+          function t() { nameEl.textContent = text.substring(0, ++i); if (i < text.length) setTimeout(t, 30); }
+          t();
         }
-      }, 1600);
+      }, 1300);
       setTimeout(function() {
-        if (ring) {
-          ring.style.transition = 'opacity 0.5s ease-out';
-          ring.style.opacity = '0';
-        }
-      }, 1800);
-      setTimeout(function() {
-        _dismissSplash();
-      }, 2400);
+        if (ring) { ring.style.transition = 'opacity 0.5s'; ring.style.opacity = '0'; }
+      }, 1500);
+      setTimeout(_dismissSplash, 2200);
     }
   }
 
@@ -14994,16 +14982,7 @@ function _initApp() {
     if (_brandImg) _brandImg.alt = _cachedCompany;
   }
 
-  // Fire splash revealOrg immediately from cached data — don't wait for Firestore
-  if (window.wcSplash && typeof window.wcSplash.revealOrg === 'function') {
-    const _cachedOrgLogo = _cachedAdmin.logoUrl || _cachedAdmin.customLogo || '';
-    const _cachedOrgName = _cachedAdmin.companyName || _cachedAdmin.orgName || '';
-    const _cachedOrgColor = _cachedAdmin.themePrimary || '';
-    if (_cachedOrgName || _cachedOrgLogo) {
-      console.log('[Splash] Firing revealOrg from cache:', _cachedOrgName, _cachedOrgLogo ? 'has logo' : 'no logo');
-      window.wcSplash.revealOrg(_cachedOrgName, _cachedOrgLogo, _cachedOrgColor);
-    }
-  }
+
 
   // Role UI applied after auth now — see onAuthStateChanged in Firebase block
   const _isFirstRun = !localStorage.getItem('wc_user_role');
