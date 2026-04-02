@@ -14792,6 +14792,10 @@ var _splashDismissed = false;
 var _splashFallbackTimer = null;
 var _onSplashDismiss = null;
 var _pulseRunning = false; // prevent early dismiss while pulse is active
+// Hard safety: if splash is STILL showing after 5s, force dismiss no matter what
+setTimeout(function() {
+  if (!_splashDismissed) { _pulseRunning = false; _dismissSplash(); }
+}, 5000);
 function _dismissSplash() {
   // If the pulse sequence is running, defer — revealOrg will call dismiss when done
   if (_pulseRunning) return;
@@ -14815,6 +14819,7 @@ function _dismissSplash() {
   function _revealOrg(orgName, orgLogoUrl, orgColor) {
     if (_splashDismissed) return;
     _pulseRunning = true;
+    console.log('[Splash] revealOrg called:', orgName, orgLogoUrl ? 'has logo' : 'no logo');
 
     var wcLogo  = document.getElementById('splash-logo');
     var orgLogo = document.getElementById('splash-org-logo');
@@ -14963,7 +14968,7 @@ function _dismissSplash() {
 
   window.wcSplash = {
     init: function() {},
-    revealOrg: _revealOrg,
+    revealOrg: function(n,u,c) { try { _revealOrg(n,u,c); } catch(e) { console.error('[Splash] revealOrg crashed:', e); _pulseRunning = false; _dismissSplash(); } },
     dismiss: _dismissSplash,
   };
 })();
