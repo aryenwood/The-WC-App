@@ -12438,6 +12438,11 @@ function applyOrgBranding(orgId, org) {
             if (el.tagName === 'IMG') el.src = org.logoUrl;
           });
         });
+      // Pre-load org logo into splash for the WC→org crossfade
+      var _splOrgLogo = document.getElementById('splash-org-logo');
+      if (_splOrgLogo) _splOrgLogo.src = org.logoUrl;
+      // Also swap login screen logos
+      document.querySelectorAll('.login-logo img').forEach(function(img) { img.src = org.logoUrl; });
     };
     _swapLogos();
     document.addEventListener('DOMContentLoaded', _swapLogos);
