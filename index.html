@@ -14932,6 +14932,14 @@ function _dismissSplash() {
       splashEl.style.setProperty('--splash-glow-dim', 'rgba('+_r+','+_g+','+_b+',0.12)');
     }
 
+    // Luminance check — light org colors need adjusted effects
+    var _lum = (0.299*_r + 0.587*_g + 0.114*_b) / 255;
+    var _isLight = _lum > 0.55;
+    // For light colors, create a darkened variant for better contrast on black bg
+    var _dr = _isLight ? Math.round(_r * 0.6) : _r;
+    var _dg = _isLight ? Math.round(_g * 0.6) : _g;
+    var _db = _isLight ? Math.round(_b * 0.6) : _b;
+
     // ── Particle engine — ambient + geometric shatter/converge ──
     var _pCanvas = document.getElementById('splash-particles');
     var _pCtx = null, _pRAF = null;
@@ -15164,7 +15172,7 @@ function _dismissSplash() {
             w: 0.5 + Math.random() * 1.5,
             life: 1,
             decay: 0.015 + Math.random() * 0.01,
-            col: 'rgb('+_r+','+_g+','+_b+')'
+            col: 'rgb('+_dr+','+_dg+','+_db+')'
           });
         }
       }, 200);
@@ -15181,7 +15189,7 @@ function _dismissSplash() {
           alpha: 0.7,
           decay: 0.005,
           w: 3 + Math.random() * 2,
-          col: 'rgba('+Math.min(255,_r+40)+','+Math.min(255,_g+40)+','+Math.min(255,_b+40)+',1)'
+          col: _isLight ? 'rgba('+_dr+','+_dg+','+_db+',1)' : 'rgba('+Math.min(255,_r+40)+','+Math.min(255,_g+40)+','+Math.min(255,_b+40)+',1)'
         });
       }, 350);
 
@@ -15201,7 +15209,7 @@ function _dismissSplash() {
             phase: Math.random() * Math.PI * 2,
             life: 1,
             decay: 0.008 + Math.random() * 0.006,
-            col: Math.random() > 0.3 ? '#fff' : 'rgb('+_r+','+_g+','+_b+')'
+            col: Math.random() > 0.3 ? '#fff' : 'rgb('+_dr+','+_dg+','+_db+')'
           });
         }
       }, 180);
@@ -15218,7 +15226,7 @@ function _dismissSplash() {
           w: 2.5 + Math.random() * 2,
           life: 1,
           decay: 0.003 + oi * 0.0005,
-          col: bright ? 'rgba(255,255,255,0.9)' : 'rgba('+_r+','+_g+','+_b+',1)'
+          col: bright ? 'rgba(255,255,255,0.9)' : 'rgba('+_dr+','+_dg+','+_db+',1)'
         });
       }
     }
@@ -15237,13 +15245,14 @@ function _dismissSplash() {
       for (var i = 0; i < 45; i++) {
         var angle = (Math.PI * 2 * i / 45) + (Math.random() - 0.5) * 0.5;
         var dist = 60 + Math.random() * maxDist;
-        // Color variations: warm, neutral, cool shifts from org color
+        // Color variations: warm, neutral, cool shifts — luminance-aware
         var cr = _r, cg = _g, cb = _b;
         var variant = i % 5;
         if (variant === 0) { cr = Math.min(255, cr + 50); cb = Math.max(0, cb - 30); } // warm
         if (variant === 1) { cb = Math.min(255, cb + 50); cr = Math.max(0, cr - 30); } // cool
         if (variant === 2) { cr = Math.min(255, cr + 30); cg = Math.min(255, cg + 30); } // bright
-        if (variant === 3) { cr = Math.min(255, Math.round(cr * 0.6 + 255 * 0.4)); cg = Math.min(255, Math.round(cg * 0.6 + 255 * 0.4)); cb = Math.min(255, Math.round(cb * 0.6 + 255 * 0.4)); } // light
+        if (variant === 3 && !_isLight) { cr = Math.min(255, Math.round(cr * 0.6 + 255 * 0.4)); cg = Math.min(255, Math.round(cg * 0.6 + 255 * 0.4)); cb = Math.min(255, Math.round(cb * 0.6 + 255 * 0.4)); } // lighten (dark orgs only)
+        if (variant === 3 && _isLight) { cr = Math.round(cr * 0.5); cg = Math.round(cg * 0.5); cb = Math.round(cb * 0.5); } // darken (light orgs)
         _fragments.push({
           peakX: cx + Math.cos(angle) * dist,
           peakY: cy + Math.sin(angle) * dist,
@@ -15368,7 +15377,9 @@ function _dismissSplash() {
           if (splashEl) {
             splashEl.style.transition = 'background 1.2s ease-out';
             var _bgPct = Math.round((_eCy / _pH) * 100);
-            splashEl.style.background = 'radial-gradient(circle at 50% '+_bgPct+'%, rgba('+_r+','+_g+','+_b+',0.2) 0%, rgba('+_r+','+_g+','+_b+',0.08) 30%, #0a0a0a 60%)';
+            var _bgA1 = _isLight ? 0.1 : 0.2;
+            var _bgA2 = _isLight ? 0.04 : 0.08;
+            splashEl.style.background = 'radial-gradient(circle at 50% '+_bgPct+'%, rgba('+_dr+','+_dg+','+_db+','+_bgA1+') 0%, rgba('+_dr+','+_dg+','+_db+','+_bgA2+') 30%, #0a0a0a 60%)';
           }
           _bassReveal();
         }, 840);
@@ -15407,7 +15418,9 @@ function _dismissSplash() {
           setTimeout(function() {
             orgLogo.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.8s ease-out';
             orgLogo.style.transform = 'rotateY(0deg) scale(1)';
-            orgLogo.style.filter = 'drop-shadow(0 0 30px rgba('+_r+','+_g+','+_b+',0.6))';
+            orgLogo.style.filter = _isLight
+              ? 'drop-shadow(0 0 25px rgba('+_dr+','+_dg+','+_db+',0.5))'
+              : 'drop-shadow(0 0 30px rgba('+_r+','+_g+','+_b+',0.6))';
             if (ring) {
               ring.style.transition = 'transform 0.5s ease-out, box-shadow 0.5s';
               ring.style.transform = 'translate(-50%, -50%) scale(1)';
@@ -15466,7 +15479,9 @@ function _dismissSplash() {
             else {
               nameEl.style.transition = 'filter 0.6s ease-out, text-shadow 0.6s ease-out';
               nameEl.style.filter = 'blur(0)';
-              nameEl.style.textShadow = '0 0 30px rgba('+_r+','+_g+','+_b+',0.5), 0 0 60px rgba('+_r+','+_g+','+_b+',0.2)';
+              nameEl.style.textShadow = _isLight
+                ? '0 0 20px rgba('+_dr+','+_dg+','+_db+',0.4), 0 2px 8px rgba(0,0,0,0.5)'
+                : '0 0 30px rgba('+_r+','+_g+','+_b+',0.5), 0 0 60px rgba('+_r+','+_g+','+_b+',0.2)';
             }
           }
           t();
