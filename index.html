@@ -10150,6 +10150,14 @@
               <span class="admin-font-size-val" id="admin-font-size-val">16px</span>
             </div>
           </div>
+          <div class="admin-field" style="margin-top:16px;">
+            <label class="admin-label">App Startup</label>
+            <p class="admin-section-hint" style="margin:4px 0 8px">Choose what happens when the app opens.</p>
+            <div style="display:flex;gap:8px">
+              <button type="button" class="admin-toggle-btn" id="admin-startup-home" style="flex:1;padding:10px 0;border-radius:10px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.7);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s">Always Home</button>
+              <button type="button" class="admin-toggle-btn" id="admin-startup-resume" style="flex:1;padding:10px 0;border-radius:10px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.7);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s">Resume Last Page</button>
+            </div>
+          </div>
         </div>
       </details>
 
@@ -15594,7 +15602,8 @@ function _initApp() {
   const qTab    = params.get('tab');
   const qAction = params.get('action');
   const stored  = localStorage.getItem('wc_active_tab');
-  const initial = qTab || stored || 'dashboard';
+  const startupMode = localStorage.getItem('wc_startup_mode') || 'home';
+  const initial = qTab || (startupMode === 'resume' ? stored : null) || 'dashboard';
   const valid   = ['dashboard', 'log', 'map', 'installs', 'leaderboard', 'resources', 'admin', 'calendar', 'trainer'];
   activateTab(valid.includes(initial) ? initial : 'dashboard');
   // PWA shortcut actions
@@ -22353,6 +22362,26 @@ function loadAdminSettings() {
   const savedFs = localStorage.getItem('wc_font_size') || '16';
   if (fSlider) { fSlider.value = savedFs; }
   if (fVal) { fVal.textContent = savedFs + 'px'; }
+
+  // Startup behavior toggle
+  var _startupMode = localStorage.getItem('wc_startup_mode') || 'home';
+  var _btnHome = document.getElementById('admin-startup-home');
+  var _btnResume = document.getElementById('admin-startup-resume');
+  function _setStartupActive(mode) {
+    if (_btnHome) {
+      _btnHome.style.background = mode === 'home' ? 'var(--teal)' : 'rgba(255,255,255,0.04)';
+      _btnHome.style.color = mode === 'home' ? '#fff' : 'rgba(255,255,255,0.7)';
+      _btnHome.style.borderColor = mode === 'home' ? 'var(--teal)' : 'rgba(255,255,255,0.1)';
+    }
+    if (_btnResume) {
+      _btnResume.style.background = mode === 'resume' ? 'var(--teal)' : 'rgba(255,255,255,0.04)';
+      _btnResume.style.color = mode === 'resume' ? '#fff' : 'rgba(255,255,255,0.7)';
+      _btnResume.style.borderColor = mode === 'resume' ? 'var(--teal)' : 'rgba(255,255,255,0.1)';
+    }
+  }
+  _setStartupActive(_startupMode);
+  if (_btnHome) _btnHome.onclick = function() { localStorage.setItem('wc_startup_mode', 'home'); _setStartupActive('home'); };
+  if (_btnResume) _btnResume.onclick = function() { localStorage.setItem('wc_startup_mode', 'resume'); _setStartupActive('resume'); };
 
   renderTeamList();
 }
