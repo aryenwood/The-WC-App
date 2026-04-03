@@ -14985,9 +14985,10 @@ var _splashAnimating = false; // true while revealOrg animation is running
 var _splashFallbackTimer = null;
 var _onSplashDismiss = null;
 var _splashIntervals = []; // Global registry for all splash intervals
-function _dismissSplash() {
+function _dismissSplash(force) {
   if (_splashDismissed) return;
-  _splashDismissed = true;
+  if (_splashAnimating && !force) return;
+  _splashDismissed = true; _splashAnimating = false;
   if (_splashFallbackTimer) { clearTimeout(_splashFallbackTimer); _splashFallbackTimer = null; }
   // Clear ALL splash intervals to prevent leaks
   for (var si = 0; si < _splashIntervals.length; si++) clearInterval(_splashIntervals[si]);
@@ -15030,7 +15031,7 @@ function _dismissSplash() {
         splashEl.addEventListener('click', function _skipSplash() {
           splashEl.removeEventListener('click', _skipSplash);
           _stopParticles();
-          _dismissSplash();
+          _dismissSplash(true);
         }, { once: true });
       }
     }, 3000);
@@ -15549,13 +15550,13 @@ function _dismissSplash() {
             ring.style.transform = 'translate(-50%, -50%) scale(1.8)';
             ring.style.opacity = '0';
           }
-          setTimeout(_dismissSplash, 700);
+          setTimeout(function(){ _dismissSplash(true); }, 700);
         }, 3000);
       } else {
         if (nameEl && orgName) {
           setTimeout(function() { nameEl.style.opacity = '1'; nameEl.textContent = orgName.toUpperCase(); }, 400);
         }
-        setTimeout(function() { _stopParticles(); _dismissSplash(); }, 1800);
+        setTimeout(function() { _stopParticles(); _dismissSplash(true); }, 1800);
       }
       return;
     }
@@ -15789,7 +15790,7 @@ function _dismissSplash() {
           ambient.style.opacity = '0';
         }
         // Whole splash fades cleanly — logo stays visible until the very end
-        setTimeout(_dismissSplash, 1200);
+        setTimeout(function(){ _dismissSplash(true); }, 1200);
       }, 10000);
 
     } else {
@@ -15813,7 +15814,7 @@ function _dismissSplash() {
           bloom.style.height = '200vmax';
           bloom.style.opacity = '1';
         }
-        setTimeout(_dismissSplash, 600);
+        setTimeout(function(){ _dismissSplash(true); }, 600);
       }, 2800);
     }
   }
@@ -15893,7 +15894,7 @@ function _initApp() {
   // 3.5s if no org (fast dismiss for master domain / first-run).
   const splash = document.getElementById('splash');
   if (splash) {
-    _splashFallbackTimer = setTimeout(function() { _pulseRunning = false; _dismissSplash(); }, 13000);
+    _splashFallbackTimer = setTimeout(function() { _pulseRunning = false; _dismissSplash(true); }, 13000);
   }
 
   // Nuclear fallback: if app is still invisible after 5s, force show everything
@@ -15903,11 +15904,11 @@ function _initApp() {
     var _loginEl = document.getElementById('login-screen');
     if (_appEl && _appEl.style.display === 'none' && _loginEl && !_loginEl.classList.contains('hidden')) {
       // Not logged in — show login screen, kill splash
-      _pulseRunning = false; _dismissSplash();
+      _pulseRunning = false; _dismissSplash(true);
     } else if (_appEl && _appEl.style.display === 'none') {
       // Logged in but app hidden — force show
       _appEl.style.display = '';
-      _pulseRunning = false; _dismissSplash();
+      _pulseRunning = false; _dismissSplash(true);
     }
   }, 5000);
 
