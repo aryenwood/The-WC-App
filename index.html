@@ -8512,18 +8512,18 @@
       <div id="dash-commission-card" onclick="_openCommissionDetail()">
         <div style="display:flex;gap:0;padding:16px 18px">
           <!-- Pipeline (Sold) -->
-          <div style="flex:1;border-right:1px solid var(--g-border);padding-right:14px">
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <div style="flex:1;border-right:1px solid var(--g-border);padding-right:14px;text-align:center">
+            <div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:6px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:#f59e0b;text-transform:uppercase">Pipeline</span>
             </div>
             <div id="dash-comm-pipeline" style="font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--text);line-height:1.1">$0</div>
             <div id="dash-comm-pipeline-sub" style="font-size:10px;color:var(--text-3);margin-top:3px">0 sold</div>
           </div>
           <!-- Earned (Installed) -->
-          <div style="flex:1;padding-left:14px">
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <div style="flex:1;padding-left:14px;text-align:center">
+            <div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:6px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
               <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:#22c55e;text-transform:uppercase">Earned</span>
             </div>
             <div id="dash-comm-earned" style="font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--text);line-height:1.1">$0</div>
@@ -8537,8 +8537,8 @@
       </div>
 
       <!-- ── Commission Detail Sheet ──────────────────────────────────────── -->
-      <div id="commission-overlay" class="cust-detail-overlay" aria-hidden="true"></div>
-      <div id="commission-sheet" class="cust-detail-sheet" role="dialog" aria-label="Commission Details">
+      <div id="commission-overlay" class="cust-detail-overlay" aria-hidden="true" style="bottom:calc(var(--nav-height, 64px) + var(--safe-bottom, 0px))"></div>
+      <div id="commission-sheet" class="cust-detail-sheet" role="dialog" aria-label="Commission Details" style="bottom:calc(var(--nav-height, 64px) + var(--safe-bottom, 0px));border-radius:20px 20px 0 0">
         <div class="cust-d-topbar">
           <button class="cust-d-back" id="commission-close" aria-label="Close"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
           <div class="cust-d-topbar-title">Commission Tracker</div>
@@ -14981,6 +14981,7 @@ let gpsWatchId = null;
 // launches from iPhone home screen where scripts may arrive from SW cache.
 var _appInitDone = false;
 var _splashDismissed = false;
+var _splashAnimating = false; // true while revealOrg animation is running
 var _splashFallbackTimer = null;
 var _onSplashDismiss = null;
 var _splashIntervals = []; // Global registry for all splash intervals
@@ -15007,6 +15008,7 @@ function _dismissSplash() {
 (function() {
   function _revealOrg(orgName, orgLogoUrl, orgColor) {
     if (_splashDismissed) return;
+    _splashAnimating = true;
     console.log('[Splash] revealOrg fired:', orgName, orgLogoUrl ? 'has logo' : 'no logo');
 
     var wcLogo  = document.getElementById('splash-wc');
@@ -15891,7 +15893,7 @@ function _initApp() {
   // 3.5s if no org (fast dismiss for master domain / first-run).
   const splash = document.getElementById('splash');
   if (splash) {
-    _splashFallbackTimer = setTimeout(function() { _pulseRunning = false; _dismissSplash(); }, 4000);
+    _splashFallbackTimer = setTimeout(function() { _pulseRunning = false; _dismissSplash(); }, 13000);
   }
 
   // Nuclear fallback: if app is still invisible after 5s, force show everything
