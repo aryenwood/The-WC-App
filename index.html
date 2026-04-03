@@ -8510,16 +8510,29 @@
 
       <!-- ── Commission Earnings Card ────────────────────────────────────── -->
       <div id="dash-commission-card" onclick="_openCommissionDetail()">
-        <div style="display:flex;align-items:center;gap:14px;padding:16px 18px">
-          <div style="width:44px;height:44px;border-radius:14px;background:rgba(34,197,94,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <div style="display:flex;gap:0;padding:16px 18px">
+          <!-- Pipeline (Sold) -->
+          <div style="flex:1;border-right:1px solid var(--g-border);padding-right:14px">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:#f59e0b;text-transform:uppercase">Pipeline</span>
+            </div>
+            <div id="dash-comm-pipeline" style="font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--text);line-height:1.1">$0</div>
+            <div id="dash-comm-pipeline-sub" style="font-size:10px;color:var(--text-3);margin-top:3px">0 sold</div>
           </div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;color:var(--text-3);text-transform:uppercase">Earnings</div>
-            <div id="dash-commission-amount" style="font-family:var(--font-display);font-size:28px;font-weight:800;color:var(--text);line-height:1.1;margin-top:2px">$0.00</div>
-            <div id="dash-commission-sub" style="font-size:11px;color:var(--text-3);margin-top:2px">0 deals this month</div>
+          <!-- Earned (Installed) -->
+          <div style="flex:1;padding-left:14px">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <span style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:#22c55e;text-transform:uppercase">Earned</span>
+            </div>
+            <div id="dash-comm-earned" style="font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--text);line-height:1.1">$0</div>
+            <div id="dash-comm-earned-sub" style="font-size:10px;color:var(--text-3);margin-top:3px">0 installed</div>
           </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+          <!-- Chevron -->
+          <div style="display:flex;align-items:center;padding-left:8px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
         </div>
       </div>
 
@@ -15760,22 +15773,22 @@ function _dismissSplash() {
         }
       }, 6000);
 
-      // ── Beat 7 (8s): Clean fade-out — no bloom vignette drowning the logo ──
+      // ── Beat 7 (10s): Clean fade-out — org logo held for ~6.5s ──
       setTimeout(function() {
         _stopParticles();
         // Ring gently fades
         if (ring) {
-          ring.style.transition = 'transform 0.8s cubic-bezier(0.16,1,0.3,1), opacity 0.8s ease-out';
+          ring.style.transition = 'transform 1s cubic-bezier(0.16,1,0.3,1), opacity 1s ease-out';
           ring.style.transform = 'translate(-50%, -50%) scale(2)';
           ring.style.opacity = '0';
         }
         if (ambient) {
-          ambient.style.transition = 'opacity 0.8s ease-out';
+          ambient.style.transition = 'opacity 1s ease-out';
           ambient.style.opacity = '0';
         }
         // Whole splash fades cleanly — logo stays visible until the very end
-        setTimeout(_dismissSplash, 900);
-      }, 8000);
+        setTimeout(_dismissSplash, 1200);
+      }, 10000);
 
     } else {
       // No org logo — show name, dismiss
@@ -27616,11 +27629,28 @@ function _loadCommissions(period) {
 function _renderCommissionCard() {
   var card = document.getElementById('dash-commission-card');
   if (!card) return;
-  var s = _commissionData ? _commissionData.summary : { totalEarned: 0, dealCount: 0 };
-  var amountEl = document.getElementById('dash-commission-amount');
-  var subEl = document.getElementById('dash-commission-sub');
-  if (amountEl) amountEl.textContent = '$' + (s.totalEarned || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  if (subEl) subEl.textContent = s.dealCount + ' deal' + (s.dealCount !== 1 ? 's' : '') + ' this ' + (_commissionPeriod === 'all' ? 'period' : _commissionPeriod);
+  var comms = _commissionData ? _commissionData.commissions || [] : [];
+
+  // Pipeline = earned + pending (signed but not installed)
+  var pipeline = 0, pipelineCount = 0;
+  // Earned = locked + paid (installed)
+  var earned = 0, earnedCount = 0;
+
+  comms.forEach(function(c) {
+    if (c.status === 'earned') { pipeline += c.amount; pipelineCount++; }
+    if (c.status === 'locked' || c.status === 'paid') { earned += c.amount; earnedCount++; }
+  });
+
+  var fmt = function(n) { return '$' + Math.round(n).toLocaleString('en-US'); };
+
+  var pEl = document.getElementById('dash-comm-pipeline');
+  var pSub = document.getElementById('dash-comm-pipeline-sub');
+  var eEl = document.getElementById('dash-comm-earned');
+  var eSub = document.getElementById('dash-comm-earned-sub');
+  if (pEl) pEl.textContent = fmt(pipeline);
+  if (pSub) pSub.textContent = pipelineCount + ' sold';
+  if (eEl) eEl.textContent = fmt(earned);
+  if (eSub) eSub.textContent = earnedCount + ' installed';
 }
 
 function _renderCommissionDetail() {
