@@ -15187,10 +15187,9 @@ function _dismissSplash() {
             ring.style.opacity = '1';
             ring.style.boxShadow = '0 0 50px var(--splash-glow, rgba(20,143,152,0.4)), 0 0 100px var(--splash-glow-dim, rgba(20,143,152,0.15))';
           }
+          // Ambient stays OFF — it was drowning the org logo due to preserve-3d z-index issues
           if (ambient) {
-            ambient.style.transition = 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease-out';
-            ambient.style.transform = 'translate(-50%, -50%) scale(1.5)';
-            ambient.style.opacity = '1';
+            ambient.style.opacity = '0';
           }
 
           // Spring settle into hero pose
