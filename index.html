@@ -14937,6 +14937,8 @@ function _dismissSplash() {
     var _pCtx = null, _pRAF = null;
     var _ambientP = [];
     var _fragments = [], _fragStart = 0, _fragActive = false;
+    var _speedLines = [];
+    var _glintAlpha = 0;
     var _pW = window.innerWidth, _pH = window.innerHeight;
     if (_pCanvas) {
       var _dpr = window.devicePixelRatio || 1;
@@ -15068,8 +15070,6 @@ function _dismissSplash() {
       }
       _drawP();
     }
-    var _speedLines = [];
-    var _glintAlpha = 0;
     function _triggerSpeedLines() {
       // Spawn radial speed lines in waves
       var _waveCount = 0;
