@@ -12190,8 +12190,10 @@ function _applyFirebaseIdentity(user) {
   // Header avatar: swap SVG for photo if available
   var photoAvatar  = document.getElementById('profile-photo-avatar');
   var defaultIcon  = document.getElementById('profile-default-icon');
-  if (user.photoURL && photoAvatar) {
-    photoAvatar.src          = user.photoURL;
+  var photoUrl = user.photoURL || localStorage.getItem('wc_google_photo') || '';
+  if (user.photoURL) { try { localStorage.setItem('wc_google_photo', user.photoURL); } catch(_) {} }
+  if (photoUrl && photoAvatar) {
+    photoAvatar.src          = photoUrl;
     photoAvatar.style.display = '';
     if (defaultIcon) defaultIcon.style.display = 'none';
   }
@@ -12203,7 +12205,7 @@ function _applyFirebaseIdentity(user) {
   var pddIdentityEmail = document.getElementById('pdd-identity-email');
   if (pddIdentity) {
     pddIdentity.style.display = '';
-    if (pddIdentityPhoto && user.photoURL) pddIdentityPhoto.src = user.photoURL;
+    if (pddIdentityPhoto && photoUrl) pddIdentityPhoto.src = photoUrl;
     if (pddIdentityName)  pddIdentityName.textContent  = user.displayName || '';
     if (pddIdentityEmail) pddIdentityEmail.textContent = user.email || '';
   }
