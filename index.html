@@ -12606,6 +12606,15 @@ function applyOrgBranding(orgId, org) {
       if (_gateEl) _gateEl.classList.add('hidden');
       appEl.style.display = '';
 
+      // 0b. Refresh Firebase Auth custom claims (server-side role + orgId)
+      try {
+        firebase.functions().httpsCallable('wcSetClaims')({}).then(function(result) {
+          console.log('[Claims] Refreshed:', result.data);
+          // Force token refresh so Firestore rules see new claims immediately
+          user.getIdToken(true).catch(function() {});
+        }).catch(function(e) { console.warn('[Claims] Refresh failed:', e.message); });
+      } catch(_) {}
+
       // 1. Write user profile to Firestore users/{uid}
       var _userProfile = {
         uid:         user.uid,

@@ -11,6 +11,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 
 const anthropicKey = defineSecret('ANTHROPIC_API_KEY');
 const netlifyToken = defineSecret('NETLIFY_TOKEN');
+const superAdminUid = defineSecret('SUPER_ADMIN_UID');
 
 const app = initializeApp({
   credential: applicationDefault(),
@@ -46,6 +47,86 @@ async function _getAllOrgDomains() {
   } catch (_) {}
   return defaults;
 }
+
+// ── Custom Claims: Server-Side Role Enforcement ─────────────────────────────
+// Sets Firebase Auth custom claims (role, orgId, superAdmin) so Firestore
+// security rules can validate server-side. Called by client after login.
+
+exports.wcSetClaims = onCall({
+  secrets: [superAdminUid],
+  cors: true,
+  invoker: 'public'
+}, async (request) => {
+  if (!request.auth) throw new Error('Authentication required');
+
+  const uid = request.auth.uid;
+  const db = getFirestore();
+  const auth = getAuth();
+  const SA_UID = superAdminUid.value();
+
+  // Check if super admin
+  if (uid === SA_UID) {
+    // SA gets superAdmin claim + orgId from their user doc
+    const userDoc = await db.collection('users').doc(uid).get();
+    const orgId = userDoc.exists ? userDoc.data().orgId || '' : '';
+    await auth.setCustomUserClaims(uid, {
+      superAdmin: true,
+      role: 'super_admin',
+      orgId: orgId
+    });
+    console.log('[Claims] Super Admin claims set for:', uid, '| orgId:', orgId);
+    return { role: 'super_admin', orgId, superAdmin: true };
+  }
+
+  // Regular user: read role and orgId from user doc
+  const userDoc = await db.collection('users').doc(uid).get();
+  if (!userDoc.exists) {
+    // New user — no claims yet, will be set after onboarding
+    return { role: '', orgId: '', superAdmin: false };
+  }
+
+  const data = userDoc.data();
+  const role = data.role || 'canvasser';
+  const orgId = data.orgId || '';
+
+  await auth.setCustomUserClaims(uid, {
+    superAdmin: false,
+    role: role,
+    orgId: orgId
+  });
+
+  console.log('[Claims] Claims set for:', uid, '| role:', role, '| orgId:', orgId);
+  return { role, orgId, superAdmin: false };
+});
+
+// ── Update Claims on Role Change ─────────────────────────────────────────────
+// When a user doc is updated (role or orgId changes), refresh their claims
+exports.wcUserUpdated = onDocumentUpdated('users/{userId}', async (event) => {
+  const before = event.data.before.data();
+  const after = event.data.after.data();
+  const uid = event.params.userId;
+
+  // Only update claims if role or orgId changed
+  if (before.role === after.role && before.orgId === after.orgId) return null;
+
+  const auth = getAuth();
+  const SA_UID = superAdminUid.value();
+
+  const claims = {
+    superAdmin: uid === SA_UID,
+    role: after.role || 'canvasser',
+    orgId: after.orgId || ''
+  };
+
+  try {
+    await auth.setCustomUserClaims(uid, claims);
+    console.log('[Claims] Auto-updated for:', uid, '| role:', claims.role, '| orgId:', claims.orgId);
+  } catch (e) {
+    console.error('[Claims] Auto-update failed for:', uid, e.message);
+  }
+
+  return null;
+});
 
 // ── Push Notification Processor ──────────────────────────────────────────────
 // Triggered by client writing to notifications/{notifId} — sends push then deletes the doc.
@@ -275,9 +356,11 @@ exports.wcOrgCreated = onDocumentCreated({
 // ── AI Brain Trainer (Claude API proxy) ──────────────────────────────────────
 exports.wcAiChat = onCall({
   secrets: [anthropicKey],
-  cors: true,  // Allow all origins — auth is enforced by Firebase callable
-  invoker: 'public'
+  cors: true
 }, async (request) => {
+  // Require authentication — no anonymous API abuse
+  if (!request.auth) throw new Error('Authentication required');
+
   const { messages, system } = request.data;
 
   if (!Array.isArray(messages) || messages.length === 0) {
