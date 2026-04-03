@@ -14943,6 +14943,13 @@ function _dismissSplash() {
     var _sparkles = [];
     var _orbits = [];
     var _pW = window.innerWidth, _pH = window.innerHeight;
+    // Effects center = actual logo-stack center, not screen center
+    var _eCx = _pW / 2, _eCy = _pH / 2;
+    if (stack) {
+      var _sb = stack.getBoundingClientRect();
+      _eCx = _sb.left + _sb.width / 2;
+      _eCy = _sb.top + _sb.height / 2;
+    }
     if (_pCanvas) {
       var _dpr = window.devicePixelRatio || 1;
       _pCanvas.width = _pW * _dpr; _pCanvas.height = _pH * _dpr;
@@ -14993,7 +15000,7 @@ function _dismissSplash() {
         if (_fragActive && _fragments.length > 0) {
           var elapsed = performance.now() - _fragStart;
           var p = Math.min(1, elapsed / 2000); // 2s total
-          var cx = _pW / 2, cy = _pH / 2;
+          var cx = _eCx, cy = _eCy;
           for (var k = 0; k < _fragments.length; k++) {
             var f = _fragments[k];
             f.rotation += f.rotSpeed;
@@ -15034,10 +15041,10 @@ function _dismissSplash() {
             _pCtx.shadowBlur = 6;
             _pCtx.shadowColor = ln.col;
             _pCtx.beginPath();
-            var sx = _pW/2 + Math.cos(ln.angle) * ln.startR;
-            var sy = _pH/2 + Math.sin(ln.angle) * ln.startR;
-            var ex = _pW/2 + Math.cos(ln.angle) * (ln.startR + ln.len);
-            var ey = _pH/2 + Math.sin(ln.angle) * (ln.startR + ln.len);
+            var sx = _eCx + Math.cos(ln.angle) * ln.startR;
+            var sy = _eCy + Math.sin(ln.angle) * ln.startR;
+            var ex = _eCx + Math.cos(ln.angle) * (ln.startR + ln.len);
+            var ey = _eCy + Math.sin(ln.angle) * (ln.startR + ln.len);
             _pCtx.moveTo(sx, sy);
             _pCtx.lineTo(ex, ey);
             _pCtx.stroke();
@@ -15046,7 +15053,7 @@ function _dismissSplash() {
         }
         // Cross-glint lens flare
         if (_glintAlpha > 0) {
-          var gx = _pW/2, gy = _pH/2;
+          var gx = _eCx, gy = _eCy;
           _pCtx.save();
           _pCtx.globalAlpha = _glintAlpha;
           // Horizontal beam
@@ -15070,7 +15077,7 @@ function _dismissSplash() {
           _pCtx.restore();
         }
         // Concentric pulse rings — sonar emanation
-        var cx = _pW / 2, cy = _pH / 2;
+        var cx = _eCx, cy = _eCy;
         for (var pr = _pulseRings.length - 1; pr >= 0; pr--) {
           var rn = _pulseRings[pr];
           rn.radius += rn.speed;
@@ -15187,8 +15194,8 @@ function _dismissSplash() {
           var dist = 70 + Math.random() * 130;
           var ang = Math.random() * Math.PI * 2;
           _sparkles.push({
-            x: _pW / 2 + Math.cos(ang) * dist,
-            y: _pH / 2 + Math.sin(ang) * dist,
+            x: _eCx + Math.cos(ang) * dist,
+            y: _eCy + Math.sin(ang) * dist,
             size: 5 + Math.random() * 10,
             rot: Math.random() * Math.PI,
             phase: Math.random() * Math.PI * 2,
@@ -15224,7 +15231,7 @@ function _dismissSplash() {
     }
     // Trigger the shatter explosion → convergence
     function _triggerShatter() {
-      var cx = _pW / 2, cy = _pH / 2;
+      var cx = _eCx, cy = _eCy;
       var maxDist = Math.min(_pW, _pH) * 0.38;
       _fragments = [];
       for (var i = 0; i < 45; i++) {
@@ -15360,7 +15367,8 @@ function _dismissSplash() {
         setTimeout(function() {
           if (splashEl) {
             splashEl.style.transition = 'background 1.2s ease-out';
-            splashEl.style.background = 'radial-gradient(circle at 50% 42%, rgba('+_r+','+_g+','+_b+',0.4) 0%, rgba('+_r+','+_g+','+_b+',0.15) 25%, #0a0a0a 55%)';
+            var _bgPct = Math.round((_eCy / _pH) * 100);
+            splashEl.style.background = 'radial-gradient(circle at 50% '+_bgPct+'%, rgba('+_r+','+_g+','+_b+',0.4) 0%, rgba('+_r+','+_g+','+_b+',0.15) 25%, #0a0a0a 55%)';
           }
           _bassReveal();
         }, 840);
