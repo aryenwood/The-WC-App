@@ -12594,17 +12594,14 @@ function applyOrgBranding(orgId, org) {
   }
 
   // Auth state — show login or app
-  fbAuth.onAuthStateChanged(async function(user) {
+  fbAuth.onAuthStateChanged(function(user) {
     if (user) {
-      // 0. Super admin: check localStorage first (instant), then verify via claims (async)
+      // 0. Super admin: check localStorage (instant, non-blocking)
       if (localStorage.getItem('wc_user_role') === 'super_admin') _isSuperAdminCached = true;
-      try {
-        var _tokenResult = await Promise.race([
-          user.getIdTokenResult(),
-          new Promise(function(_, reject) { setTimeout(function() { reject(new Error('timeout')); }, 2000); })
-        ]);
-        if (_tokenResult.claims && _tokenResult.claims.superAdmin) _isSuperAdminCached = true;
-      } catch(_) {}
+      // Also check claims async (non-blocking — updates flag for future checks)
+      user.getIdTokenResult().then(function(result) {
+        if (result.claims && result.claims.superAdmin) _isSuperAdminCached = true;
+      }).catch(function() {});
       if (_isSuperAdminCached) {
         try { localStorage.setItem('wc_user_role', 'super_admin'); } catch(_) {}
         try { localStorage.removeItem('wc_impersonate_role'); } catch(_) {} // never let impersonation override SA
