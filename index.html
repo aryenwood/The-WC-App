@@ -15037,13 +15037,12 @@ function _dismissSplash() {
       } catch(_) {}
     }
 
-    // Apply org brand color to all splash effects via CSS custom properties
+    // Parse org brand color to RGB — always, even if splashEl missing
     var c = orgColor || '#148f98';
-    if (c && splashEl) {
-      // Parse hex to rgb for rgba() usage
-      var _h = c.replace('#','');
-      if (_h.length === 3) _h = _h[0]+_h[0]+_h[1]+_h[1]+_h[2]+_h[2];
-      var _r = parseInt(_h.slice(0,2),16), _g = parseInt(_h.slice(2,4),16), _b = parseInt(_h.slice(4,6),16);
+    var _h = c.replace('#','');
+    if (_h.length === 3) _h = _h[0]+_h[0]+_h[1]+_h[1]+_h[2]+_h[2];
+    var _r = parseInt(_h.slice(0,2),16) || 20, _g = parseInt(_h.slice(2,4),16) || 143, _b = parseInt(_h.slice(4,6),16) || 152;
+    if (splashEl) {
       splashEl.style.setProperty('--splash-color', 'rgba('+_r+','+_g+','+_b+',0.7)');
       splashEl.style.setProperty('--splash-glow', 'rgba('+_r+','+_g+','+_b+',0.35)');
       splashEl.style.setProperty('--splash-glow-dim', 'rgba('+_r+','+_g+','+_b+',0.12)');
@@ -15806,7 +15805,7 @@ function _dismissSplash() {
 
   window.wcSplash = {
     init: function() {},
-    revealOrg: function(n,u,c) { try { _revealOrg(n,u,c); } catch(e) { console.error('[Splash] revealOrg crashed:', e); _dismissSplash(); } },
+    revealOrg: function(n,u,c) { try { _revealOrg(n,u,c); } catch(e) { console.error('[Splash] revealOrg crashed:', e.message, e.stack); _dismissSplash(); } },
     dismiss: _dismissSplash,
   };
 })();
